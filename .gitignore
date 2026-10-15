@@ -47,6 +47,8 @@ pnpm-debug.log*
 .pio/
 .pioenvs/
 build/
+build32/
+build32_new/
 
 # IDEs / editors
 .vscode/
@@ -69,5 +71,12 @@ temp/
 
 # Secrets
 .env*
+!.env.example
 config/*.secret
+TeleSol_ESP12E/config.h
+esp8266/config.h
+!*.example
+
+# Large binaries
+tools/arduino-cli
 # (Keep config.h tracked if required; don't broadly ignore it.)

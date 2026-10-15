@@ -1,13 +1,20 @@
 // ═══════════════════════════════════════════════════════
-// CrowdShield — TopBar Component
-// Status bar with mode toggle, clock, and page title
+// TeleSol Sentinel — TopBar Component
+// Status bar with scenario badge, TinyFish agent state, and clock
 // ═══════════════════════════════════════════════════════
 
 import { useState, useEffect } from 'react';
-import { Radio, Clock, Zap } from 'lucide-react';
+import { Radio, Clock, Zap, Globe, Shield } from 'lucide-react';
 import StatusDot from '../shared/StatusDot';
 
-export default function TopBar({ pageTitle, mode, onToggleMode }) {
+const SCENARIO_LABELS = {
+  normal: { label: 'Normal Flow', color: '#00FF88' },
+  congestion: { label: 'Congestion', color: '#FFB800' },
+  sudden_surge: { label: 'Sudden Surge', color: '#FF8C00' },
+  blocked_exit: { label: 'Blocked Exit', color: '#FF3B5C' },
+};
+
+export default function TopBar({ pageTitle, mode, scenario = 'normal', tinyfish = null, onToggleMode }) {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
@@ -16,15 +23,32 @@ export default function TopBar({ pageTitle, mode, onToggleMode }) {
   }, []);
 
   const isSimulation = mode === 'simulation';
+  const scInfo = SCENARIO_LABELS[scenario] || SCENARIO_LABELS.normal;
+  const isTinyFishLive = tinyfish?.configured;
 
   return (
     <header className="h-14 bg-crowd-surface/80 backdrop-blur-xl border-b border-crowd-border flex items-center justify-between px-6 sticky top-0 z-30">
-      {/* ── Left: Page Title ── */}
+      {/* ── Left: Page Title & Scenario Badge ── */}
       <div className="flex items-center gap-3">
         <h2 className="text-base font-semibold font-display text-crowd-text-primary">{pageTitle}</h2>
-        <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-crowd-cyan/10 border border-crowd-cyan/20">
-          <StatusDot status="active" size="sm" />
-          <span className="text-[10px] font-mono text-crowd-cyan uppercase tracking-wider">Live Feed</span>
+        
+        {/* Scenario Pill */}
+        <div
+          className="hidden sm:flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold"
+          style={{
+            backgroundColor: `${scInfo.color}15`,
+            border: `1px solid ${scInfo.color}40`,
+            color: scInfo.color,
+          }}
+        >
+          <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: scInfo.color }} />
+          <span>SCENARIO: {scInfo.label.toUpperCase()}</span>
+        </div>
+
+        {/* TinyFish Status Indicator */}
+        <div className="hidden md:flex items-center gap-1 px-2 py-0.5 rounded-full bg-crowd-cyan/10 border border-crowd-cyan/20 text-[10px] font-mono text-crowd-cyan">
+          <Globe size={11} />
+          <span>TINYFISH: {isTinyFishLive ? 'LIVE' : 'AGENT READY'}</span>
         </div>
       </div>
 
@@ -44,12 +68,12 @@ export default function TopBar({ pageTitle, mode, onToggleMode }) {
         {isSimulation ? (
           <>
             <Zap size={14} />
-            <span>Simulation</span>
+            <span>Sim Lab</span>
           </>
         ) : (
           <>
             <Radio size={14} />
-            <span>Live</span>
+            <span>Sentinel Live</span>
           </>
         )}
         <span className={`w-8 h-4 rounded-full relative transition-colors duration-300 ${isSimulation ? 'bg-crowd-purple/40' : 'bg-crowd-safe/40'}`}>
@@ -57,7 +81,7 @@ export default function TopBar({ pageTitle, mode, onToggleMode }) {
         </span>
       </button>
 
-      {/* ── Right: Clock ── */}
+      {/* ── Right: Clock & Logo ── */}
       <div className="flex items-center gap-4">
         <div className="flex items-center gap-2 text-crowd-text-secondary">
           <Clock size={14} />
@@ -65,8 +89,10 @@ export default function TopBar({ pageTitle, mode, onToggleMode }) {
             {time.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
           </span>
         </div>
-        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-crowd-cyan/20 to-crowd-purple/20 border border-crowd-border flex items-center justify-center">
-          <span className="text-xs font-bold text-crowd-cyan">CS</span>
+        <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-crowd-cyan to-crowd-purple p-[1px] flex items-center justify-center">
+          <div className="w-full h-full bg-crowd-surface rounded-[7px] flex items-center justify-center">
+            <span className="text-xs font-bold text-crowd-cyan">TS</span>
+          </div>
         </div>
       </div>
     </header>

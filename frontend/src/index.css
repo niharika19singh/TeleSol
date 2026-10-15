@@ -197,3 +197,146 @@ input[type="range"]::-moz-range-thumb {
   fill: #64748B !important;
   font-size: 11px;
 }
+
+/* ═══════════════════════════════════════════
+   SENSOR DASHBOARD — Animations & Styles
+   ═══════════════════════════════════════════ */
+
+/* ── Radar Sweep Animation ── */
+@keyframes radarSweep {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.radar-sweep {
+  animation: radarSweep 2.5s linear infinite;
+}
+
+/* ── Sensor Card Base ── */
+.sensor-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.sensor-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.3), transparent);
+  opacity: 0;
+  transition: opacity 0.4s ease;
+}
+
+.sensor-card:hover::before {
+  opacity: 1;
+}
+
+/* ── Sensor Status Pulse ── */
+.sensor-status-live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 10px;
+  border-radius: 9999px;
+  background: rgba(0, 255, 136, 0.08);
+  border: 1px solid rgba(0, 255, 136, 0.15);
+}
+
+.sensor-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #00FF88;
+  box-shadow: 0 0 6px rgba(0, 255, 136, 0.6);
+  animation: sensorPulse 2s ease-in-out infinite;
+}
+
+@keyframes sensorPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%      { opacity: 0.5; transform: scale(0.7); }
+}
+
+/* ── Sensor Pulse Dot (for radar detected state) ── */
+.sensor-pulse-dot {
+  animation: sensorPulse 1.5s ease-in-out infinite;
+}
+
+/* ── Icon Boxes ── */
+.sensor-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.sensor-icon-mpu {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(0, 212, 255, 0.04));
+  border: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.sensor-icon-tof {
+  background: linear-gradient(135deg, rgba(0, 255, 136, 0.12), rgba(0, 255, 136, 0.04));
+  border: 1px solid rgba(0, 255, 136, 0.15);
+}
+
+.sensor-icon-radar {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.12), rgba(168, 85, 247, 0.04));
+  border: 1px solid rgba(168, 85, 247, 0.15);
+}
+
+.sensor-icon-phone {
+  background: linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(168, 85, 247, 0.04));
+  border: 1px solid rgba(0, 212, 255, 0.15);
+}
+
+.sensor-card:hover .sensor-icon-box {
+  transform: scale(1.05);
+}
+
+/* ── ToF Proximity Active ── */
+.tof-proximity-active {
+  background: rgba(255, 59, 92, 0.08);
+  border: 1px solid rgba(255, 59, 92, 0.2);
+}
+
+/* ── Phone Feed Card ── */
+.phone-feed-card video,
+.phone-feed-card img {
+  border-radius: 8px;
+}
+
+/* ── Fade In Animation ── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* ── Shimmer Animation (for skeletons) ── */
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+/* ── Scanner Line Animation ── */
+@keyframes scanner {
+  0%   { top: 0; }
+  50%  { top: 100%; }
+  100% { top: 0; }
+}

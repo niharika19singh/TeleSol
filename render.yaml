@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: telesol-sentinel-api
+    runtime: python
+    region: oregon
+    plan: free
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.8
+      - key: TINYFISH_API_KEY
+        sync: false
+      - key: ALLOWED_ORIGINS
+        value: "*"

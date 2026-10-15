@@ -1,0 +1,34 @@
+// ============================================================
+// CONFIGURATION - ESP-12E (ESP8266) SENSOR HUB
+// TeleSol v3.0 — MPU6050 + VL53L0X + HLK-LD2420
+// ============================================================
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// ── WiFi ──
+#define WIFI_SSID         "YOUR_WIFI_SSID"
+#define WIFI_PASSWORD     "YOUR_WIFI_PASSWORD"
+
+// ── Node Identity ──
+#define NODE_ID           "TELESOL-ESP12E-001"
+#define NODE_LOCATION     "Entry-Gate-1"
+
+// ── Backend ──
+#define BACKEND_URL       "http://your-backend-ip:8000/api/sensors/data"
+#define PUSH_INTERVAL_MS  5000   // POST every 5 seconds
+
+// ── I2C Bus (shared: MPU6050 + VL53L0X) ──
+#define I2C_SDA           4      // GPIO4  = D2
+#define I2C_SCL           5      // GPIO5  = D1
+
+// ── I2C Addresses ──
+#define MPU6050_ADDR      0x68
+#define VL53L0X_ADDR      0x29
+
+// ── HLK-LD2420 Radar (SoftwareSerial) ──
+#define RADAR_RX_PIN      14     // GPIO14 = D5  (ESP RX ← Radar TX)
+#define RADAR_TX_PIN      12     // GPIO12 = D6  (ESP TX → Radar RX)
+#define RADAR_BAUD        115200
+
+#endif // CONFIG_H

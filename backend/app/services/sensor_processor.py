@@ -1,5 +1,5 @@
 from typing import Dict, Any
-from datetime import datetime
+from datetime import datetime, timezone
 
 ZONE_AREA_DEFAULT = 20.0  # m^2
 DEVICE_MULTIPLIER_DEFAULT = 2.0  # devices per person
@@ -55,6 +55,26 @@ class SensorProcessor:
         # Clamp
         estimated = max(0, estimated)
 
+        # Additional signal: ToF proximity detection (person in doorway)
+        tof = sensors.get("tof")
+        if isinstance(tof, dict) and tof.get("valid") and tof.get("distance_mm"):
+            try:
+                tof_dist = int(tof.get("distance_mm", 0))
+                if 0 < tof_dist < 1500:
+                    estimated = max(estimated, 1)  # at minimum 1 person if ToF detects proximity
+            except Exception:
+                pass
+
+        # Additional signal: vibration from MPU6050 (foot traffic)
+        imu = sensors.get("imu")
+        if isinstance(imu, dict) and imu.get("vibrationMagnitude"):
+            try:
+                vib = float(imu.get("vibrationMagnitude", 0))
+                if vib > 2.0:
+                    estimated = max(estimated, 1)
+            except Exception:
+                pass
+
         # 2) Crowd density
         try:
             zone_area = float(computed.get("zoneArea", ZONE_AREA_DEFAULT))
@@ -108,11 +128,11 @@ class SensorProcessor:
         if isinstance(ts, (int, float)):
             try:
                 # assume epoch milliseconds
-                dt = datetime.utcfromtimestamp(ts / 1000.0)
+                dt = datetime.fromtimestamp(ts / 1000.0, timezone.utc)
             except Exception:
-                dt = datetime.utcnow()
+                dt = datetime.now(timezone.utc)
         else:
-            dt = datetime.utcnow()
+            dt = datetime.now(timezone.utc)
         hour = dt.hour
         if 18 <= hour <= 23:
             temporal_factor = 80.0

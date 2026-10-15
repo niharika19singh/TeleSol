@@ -56,5 +56,14 @@ export function useRealTimeData() {
     isConnected,
     backendData,
     lastUpdate,
+    sentinel: backendData?.sentinel || null,
+    aiForecast: backendData?.aiForecast || null,
+    tinyfish: backendData?.tinyfish || null,
+    zones: backendData?.sentinel?.zones || null,
+    venue: backendData?.sentinel?.venue || null,
+    timeline: backendData?.sentinel?.timeline || [],
+    alerts: backendData?.alerts || [],
+    stats: backendData?.stats || null,
+    crs: backendData?.crs || null,
   };
 }

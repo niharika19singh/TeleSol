@@ -6,12 +6,13 @@
 import { useState } from 'react';
 import {
   LayoutDashboard, Map, BarChart3, Bell, FlaskConical,
-  ChevronLeft, ChevronRight, Shield, Wifi, WifiOff
+  ChevronLeft, ChevronRight, Shield, Wifi, WifiOff, Cpu
 } from 'lucide-react';
 import StatusDot from '../shared/StatusDot';
 
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { id: 'sensors', label: 'Sensors', icon: Cpu },
   { id: 'map', label: 'Map View', icon: Map },
   { id: 'analytics', label: 'Analytics', icon: BarChart3 },
   { id: 'alerts', label: 'Alerts', icon: Bell },
@@ -39,8 +40,8 @@ export default function Sidebar({ currentPage, onNavigate, isConnected, alertCou
         </div>
         {!collapsed && (
           <div className="overflow-hidden">
-            <h1 className="text-sm font-bold font-display text-crowd-text-primary tracking-wide">CrowdShield</h1>
-            <p className="text-[10px] text-crowd-text-muted uppercase tracking-widest">Intelligence</p>
+            <h1 className="text-sm font-bold font-display text-crowd-text-primary tracking-wide">TeleSol</h1>
+            <p className="text-[10px] text-crowd-cyan font-semibold uppercase tracking-widest">Sentinel</p>
           </div>
         )}
       </div>

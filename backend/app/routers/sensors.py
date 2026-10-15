@@ -16,7 +16,7 @@ router = APIRouter()
 async def ingest_sensor_data(payload: SensorPayload, request: Request):
     """Endpoint to ingest sensor payloads, process them, calculate CRS, and return status."""
     try:
-        raw = payload.dict()
+        raw = payload.model_dump() if hasattr(payload, "model_dump") else payload.dict()
         processed = SensorProcessor.process(raw)
 
         # Prepare percentage inputs for CRS calculator
