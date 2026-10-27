@@ -1,11 +1,12 @@
 // ═══════════════════════════════════════════════════════
-// SENPAY Network Digital Twin — Crowd & Telecom Map
-// High-reliability geographic basemap with automatic
-// dark schematic network topology fallback
+// SENPAY Network Digital Twin — Telecom & Site Map
+// High-reliability geographic basemap with custom telecom
+// site markers, 9 map layers, and dark schematic topology
 // ═══════════════════════════════════════════════════════
 
 import React, { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import { MapContainer, TileLayer, Circle, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Circle, Popup, Tooltip, Marker, Polyline, useMap } from 'react-leaflet';
+import L from 'leaflet';
 import { 
   AlertTriangle, 
   Layers, 
@@ -19,12 +20,14 @@ import {
   Activity,
   Wifi,
   ChevronRight,
-  Info
+  Info,
+  Sliders,
+  Check
 } from 'lucide-react';
-import { getRiskLevel, RISK_THRESHOLDS } from '../../data/mockData';
+import { getRiskLevel } from '../../data/mockData';
 import 'leaflet/dist/leaflet.css';
 
-// ── Default Tile Providers (All Public & Keyless) ──
+// ── Default Keyless Tile Providers ──
 const TILE_PROVIDERS = {
   esriDark: {
     name: 'Dark Basemap',
@@ -44,28 +47,94 @@ const TILE_PROVIDERS = {
   },
 };
 
-// ── Component: Auto-Recenter on selectedZone or default coordinates ──
+// ── Custom Telecom Mast DivIcon Factory ──
+function createTelecomSiteIcon(site, isSelected, layers = {}) {
+  const riskScore = Number.isFinite(site.riskScore) ? site.riskScore : (site.metrics?.crs ?? 0);
+  const isDanger = riskScore > 65;
+  const isWarning = riskScore > 40 && riskScore <= 65;
+  const statusColor = isDanger ? '#FF3B5C' : isWarning ? '#FFB800' : '#00FF88';
+
+  const tech = site.technology || (site.tech_type === '5G_NR' ? '5G' : 'LTE');
+  const siteCode = site.name ? site.name.split('—')[0].trim() : (site.site_id || site.id);
+  const showTech = layers.tech !== false;
+  const showCongestion = layers.congestion !== false;
+
+  return L.divIcon({
+    className: 'custom-telecom-site-icon',
+    html: `
+      <div class="telecom-marker-container ${isSelected ? 'marker-selected' : ''}">
+        <div class="marker-dot" style="background-color: ${statusColor}; box-shadow: 0 0 10px ${statusColor}80">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#0B1118" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4.9 19.1C1 15.2 1 8.8 4.9 4.9"/>
+            <path d="M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5"/>
+            <circle cx="12" cy="12" r="2.2" fill="#0B1118"/>
+            <path d="M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5"/>
+            <path d="M19.1 4.9C23 8.8 23 15.1 19.1 19"/>
+          </svg>
+        </div>
+        <div class="marker-badge">
+          <span class="badge-id">${siteCode}</span>
+          ${showTech ? `<span class="badge-tech">${tech}</span>` : ''}
+          ${showCongestion ? `<span class="badge-risk" style="color:${statusColor}">${riskScore}</span>` : ''}
+        </div>
+      </div>
+    `,
+    iconSize: [64, 42],
+    iconAnchor: [32, 21],
+    popupAnchor: [0, -22],
+  });
+}
+
+// ── Map Bounds Auto-Fitter ──
+function MapBoundsFitter({ sites }) {
+  const map = useMap();
+  const prevCount = useRef(sites.length);
+  const prevCenterFirst = useRef(sites[0] ? `${sites[0].lat},${sites[0].lng}` : '');
+
+  useEffect(() => {
+    if (!sites || sites.length === 0) return;
+    const currentFirst = `${sites[0].lat},${sites[0].lng}`;
+
+    // Re-fit if site count changed significantly or center region switched
+    if (sites.length !== prevCount.current || currentFirst !== prevCenterFirst.current) {
+      prevCount.current = sites.length;
+      prevCenterFirst.current = currentFirst;
+
+      const validLatLngs = sites
+        .filter((s) => Number.isFinite(s.lat) && Number.isFinite(s.lng))
+        .map((s) => [s.lat, s.lng]);
+
+      if (validLatLngs.length > 0) {
+        try {
+          const bounds = L.latLngBounds(validLatLngs);
+          map.fitBounds(bounds, { padding: [40, 40], maxZoom: 15 });
+        } catch {}
+      }
+    }
+  }, [sites, map]);
+
+  return null;
+}
+
+// ── Component: Auto-Recenter on selectedZone ──
 function MapRecenter({ center }) {
   const map = useMap();
   useEffect(() => {
     if (center && Number.isFinite(center[0]) && Number.isFinite(center[1])) {
-      map.setView(center, map.getZoom() || 16, { animate: true, duration: 0.8 });
+      map.setView(center, Math.max(map.getZoom() || 14, 14), { animate: true, duration: 0.8 });
     }
   }, [center, map]);
   return null;
 }
 
-// ── Component: Map Container Auto-Resize Observer ──
+// ── Component: Container Resize Observer ──
 function MapResizeHandler() {
   const map = useMap();
   useEffect(() => {
-    // Initial size invalidation after layout settles
     const timer = setTimeout(() => {
       try {
         map.invalidateSize();
-      } catch {
-        // ignore unmounted map errors
-      }
+      } catch {}
     }, 250);
 
     const handleResize = () => {
@@ -102,9 +171,8 @@ function TileErrorMonitor({ onTileError }) {
   return null;
 }
 
-// ── Component: Schematic Network Topology Canvas (Robust Fallback & Dedicated View) ──
+// ── Component: Schematic Network Topology Canvas ──
 function SchematicTopologyView({ zones, selectedZone, onSelectZone }) {
-  // Pre-calculated geometric placement for the 6 monitored sectors around a central gateway
   const sectorPositions = {
     'zone-a': { x: 190, y: 130, sector: 'SEC-A', code: 'GATE-A', role: 'Main Entry Ingress' },
     'zone-b': { x: 730, y: 130, sector: 'SEC-B', code: 'GATE-B', role: 'East Wing Perimeter' },
@@ -114,11 +182,34 @@ function SchematicTopologyView({ zones, selectedZone, onSelectZone }) {
     'zone-f': { x: 730, y: 410, sector: 'SEC-F', code: 'GATE-F', role: 'Emergency Egress' },
   };
 
-  const centerNode = { x: 460, y: 270, label: 'CENTRAL 5G MACRO GATEWAY', sub: 'NOC Aggregation Hub' };
+  const centerNode = { x: 460, y: 270, label: 'CENTRAL 5G CORE MACRO GATEWAY', sub: 'NOC Aggregation Hub' };
+
+  // If viewing UCC 5G dataset or large site list, map them into an organized radial ring
+  const displaySites = useMemo(() => {
+    if (zones.length <= 6) {
+      return zones.map((z) => ({
+        ...z,
+        pos: sectorPositions[z.id] || { x: 460, y: 270, sector: z.id, code: z.id },
+      }));
+    }
+    // Arrange first 16 representative sites in concentric circles around core
+    return zones.slice(0, 16).map((z, idx) => {
+      const angle = (idx / 16) * 2 * Math.PI - Math.PI / 2;
+      const radius = idx % 2 === 0 ? 190 : 130;
+      return {
+        ...z,
+        pos: {
+          x: Math.round(460 + radius * Math.cos(angle)),
+          y: Math.round(270 + radius * Math.sin(angle)),
+          sector: z.name ? z.name.split('—')[0].trim() : (z.site_id || `CELL-${idx}`),
+          code: z.technology || '5G',
+        },
+      };
+    });
+  }, [zones]);
 
   return (
     <div className="relative w-full h-full bg-[#080D14] flex flex-col items-center justify-center overflow-hidden select-none">
-      {/* Background Matrix / Grid lines */}
       <svg
         className="w-full h-full absolute inset-0"
         viewBox="0 0 920 540"
@@ -129,10 +220,6 @@ function SchematicTopologyView({ zones, selectedZone, onSelectZone }) {
             <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#121D2B" strokeWidth="0.8" />
             <circle cx="40" cy="40" r="1" fill="#1C2F44" />
           </pattern>
-          <linearGradient id="linkCyanGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#00E5FF" stopOpacity="0.8" />
-            <stop offset="100%" stopColor="#00E5FF" stopOpacity="0.2" />
-          </linearGradient>
           <radialGradient id="centerAura" cx="50%" cy="50%" r="50%">
             <stop offset="0%" stopColor="#00E5FF" stopOpacity="0.25" />
             <stop offset="60%" stopColor="#00E5FF" stopOpacity="0.05" />
@@ -143,25 +230,28 @@ function SchematicTopologyView({ zones, selectedZone, onSelectZone }) {
         {/* Grid Background */}
         <rect width="920" height="540" fill="url(#telecomGrid)" />
 
-        {/* Outer Perimeter Handover Rings (Inter-sector telemetry links) */}
-        <polygon
-          points="190,130 460,100 730,130 730,410 460,440 190,410"
-          fill="none"
-          stroke="#1A2D42"
-          strokeWidth="1.5"
-          strokeDasharray="6 6"
-        />
+        {/* Outer Perimeter Handover Mesh */}
+        {displaySites.length <= 6 && (
+          <polygon
+            points="190,130 460,100 730,130 730,410 460,440 190,410"
+            fill="none"
+            stroke="#1A2D42"
+            strokeWidth="1.5"
+            strokeDasharray="6 6"
+          />
+        )}
 
-        {/* Central Core Gateway Aura */}
+        {/* Central Gateway Aura */}
         <circle cx={centerNode.x} cy={centerNode.y} r="110" fill="url(#centerAura)" />
 
-        {/* Backhaul Links: Central Gateway to Each Sector */}
-        {zones.map((zone) => {
-          const pos = sectorPositions[zone.id] || { x: 460, y: 270 };
-          const risk = getRiskLevel(zone.riskScore);
-          const isSelected = selectedZone?.id === zone.id;
+        {/* Backhaul Links: Central Gateway to Sites */}
+        {displaySites.map((site) => {
+          const pos = site.pos;
+          const riskScore = Number.isFinite(site.riskScore) ? site.riskScore : (site.metrics?.crs ?? 0);
+          const risk = getRiskLevel(riskScore);
+          const isSelected = selectedZone?.id === site.id;
           return (
-            <g key={`link-${zone.id}`}>
+            <g key={`link-${site.id}`}>
               <line
                 x1={centerNode.x}
                 y1={centerNode.y}
@@ -169,10 +259,9 @@ function SchematicTopologyView({ zones, selectedZone, onSelectZone }) {
                 y2={pos.y}
                 stroke={isSelected ? '#00E5FF' : risk.color}
                 strokeWidth={isSelected ? 2.5 : 1.5}
-                strokeOpacity={isSelected ? 0.9 : 0.4}
-                strokeDasharray={zone.riskScore > 65 ? '' : '5 4'}
+                strokeOpacity={isSelected ? 0.9 : 0.35}
+                strokeDasharray={riskScore > 65 ? '' : '5 4'}
               />
-              {/* Mid-point signal flow beacon */}
               <circle
                 cx={(centerNode.x + pos.x) / 2}
                 cy={(centerNode.y + pos.y) / 2}
@@ -184,7 +273,7 @@ function SchematicTopologyView({ zones, selectedZone, onSelectZone }) {
           );
         })}
 
-        {/* Central 5G Core Gateway Node */}
+        {/* Central Core Gateway Node */}
         <g transform={`translate(${centerNode.x}, ${centerNode.y})`}>
           <circle r="36" fill="#0C141F" stroke="#00E5FF" strokeWidth="2" />
           <circle r="46" fill="none" stroke="#00E5FF" strokeWidth="1" strokeDasharray="4 3" opacity="0.6" className="animate-spin" style={{ animationDuration: '25s' }} />
@@ -200,38 +289,28 @@ function SchematicTopologyView({ zones, selectedZone, onSelectZone }) {
           </text>
         </g>
 
-        {/* Six Sector Nodes */}
-        {zones.map((zone) => {
-          const pos = sectorPositions[zone.id] || { x: 460, y: 270, sector: 'SEC-?', code: 'GATE' };
-          const risk = getRiskLevel(zone.riskScore);
-          const isSelected = selectedZone?.id === zone.id;
-          const isDanger = zone.riskScore > 65;
-          const isWarning = zone.riskScore > 40;
+        {/* Sector / Cell Nodes */}
+        {displaySites.map((site) => {
+          const pos = site.pos;
+          const riskScore = Number.isFinite(site.riskScore) ? site.riskScore : (site.metrics?.crs ?? 0);
+          const risk = getRiskLevel(riskScore);
+          const isSelected = selectedZone?.id === site.id;
+          const isDanger = riskScore > 65;
 
-          const densityVal = Number.isFinite(zone.density) ? zone.density : '—';
-          const riskVal = Number.isFinite(zone.riskScore) ? zone.riskScore : 0;
+          const siteLabel = site.name ? site.name.split('—')[0].trim() : (site.site_id || site.id);
+          const techLabel = site.technology || '5G';
 
           return (
             <g
-              key={zone.id}
+              key={site.id}
               transform={`translate(${pos.x}, ${pos.y})`}
-              onClick={() => onSelectZone?.(zone)}
+              onClick={() => onSelectZone?.(site)}
               className="cursor-pointer group"
             >
-              {/* Outer Coverage Boundary Radius */}
-              <circle
-                r="55"
-                fill={risk.color}
-                fillOpacity={isSelected ? 0.18 : isDanger ? 0.22 : 0.08}
-                stroke={risk.color}
-                strokeWidth={isSelected ? 2 : 1.2}
-                strokeDasharray={isDanger ? '' : '5 4'}
-              />
-
               {/* Pulsing Alert Halo for Critical */}
               {isDanger && (
                 <circle
-                  r="65"
+                  r="52"
                   fill="none"
                   stroke="#FF3B5C"
                   strokeWidth="1.5"
@@ -241,13 +320,13 @@ function SchematicTopologyView({ zones, selectedZone, onSelectZone }) {
                 />
               )}
 
-              {/* Core Node Box */}
+              {/* Node Card */}
               <rect
-                x="-45"
-                y="-30"
-                width="90"
-                height="60"
-                rx="8"
+                x="-42"
+                y="-26"
+                width="84"
+                height="52"
+                rx="7"
                 fill="#0F1722"
                 stroke={isSelected ? '#00E5FF' : risk.color}
                 strokeWidth={isSelected ? 2 : 1}
@@ -255,24 +334,20 @@ function SchematicTopologyView({ zones, selectedZone, onSelectZone }) {
               />
 
               {/* Sector Pill & Title */}
-              <text textAnchor="middle" y="-14" fill="#94A3B8" fontSize="8" fontFamily="monospace" fontWeight="600">
-                {pos.sector} • {pos.code}
+              <text textAnchor="middle" y="-12" fill="#94A3B8" fontSize="8" fontFamily="monospace" fontWeight="600">
+                {pos.sector} • {techLabel}
               </text>
-              <text textAnchor="middle" y="2" fill="#FFFFFF" fontSize="10" fontWeight="bold">
-                {zone.name.split('—')[0].trim()}
-              </text>
-
-              {/* Metrics: Score & Density */}
-              <text textAnchor="middle" y="16" fill={risk.color} fontSize="9" fontWeight="bold" fontFamily="monospace">
-                CRS: {riskVal} • {risk.label.toUpperCase()}
-              </text>
-              <text textAnchor="middle" y="25" fill="#64748B" fontSize="7.5" fontFamily="monospace">
-                {densityVal} ppl/m²
+              <text textAnchor="middle" y="2" fill="#FFFFFF" fontSize="9.5" fontWeight="bold">
+                {siteLabel}
               </text>
 
-              {/* Selection Accent Indicator */}
+              {/* CRS & Status */}
+              <text textAnchor="middle" y="16" fill={risk.color} fontSize="8.5" fontWeight="bold" fontFamily="monospace">
+                CRS: {riskScore} • {risk.label.toUpperCase()}
+              </text>
+
               {isSelected && (
-                <circle cx="0" cy="-30" r="3.5" fill="#00E5FF" className="animate-pulse" />
+                <circle cx="0" cy="-26" r="3.5" fill="#00E5FF" className="animate-pulse" />
               )}
             </g>
           );
@@ -306,6 +381,8 @@ export default function CrowdMap({
   onSelectZone,
   height = '100%',
   isLive = false,
+  layers: externalLayers,
+  onToggleLayer,
 }) {
   const mapRef = useRef(null);
   const [mapReady, setMapReady] = useState(false);
@@ -315,23 +392,69 @@ export default function CrowdMap({
   const [tileError, setTileError] = useState(false);
   const [isFallbackActive, setIsFallbackActive] = useState(false);
 
-  // Safe fallback coordinates (Delhi IIITD Campus baseline)
-  const defaultCenter = [28.5459, 77.2732];
+  // 9 Default Map Layers
+  const defaultLayers = {
+    sites: true,        // 1. Network Sites
+    tech: true,         // 2. Cell Technology
+    signal: true,       // 3. Signal Quality
+    congestion: true,   // 4. Congestion (CRS)
+    density: false,     // 5. Crowd Density
+    incidents: true,    // 6. Active Incidents
+    prediction: true,   // 7. Predicted Risk
+    coverage: false,    // 8. Coverage Areas (default OFF, simulated)
+    links: true,        // 9. Site-to-Site Links (simulated backhaul)
+  };
 
-  // Calculate dynamic map center based on selected or first valid zone
+  const activeLayers = externalLayers || defaultLayers;
+
+  // Filter valid geographic coordinates
+  const validMapZones = useMemo(() => {
+    return zones
+      .map((z) => ({
+        ...z,
+        lat: Number.isFinite(z.lat) ? z.lat : (Number.isFinite(z.latitude) ? z.latitude : null),
+        lng: Number.isFinite(z.lng) ? z.lng : (Number.isFinite(z.longitude) ? z.longitude : null),
+      }))
+      .filter(
+        (z) =>
+          Number.isFinite(z.lat) &&
+          Number.isFinite(z.lng) &&
+          z.lat >= -90 &&
+          z.lat <= 90 &&
+          z.lng >= -180 &&
+          z.lng <= 180
+      );
+  }, [zones]);
+
+  // Compute dynamic center
   const center = useMemo(() => {
     if (selectedZone && Number.isFinite(selectedZone.lat) && Number.isFinite(selectedZone.lng)) {
       return [selectedZone.lat, selectedZone.lng];
     }
-    const firstValid = zones.find(
-      (z) => Number.isFinite(z.lat) && Number.isFinite(z.lng) && z.lat !== 0 && z.lng !== 0
-    );
-    return firstValid ? [firstValid.lat, firstValid.lng] : defaultCenter;
-  }, [zones, selectedZone]);
+    const firstValid = validMapZones[0];
+    return firstValid ? [firstValid.lat, firstValid.lng] : [51.898, -8.473]; // Cork baseline default
+  }, [selectedZone, validMapZones]);
 
-  // Determine current active tile configuration
+  // Compute backhaul links between adjacent sites (for links layer)
+  const backhaulLinks = useMemo(() => {
+    if (!activeLayers.links || validMapZones.length < 2) return [];
+    const links = [];
+    // Draw links between nearby sites (simple distance mesh)
+    for (let i = 0; i < Math.min(validMapZones.length, 25); i++) {
+      for (let j = i + 1; j < Math.min(validMapZones.length, 25); j++) {
+        const a = validMapZones[i];
+        const b = validMapZones[j];
+        const dist = Math.hypot(a.lat - b.lat, a.lng - b.lng);
+        // Link sites within approx 1.5km
+        if (dist < 0.02) {
+          links.push([[a.lat, a.lng], [b.lat, b.lng]]);
+        }
+      }
+    }
+    return links;
+  }, [validMapZones, activeLayers.links]);
+
   const activeTileConfig = useMemo(() => {
-    // Respect custom environment variable override if provided
     const customUrl = import.meta.env.VITE_MAP_TILE_URL;
     const customAttr = import.meta.env.VITE_MAP_ATTRIBUTION;
     if (customUrl) {
@@ -342,32 +465,14 @@ export default function CrowdMap({
         maxZoom: 18,
       };
     }
-
-    if (viewMode === 'osm') {
-      return TILE_PROVIDERS.osm;
-    }
-    return TILE_PROVIDERS.esriDark;
+    return viewMode === 'osm' ? TILE_PROVIDERS.osm : TILE_PROVIDERS.esriDark;
   }, [viewMode]);
 
-  // Handle tile load failures by gracefully engaging the topology fallback
   const handleTileError = useCallback(() => {
     setTileError(true);
     setIsFallbackActive(true);
     setViewMode('topology');
   }, []);
-
-  // Safe filter for zones with valid coordinates
-  const validMapZones = useMemo(() => {
-    return zones.filter(
-      (z) =>
-        Number.isFinite(z.lat) &&
-        Number.isFinite(z.lng) &&
-        z.lat >= -90 &&
-        z.lat <= 90 &&
-        z.lng >= -180 &&
-        z.lng <= 180
-    );
-  }, [zones]);
 
   return (
     <div
@@ -376,9 +481,8 @@ export default function CrowdMap({
     >
       {/* ── Top Header Control Bar ── */}
       <div className="absolute top-3 left-3 right-3 z-[600] flex flex-wrap items-center justify-between gap-2 pointer-events-none">
-        {/* Left Side: View Mode Toggles & Basemap Status Pill */}
+        {/* Left Side: View Mode Toggles */}
         <div className="flex items-center gap-2 pointer-events-auto">
-          {/* Mode Switcher */}
           <div className="flex items-center rounded-lg bg-[#0F1722]/90 border border-senpay-border p-0.5 backdrop-blur-md shadow-lg">
             <button
               onClick={() => {
@@ -452,17 +556,17 @@ export default function CrowdMap({
           )}
         </div>
 
-        {/* Right Side: Sector Count & Telemetry Mode Pill */}
+        {/* Right Side: Site Count & Telemetry Mode Pill */}
         <div className="flex items-center gap-2 pointer-events-auto">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0F1722]/90 border border-senpay-border text-xs font-mono text-slate-300 backdrop-blur-md shadow-lg">
             <Radio size={12} className={isLive ? 'text-emerald-400 animate-pulse' : 'text-senpay-cyan'} />
-            <span className="font-bold">{zones.length}</span>
-            <span className="text-senpay-text-muted">Sectors Monitored</span>
+            <span className="font-bold">{validMapZones.length}</span>
+            <span className="text-senpay-text-muted">Sites Active</span>
           </div>
         </div>
       </div>
 
-      {/* ── Center Content: Either Schematic Topology or Geographic Leaflet Map ── */}
+      {/* ── Center Content: Schematic Topology or Geographic Leaflet Map ── */}
       {viewMode === 'topology' || isFallbackActive ? (
         <SchematicTopologyView
           zones={zones}
@@ -474,12 +578,12 @@ export default function CrowdMap({
           <MapContainer
             ref={mapRef}
             center={center}
-            zoom={16}
+            zoom={14}
             style={{ height: '100%', width: '100%', background: '#0B1118' }}
             zoomControl={true}
             whenReady={() => setMapReady(true)}
           >
-            {/* Real Geographic Basemap TileLayer (No Watermarks, Public & Free) */}
+            {/* Real Geographic Basemap TileLayer */}
             <TileLayer
               key={`${activeTileConfig.id}-${activeTileConfig.url}`}
               url={activeTileConfig.url}
@@ -488,83 +592,146 @@ export default function CrowdMap({
               className={activeTileConfig.isDark ? 'senpay-dark-tiles' : ''}
             />
 
-            {/* Recenter & Invalidate Map Size Handlers */}
+            {/* Recenter, Fit Bounds & Invalidate Handlers */}
+            <MapBoundsFitter sites={validMapZones} />
             <MapRecenter center={center} />
             <MapResizeHandler />
             <TileErrorMonitor onTileError={handleTileError} />
 
-            {/* Zone Overlays: Circles & Tooltips */}
-            {validMapZones.map((zone) => {
-              const risk = getRiskLevel(zone.riskScore);
-              const isDanger = zone.riskScore > 65;
-              const isWarning = zone.riskScore > 40;
-              const isSelected = selectedZone?.id === zone.id;
-
-              const densityVal = Number.isFinite(zone.density) ? zone.density : '—';
-              const flowVal = Number.isFinite(zone.flowInstability) ? `${zone.flowInstability}%` : '—';
-              const panicVal = Number.isFinite(zone.panicLevel) ? `${zone.panicLevel}%` : '—';
-              const riskVal = Number.isFinite(zone.riskScore) ? zone.riskScore : 0;
-              const radiusVal = Number.isFinite(zone.radius) ? zone.radius : 100;
-
-              return (
-                <Circle
-                  key={zone.id}
-                  center={[zone.lat, zone.lng]}
-                  radius={radiusVal}
+            {/* Layer 9: Site-to-Site Backhaul Links (Subtle mesh) */}
+            {activeLayers.links &&
+              backhaulLinks.map((link, idx) => (
+                <Polyline
+                  key={`link-mesh-${idx}`}
+                  positions={link}
                   pathOptions={{
-                    color: isSelected ? '#00E5FF' : risk.color,
-                    weight: isSelected ? 3.5 : 2,
-                    fillColor: risk.color,
-                    fillOpacity: isDanger ? 0.35 : isWarning ? 0.22 : 0.12,
-                    dashArray: isDanger ? '' : '6 4',
-                    className: isDanger ? 'danger-pulse' : '',
+                    color: '#00E5FF',
+                    weight: 1.2,
+                    opacity: 0.25,
+                    dashArray: '4 4',
                   }}
-                  eventHandlers={{
-                    click: () => onSelectZone?.(zone),
-                  }}
-                >
-                  <Popup>
-                    <div className="min-w-[210px] p-1 font-sans">
-                      <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-700">
-                        <span className="font-bold text-sm text-white">{zone.name}</span>
-                        <span
-                          className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase"
-                          style={{ backgroundColor: `${risk.color}25`, color: risk.color }}
-                        >
-                          {risk.label}
-                        </span>
-                      </div>
-                      <div className="space-y-1.5 text-xs">
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Crowd Density:</span>
-                          <span className="font-mono font-bold text-white">{densityVal} ppl/m²</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Flow Instability:</span>
-                          <span className="font-mono font-medium text-white">{flowVal}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-400">Panic Index:</span>
-                          <span className="font-mono font-medium text-white">{panicVal}</span>
-                        </div>
-                        <div className="pt-1.5 mt-1.5 border-t border-slate-700/80 flex justify-between items-center">
-                          <span className="text-slate-400 font-semibold">Congestion Score:</span>
-                          <span className="font-mono font-bold text-base" style={{ color: risk.color }}>
-                            {riskVal} / 100
+                />
+              ))}
+
+            {/* Layer 8: Optional Coverage Hulls (Default OFF, simulated) */}
+            {activeLayers.coverage &&
+              validMapZones.map((site) => {
+                const riskScore = Number.isFinite(site.riskScore) ? site.riskScore : (site.metrics?.crs ?? 0);
+                const risk = getRiskLevel(riskScore);
+                const radius = site.estimated_coverage_radius_m || site.radius || 180;
+                return (
+                  <Circle
+                    key={`cov-${site.id}`}
+                    center={[site.lat, site.lng]}
+                    radius={radius}
+                    pathOptions={{
+                      color: risk.color,
+                      weight: 1,
+                      fillColor: risk.color,
+                      fillOpacity: 0.05,
+                      dashArray: '4 4',
+                    }}
+                  />
+                );
+              })}
+
+            {/* Layer 1-7: Realistic Telecom Site Markers */}
+            {activeLayers.sites &&
+              validMapZones.map((site) => {
+                const isSelected = selectedZone?.id === site.id;
+                const riskScore = Number.isFinite(site.riskScore) ? site.riskScore : (site.metrics?.crs ?? 0);
+                const risk = getRiskLevel(riskScore);
+                const siteName = site.name || site.site_id || site.id;
+                const tech = site.technology || (site.tech_type === '5G_NR' ? '5G' : 'LTE');
+                const rsrp = site.metrics?.rsrp ?? (site.rsrp ?? null);
+                const rsrq = site.metrics?.rsrq ?? (site.rsrq ?? null);
+                const density = site.density ?? (site.crowd_density ?? null);
+
+                return (
+                  <Marker
+                    key={site.id}
+                    position={[site.lat, site.lng]}
+                    icon={createTelecomSiteIcon(site, isSelected, activeLayers)}
+                    eventHandlers={{
+                      click: () => onSelectZone?.(site),
+                    }}
+                  >
+                    <Tooltip direction="top" offset={[0, -22]} opacity={0.95}>
+                      <div className="p-1 font-mono text-xs">
+                        <div className="font-bold text-white flex items-center justify-between gap-2">
+                          <span>{siteName}</span>
+                          <span className="text-[10px] px-1 py-0.5 rounded" style={{ backgroundColor: `${risk.color}30`, color: risk.color }}>
+                            {tech} • CRS {riskScore}
                           </span>
                         </div>
+                        {rsrp !== null && (
+                          <div className="text-[10px] text-slate-300 mt-1">
+                            RSRP: {rsrp} dBm {rsrq ? `| RSRQ: ${rsrq} dB` : ''}
+                          </div>
+                        )}
+                        <div className="text-[9px] text-slate-400 mt-0.5">
+                          {site.data_provenance ? site.data_provenance.replace('_', ' ') : 'PUBLIC DATA'}
+                        </div>
                       </div>
-                      <div className="mt-2.5 h-1.5 rounded-full bg-slate-800 overflow-hidden">
-                        <div
-                          className="h-full rounded-full transition-all duration-500"
-                          style={{ width: `${Math.min(100, Math.max(0, riskVal))}%`, backgroundColor: risk.color }}
-                        />
+                    </Tooltip>
+
+                    <Popup>
+                      <div className="min-w-[220px] p-1 font-sans">
+                        <div className="flex items-center justify-between mb-2 pb-1.5 border-b border-slate-700">
+                          <div>
+                            <span className="text-[10px] font-mono text-senpay-cyan font-bold uppercase">{tech} SITE</span>
+                            <h4 className="font-bold text-sm text-white leading-tight">{siteName}</h4>
+                          </div>
+                          <span
+                            className="px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase"
+                            style={{ backgroundColor: `${risk.color}25`, color: risk.color }}
+                          >
+                            {risk.label}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5 text-xs font-mono">
+                          <div className="flex justify-between">
+                            <span className="text-slate-400">Site ID / Cell:</span>
+                            <span className="font-bold text-white">{site.cell_id || site.id}</span>
+                          </div>
+                          {rsrp !== null && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Signal (RSRP):</span>
+                              <span className="font-bold text-white">{rsrp} dBm</span>
+                            </div>
+                          )}
+                          {rsrq !== null && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Quality (RSRQ):</span>
+                              <span className="font-bold text-white">{rsrq} dB</span>
+                            </div>
+                          )}
+                          {density !== null && (
+                            <div className="flex justify-between">
+                              <span className="text-slate-400">Crowd Density:</span>
+                              <span className="font-bold text-white">{density} ppl/m²</span>
+                            </div>
+                          )}
+                          <div className="pt-1.5 mt-1.5 border-t border-slate-700/80 flex justify-between items-center">
+                            <span className="text-slate-400 font-semibold">Congestion Score:</span>
+                            <span className="font-mono font-bold text-base" style={{ color: risk.color }}>
+                              {riskScore} / 100
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          onClick={() => onSelectZone?.(site)}
+                          className="mt-2.5 w-full py-1 text-center text-xs font-mono font-bold rounded bg-senpay-cyan text-slate-950 hover:bg-cyan-300 transition"
+                        >
+                          Deep Site Inspection →
+                        </button>
                       </div>
-                    </div>
-                  </Popup>
-                </Circle>
-              );
-            })}
+                    </Popup>
+                  </Marker>
+                );
+              })}
           </MapContainer>
 
           {/* Map Legend Overlay */}
@@ -591,18 +758,20 @@ export default function CrowdMap({
         <div className="absolute top-14 right-3 z-[600] flex items-center gap-3 px-3 py-2 rounded-xl bg-[#0F1722]/95 border border-senpay-border shadow-2xl backdrop-blur-md animate-slide-in-right">
           <div
             className="w-2.5 h-2.5 rounded-full flex-shrink-0"
-            style={{ backgroundColor: getRiskLevel(selectedZone.riskScore).color }}
+            style={{ backgroundColor: getRiskLevel(selectedZone.riskScore || selectedZone.metrics?.crs || 0).color }}
           />
           <div className="flex flex-col">
-            <span className="text-xs font-bold text-white leading-tight">{selectedZone.name}</span>
+            <span className="text-xs font-bold text-white leading-tight">
+              {selectedZone.name || selectedZone.site_id || selectedZone.id}
+            </span>
             <span className="text-[10px] font-mono text-slate-400">
-              CRS {selectedZone.riskScore ?? '—'} • {selectedZone.density ?? '—'} ppl/m²
+              CRS {selectedZone.riskScore ?? selectedZone.metrics?.crs ?? '—'} • {selectedZone.technology || '5G'}
             </span>
           </div>
           <button
             onClick={() => onSelectZone?.(null)}
             className="text-slate-500 hover:text-white text-xs ml-2 px-1 rounded hover:bg-slate-800 transition"
-            title="Deselect zone"
+            title="Deselect site"
           >
             ✕
           </button>

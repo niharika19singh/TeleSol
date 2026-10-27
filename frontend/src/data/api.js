@@ -298,3 +298,36 @@ export async function runModelInference(telemetry) {
 export async function triggerModelTraining() {
   return await apiPost('/api/ml/train', {});
 }
+
+// ═══════════════════════════════════════════════════════════════════
+// DIGITAL TWIN & REAL TELECOM DATA API
+// ═══════════════════════════════════════════════════════════════════
+
+export async function fetchDigitalTwinSites(filters = {}) {
+  const query = new URLSearchParams();
+  if (filters.source && filters.source !== 'all') query.set('source', filters.source);
+  if (filters.tech && filters.tech !== 'all') query.set('tech', filters.tech);
+  if (filters.risk && filters.risk !== 'all') query.set('risk', filters.risk);
+  if (filters.query) query.set('query', filters.query);
+
+  const qs = query.toString();
+  const endpoint = `/api/digital-twin/sites${qs ? `?${qs}` : ''}`;
+  return await apiFetch(endpoint);
+}
+
+export async function fetchDigitalTwinSiteDetail(siteId) {
+  if (!siteId) return null;
+  return await apiFetch(`/api/digital-twin/sites/${encodeURIComponent(siteId)}`);
+}
+
+export async function fetchDigitalTwinLayers() {
+  return await apiFetch('/api/digital-twin/layers');
+}
+
+export async function fetchDigitalTwinTopology() {
+  return await apiFetch('/api/digital-twin/topology');
+}
+
+export async function fetchOpenCellIdStatus() {
+  return await apiFetch('/api/digital-twin/providers/opencellid');
+}

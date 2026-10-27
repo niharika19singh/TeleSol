@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import SenPayLogo from '../shared/SenPayLogo';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme, THEMES } from '../../context/ThemeContext';
 
 export default function SenPayTopBar({
   currentPage,
@@ -15,6 +16,7 @@ export default function SenPayTopBar({
   alertCount = 2,
 }) {
   const { user, isAuthenticated, logout } = useAuth();
+  const { theme, setTheme, isHighContrast } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
@@ -201,26 +203,49 @@ export default function SenPayTopBar({
         <div className="relative">
           <button
             onClick={() => setThemeMenuOpen(!themeMenuOpen)}
-            className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-[#151F2A] border border-senpay-border text-xs text-senpay-text-secondary hover:text-senpay-text-primary transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#151F2A] border border-senpay-border text-xs text-senpay-text-secondary hover:text-senpay-text-primary transition-colors"
+            title="Switch color theme"
           >
-            <Moon size={12} className="text-senpay-cyan" />
-            <span className="font-mono text-[11px]">Theme</span>
+            {isHighContrast ? (
+              <Sun size={12} className="text-amber-400" />
+            ) : (
+              <Moon size={12} className="text-senpay-cyan" />
+            )}
+            <span className="font-mono text-[11px]">
+              {theme === THEMES.HIGH_CONTRAST ? 'High Contrast' : 'Obsidian'}
+            </span>
             <ChevronDown size={11} className="opacity-70" />
           </button>
 
           {themeMenuOpen && (
-            <div className="absolute right-0 mt-2 w-32 rounded-xl bg-senpay-card border border-senpay-border shadow-2xl py-1 z-50 text-xs font-mono">
+            <div className="absolute right-0 mt-2 w-36 rounded-xl bg-senpay-card border border-senpay-border shadow-2xl py-1 z-50 text-xs font-mono">
               <button
-                onClick={() => setThemeMenuOpen(false)}
-                className="w-full text-left px-3 py-1.5 text-senpay-cyan font-bold bg-senpay-panel/50"
+                onClick={() => {
+                  setTheme(THEMES.OBSIDIAN);
+                  setThemeMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${
+                  theme === THEMES.OBSIDIAN
+                    ? 'text-senpay-cyan font-bold bg-senpay-panel/50'
+                    : 'text-senpay-text-muted hover:text-white'
+                }`}
               >
-                ● Obsidian Dark
+                <span>● Obsidian Dark</span>
+                {theme === THEMES.OBSIDIAN && <span className="text-[10px]">✓</span>}
               </button>
               <button
-                onClick={() => setThemeMenuOpen(false)}
-                className="w-full text-left px-3 py-1.5 text-senpay-text-muted hover:text-white"
+                onClick={() => {
+                  setTheme(THEMES.HIGH_CONTRAST);
+                  setThemeMenuOpen(false);
+                }}
+                className={`w-full text-left px-3 py-1.5 flex items-center justify-between ${
+                  theme === THEMES.HIGH_CONTRAST
+                    ? 'text-amber-400 font-bold bg-senpay-panel/50'
+                    : 'text-senpay-text-muted hover:text-white'
+                }`}
               >
-                ○ High Contrast
+                <span>○ High Contrast</span>
+                {theme === THEMES.HIGH_CONTRAST && <span className="text-[10px]">✓</span>}
               </button>
             </div>
           )}

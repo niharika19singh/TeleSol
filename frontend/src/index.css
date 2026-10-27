@@ -403,3 +403,150 @@ input[type="range"]::-moz-range-thumb {
   50%  { top: 100%; }
   100% { top: 0; }
 }
+
+/* ═══════════════════════════════════════════
+   CUSTOM TELECOM SITE MAP MARKERS
+   ═══════════════════════════════════════════ */
+.custom-telecom-site-icon {
+  background: transparent !important;
+  border: none !important;
+}
+
+.telecom-marker-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 0.15s ease-in-out;
+}
+
+.telecom-marker-container:hover {
+  transform: scale(1.15);
+  z-index: 9999 !important;
+}
+
+.telecom-marker-container.marker-selected .marker-dot {
+  outline: 2.5px solid #00E5FF;
+  outline-offset: 2px;
+  box-shadow: 0 0 14px rgba(0, 229, 255, 0.7) !important;
+}
+
+.marker-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid #0B1118;
+  transition: all 0.2s ease;
+}
+
+.marker-badge {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(11, 17, 24, 0.94);
+  border: 1px solid #1E2D3D;
+  border-radius: 4px;
+  padding: 1px 4px;
+  margin-top: 2px;
+  font-family: monospace;
+  font-size: 8.5px;
+  font-weight: 600;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+}
+
+.badge-id {
+  color: #F1F5F9;
+}
+
+.badge-tech {
+  background: rgba(0, 229, 255, 0.15);
+  color: #00E5FF;
+  padding: 0 2px;
+  border-radius: 2px;
+  font-size: 7.5px;
+  font-weight: 700;
+}
+
+.badge-risk {
+  font-weight: 700;
+}
+
+/* ═══════════════════════════════════════════
+   HIGH CONTRAST THEME (WCAG AAA Optimized)
+   ═══════════════════════════════════════════ */
+[data-theme="high-contrast"],
+.theme-high-contrast {
+  --senpay-bg: #000000;
+  --senpay-sidebar: #05080C;
+  --senpay-card: #0A0F16;
+  --senpay-panel: #111A24;
+  --senpay-border: #4A607A;
+  --senpay-cyan: #38BDF8;
+  --senpay-amber: #FBBF24;
+  --senpay-red: #F87171;
+  --senpay-green: #4ADE80;
+  --senpay-violet: #C084FC;
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="high-contrast"] body,
+.theme-high-contrast body {
+  background-color: #000000 !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="high-contrast"] .senpay-card,
+.theme-high-contrast .senpay-card {
+  background-color: #0A0F16 !important;
+  border-color: #4A607A !important;
+  box-shadow: 0 0 0 1px #4A607A, 0 4px 20px rgba(0, 0, 0, 0.9) !important;
+}
+
+[data-theme="high-contrast"] .senpay-card-elevated,
+.theme-high-contrast .senpay-card-elevated {
+  background-color: #111A24 !important;
+  border-color: #5D7A9E !important;
+}
+
+[data-theme="high-contrast"] header,
+.theme-high-contrast header {
+  background-color: #05080C !important;
+  border-color: #4A607A !important;
+}
+
+[data-theme="high-contrast"] aside,
+.theme-high-contrast aside {
+  background-color: #05080C !important;
+  border-color: #4A607A !important;
+}
+
+[data-theme="high-contrast"] button:focus-visible,
+.theme-high-contrast button:focus-visible {
+  outline: 2px solid #38BDF8 !important;
+  outline-offset: 2px !important;
+}
+
+[data-theme="high-contrast"] input,
+[data-theme="high-contrast"] select,
+.theme-high-contrast input,
+.theme-high-contrast select {
+  background-color: #05080C !important;
+  border-color: #4A607A !important;
+  color: #FFFFFF !important;
+}
+
+[data-theme="high-contrast"] .text-senpay-text-muted,
+.theme-high-contrast .text-senpay-text-muted {
+  color: #94A3B8 !important;
+}
+
+[data-theme="high-contrast"] .text-senpay-text-secondary,
+.theme-high-contrast .text-senpay-text-secondary {
+  color: #E2E8F0 !important;
+}
