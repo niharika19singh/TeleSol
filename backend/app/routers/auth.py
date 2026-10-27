@@ -12,7 +12,7 @@ from typing import Dict, Any, Optional
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel, Field
 
-from app.services.auth_service import AuthService, get_current_user
+from app.services.auth_service import AuthService, get_current_user, create_access_token
 
 router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
@@ -58,6 +58,7 @@ async def register(payload: RegisterRequest):
     """
     Register a new user or operator.
     Validates input constraints, hashes password with PBKDF2, and persists account.
+    Returns access token for immediate seamless authentication.
     """
     try:
         user = AuthService.register_user(
@@ -67,10 +68,16 @@ async def register(payload: RegisterRequest):
             full_name=payload.full_name,
             role=payload.role or "OPERATOR"
         )
+        token = create_access_token(user["id"], user["username"], user["email"], user["role"])
         return {
             "status": "success",
-            "message": "Account successfully created. Please sign in.",
-            "user": user
+            "message": "Account successfully created.",
+            "token": token,
+            "access_token": token,
+            "token_type": "Bearer",
+            "expires_in": 86400,
+            "user": user,
+            **user
         }
     except ValueError as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
@@ -84,7 +91,8 @@ async def get_current_user_profile(user: Dict[str, Any] = Depends(get_current_us
     """
     return {
         "status": "authenticated",
-        "user": user
+        "user": user,
+        **user
     }
 
 

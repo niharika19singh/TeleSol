@@ -67,6 +67,14 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
             <span>DEMO MODE</span>
           </button>
 
+          {/* Sign In Button */}
+          <button
+            onClick={() => onLaunchConsole('login')}
+            className="py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-medium text-xs tracking-wider transition-all"
+          >
+            Sign In
+          </button>
+
           {/* Launch Console CTA Button */}
           <button
             onClick={() => onLaunchConsole('command_center')}

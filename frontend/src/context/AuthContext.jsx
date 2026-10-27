@@ -33,24 +33,27 @@ export function AuthProvider({ children }) {
 
   const [isLoading, setIsLoading] = useState(!isDemoParam);
 
-  // Validate token on initial mount
+  // Validate saved token on initial mount
   useEffect(() => {
     if (isDemoParam) {
       setIsLoading(false);
       return;
     }
+    const savedToken = localStorage.getItem(TOKEN_STORAGE_KEY);
+    if (!savedToken) {
+      setIsLoading(false);
+      return;
+    }
+
     let isMounted = true;
     async function verifySession() {
-      if (!token) {
-        setIsLoading(false);
-        return;
-      }
       try {
-        const userData = await fetchCurrentUser(token);
+        const res = await fetchCurrentUser(savedToken);
         if (isMounted) {
-          if (userData && userData.email) {
-            setUser(userData);
-            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+          const resolvedUser = res?.user || res;
+          if (resolvedUser && (resolvedUser.email || resolvedUser.username)) {
+            setUser(resolvedUser);
+            localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(resolvedUser));
           } else {
             // Token expired or invalid
             setToken(null);
@@ -70,17 +73,18 @@ export function AuthProvider({ children }) {
     return () => {
       isMounted = false;
     };
-  }, [token]);
+  }, []);
 
   const login = async (username_or_email, password) => {
     const res = await loginUser({ username_or_email, password });
     const userToken = res.token || res.access_token;
-    if (userToken && res.user) {
+    const userData = res.user || res;
+    if (userToken && userData && (userData.email || userData.username)) {
       setToken(userToken);
-      setUser(res.user);
+      setUser(userData);
       localStorage.setItem(TOKEN_STORAGE_KEY, userToken);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(res.user));
-      return res.user;
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(userData));
+      return userData;
     }
     throw new Error('Invalid login response from server');
   };
@@ -88,12 +92,13 @@ export function AuthProvider({ children }) {
   const register = async (userData) => {
     const res = await registerUser(userData);
     const userToken = res.token || res.access_token;
-    if (userToken && res.user) {
+    const createdUser = res.user || res;
+    if (userToken && createdUser && (createdUser.email || createdUser.username)) {
       setToken(userToken);
-      setUser(res.user);
+      setUser(createdUser);
       localStorage.setItem(TOKEN_STORAGE_KEY, userToken);
-      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(res.user));
-      return res.user;
+      localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(createdUser));
+      return createdUser;
     }
     throw new Error('Registration failed: no token returned');
   };

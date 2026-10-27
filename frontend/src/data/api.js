@@ -263,7 +263,8 @@ export async function fetchCurrentUser(token) {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
+    const data = await res.json();
+    return data.user || data;
   } catch (err) {
     console.warn('[API] /api/auth/me failed:', err.message);
     return null;

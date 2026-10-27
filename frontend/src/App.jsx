@@ -66,7 +66,7 @@ function AppContent() {
   const setCurrentPage = (page) => {
     setCurrentPageRaw(page);
     if (typeof window !== 'undefined' && window.location.hash !== `#${page}`) {
-      window.history.pushState(null, '', `#${page}`);
+      window.location.hash = `#${page}`;
     }
   };
 

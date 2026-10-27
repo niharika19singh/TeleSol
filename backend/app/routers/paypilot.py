@@ -463,19 +463,22 @@ async def get_provider_trust_profile(
 
 
 @router.get("/discovery")
-async def discover_services(query: str = Query(..., min_length=2)):
+async def discover_services(query: Optional[str] = Query(None)):
     """Search providers using local catalog and live TinyFish Search API."""
-    clean_query = sanitize_untrusted_content(query)
+    clean_query = sanitize_untrusted_content(query) if query else ""
     now = datetime.now(timezone.utc).isoformat()
 
     with db_session() as conn:
         cursor = conn.cursor()
-        search_term = f"%{clean_query.lower()}%"
-        cursor.execute("""
-        SELECT * FROM providers
-        WHERE lower(name) LIKE ? OR lower(category) LIKE ? OR lower(description) LIKE ?
-        ORDER BY verified DESC;
-        """, (search_term, search_term, search_term))
+        if clean_query:
+            search_term = f"%{clean_query.lower()}%"
+            cursor.execute("""
+            SELECT * FROM providers
+            WHERE lower(name) LIKE ? OR lower(category) LIKE ? OR lower(description) LIKE ?
+            ORDER BY verified DESC;
+            """, (search_term, search_term, search_term))
+        else:
+            cursor.execute("SELECT * FROM providers ORDER BY verified DESC;")
         local_providers = [dict(r) for r in cursor.fetchall()]
 
     tinyfish_results = []
@@ -524,6 +527,7 @@ async def discover_services(query: str = Query(..., min_length=2)):
 # ─────────────────────────────────────────────────────────────
 
 @router.get("/agreements")
+@router.get("/service-agreements")
 async def list_agreements(task_id: Optional[str] = Query(None)):
     """List service agreements."""
     with db_session() as conn:
@@ -1052,6 +1056,7 @@ async def export_evidence_bundle_json(bundle_id: str):
 # ─────────────────────────────────────────────────────────────
 
 @router.get("/incidents")
+@router.get("/disputes")
 async def list_incidents(status: Optional[str] = Query(None)):
     """List payment incidents and disputes."""
     return {"incidents": dispute_manager.list_incidents(status=status)}
