@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════════════════
 // SENPAY Hero Section: Operational Decision Replay
-// Research-grounded, credible telecom operations sequence:
-// 1. Detect -> 2. Analyze -> 3. Compare -> 4. Authorize -> 5. Verify -> 6. Stable
+// Truthful, research-grounded telecom operations sequence:
+// 1. Detect -> 2. Analyze -> 3. Compare -> 4. Authorize -> 5. Verify -> 6. Settle
 // ═══════════════════════════════════════════════════════
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
@@ -10,6 +10,7 @@ import {
   Pause, 
   RotateCcw, 
   ChevronRight, 
+  ChevronLeft,
   AlertTriangle, 
   ShieldCheck, 
   Cpu, 
@@ -22,17 +23,117 @@ import {
   Sparkles,
   Lock,
   Layers,
-  FileCheck2
+  FileCheck2,
+  Info
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
+// ── Centralized Deterministic Scenario Fixture ──
+// All metrics are mathematically derived from SENPAY's backend models:
+// - Incident in zone-c (VIP Corridor) from virtual_sentinel.py (sudden_surge scenario)
+// - Telemetry QoS formulas from intervention_optimizer.py
+// - Delegation del_sentinel_telecom_001 from db.py & delegation_service.py
+// - HashKey HSP Demo Gateway Adapter execution from hsp_service.py
+export const HERO_DEMO_SCENARIO = {
+  scenarioId: 'runbook_vip_corridor_0881',
+  runbookLabel: 'RUNBOOK #TEL-2026-VIP',
+  modeLabel: 'DEMO REPLAY (AUTONOMOUS TELECOM RUNBOOK)',
+  provenance: {
+    eventSource: 'SIMULATION_ENGINE',
+    engineName: 'TeleSol Sentinel Simulation Engine',
+    networkSector: 'Campus Operational Grid (Gate C VIP Core)',
+    telecomAdapter: 'HSP Gateway (Demo Adapter / HSK Testnet 133)',
+  },
+  incident: {
+    id: 'INC-2026-VIP-0881',
+    zoneId: 'zone-c',
+    zoneName: 'Gate C — VIP Corridor',
+    initialCrs: 84,
+    status: 'CRITICAL',
+    triggerThreshold: 65,
+    timeToBreachMinutes: 4.2,
+  },
+  telemetry: {
+    rsrpDbm: -104,
+    packetLossPct: 14.2,
+    latencyMs: 142,
+    densityPplM2: 4.8,
+    flowInstabilityPct: 78,
+    mlModel: 'RF-GB-v1.0 (RandomForest & GradientBoosting)',
+    inferenceConfidence: 0.96,
+  },
+  interventions: [
+    {
+      id: 'opt_1',
+      title: '1. Do Nothing (Passive)',
+      type: 'PASSIVE_MONITORING',
+      predictedCrs: 84,
+      costHsk: '0.00',
+      slaRisk: '94% SLA Breach Risk',
+      isSelected: false,
+    },
+    {
+      id: 'opt_2',
+      title: '2. Local Traffic Shaping',
+      type: 'QOS_TRAFFIC_SHAPING',
+      predictedCrs: 58,
+      costHsk: '0.00',
+      slaRisk: 'Moderate Mitigation (Warning)',
+      isSelected: false,
+    },
+    {
+      id: 'opt_3',
+      title: '3. Autonomous 5G Slice (Apex)',
+      type: 'DYNAMIC_SLICE_ALLOCATION',
+      provider: 'SkyLink Dynamic 5G Slicing',
+      predictedCrs: 22,
+      crsUncertainty: '±3.2',
+      costHsk: '12.50',
+      confidencePct: 96,
+      slaRisk: 'SLA Protected (< 35 CRS)',
+      isSelected: true,
+    },
+  ],
+  procurement: {
+    delegationId: 'del_sentinel_telecom_001',
+    delegationPoolLimitHsk: 150.0,
+    perTxLimitHsk: 30.0,
+    policyId: 'policy_telecom_standard',
+    authorizedAmountHsk: '12.50',
+    asset: 'HSK',
+    networkId: 133,
+    steps: [
+      { key: 'policy', label: '1. Policy Check', status: 'PASSED', detail: 'Amount 12.50 <= 30.0 HSK tx limit' },
+      { key: 'budget', label: '2. Budget Escrow', status: 'RESERVED', detail: '12.50 of 150.0 HSK pool reserved' },
+      { key: 'wallet', label: '3. Agent Signature', status: 'AUTHORIZED', detail: 'EIP-712 Cart Mandate signed' },
+      { key: 'dispatch', label: '4. HSP Gateway', status: 'SUBMITTED', detail: 'Dispatched to HSK Testnet router' },
+    ],
+  },
+  outcome: {
+    counterfactualBaselineCrs: 84,
+    observedPostCrs: 22,
+    reductionPct: 73.8,
+    targetThreshold: 35,
+    isSlaRestored: true,
+    evaluationType: 'Counterfactual Digital Twin SLA Match',
+  },
+  settlement: {
+    receiptId: 'RCPT-HSK-133-VIP',
+    networkName: 'HashKey Chain Testnet (Chain ID: 133)',
+    txHash: '0x8f2a49b10c73d9e83b4f6a7d18c9e0f2b3a4c5d6e7f8a9b0c1d2e3f4a5b6c7d8',
+    adapterType: 'HSP Demo Gateway Adapter (Simulated Settlement)',
+    settlementState: 'payment-finalized',
+    isSimulatedAdapter: true,
+  },
+};
+
 export const STAGES = [
-  { id: 'detect', label: '1. Detect', duration: 2400, desc: 'Congestion Threshold Breached' },
-  { id: 'analyze', label: '2. Analyze', duration: 2400, desc: 'Radio Link Degradation' },
-  { id: 'compare', label: '3. Compare', duration: 3200, desc: 'Intervention Optimizer' },
-  { id: 'authorize', label: '4. Authorize', duration: 3200, desc: 'Agent Mandate & Dispatch' },
+  { id: 'detect', label: '1. Detect', duration: 2500, desc: 'Congestion Threshold Breached' },
+  { id: 'analyze', label: '2. Analyze', duration: 2500, desc: 'Radio Link Degradation' },
+  { id: 'compare', label: '3. Compare', duration: 3300, desc: 'Intervention Optimizer' },
+  { id: 'authorize', label: '4. Authorize', duration: 3300, desc: 'Agent Mandate & Dispatch' },
   { id: 'verify', label: '5. Verify', duration: 2800, desc: 'Counterfactual SLA Check' },
-  { id: 'stable', label: '6. Settle', duration: 3500, desc: 'Autonomous Settlement' },
+  { id: 'stable', label: '6. Settle', duration: 3600, desc: 'Autonomous Settlement' },
 ];
 
 export default function HeroOperationsReplay({ onLaunchConsole }) {
@@ -40,8 +141,9 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  const [motionDisabledByUser, setMotionDisabledByUser] = useState(false);
 
-  // Check reduced motion preference
+  // Check reduced motion preference from system media query
   useEffect(() => {
     if (typeof window !== 'undefined') {
       const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -52,7 +154,9 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
     }
   }, []);
 
-  // Main Sequence Timer Loop
+  const isMotionSuppressed = prefersReducedMotion || motionDisabledByUser;
+
+  // Main Sequence Timer Loop with explicit cleanup
   useEffect(() => {
     if (!isPlaying) return;
 
@@ -67,7 +171,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
   // Keyboard navigation (Space to toggle, Left/Right arrows to step)
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') return;
       if (e.code === 'Space') {
         e.preventDefault();
         setIsPlaying((p) => !p);
@@ -85,56 +189,78 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
 
   const currentStage = STAGES[currentStageIndex];
   const stageId = currentStage.id;
+  const data = HERO_DEMO_SCENARIO;
 
-  // Topology node states derived from current stage
+  // Topology node states derived strictly from current stage
   const isIncidentActive = stageId === 'detect' || stageId === 'analyze' || stageId === 'compare';
   const isProcurementActive = stageId === 'authorize';
   const isOutcomeResolved = stageId === 'verify' || stageId === 'stable';
 
-  const vipCrs = isIncidentActive ? 84 : isProcurementActive ? 48 : 22;
+  const vipCrs = isIncidentActive ? data.incident.initialCrs : isProcurementActive ? 48 : data.outcome.observedPostCrs;
   const vipColor = isIncidentActive ? '#FF3B5C' : isProcurementActive ? '#FFB800' : '#00FF88';
 
-  // Fixed Schematic Layout Coordinates (ViewBox 540 x 320)
+  // Fixed Schematic Layout Coordinates (ViewBox 540 x 300)
   const nodes = {
-    core: { x: 270, y: 155, id: '5G-MACRO-GW', label: 'Aggregation Hub', tech: 'Core Backhaul' },
-    gateA: { x: 100, y: 75, id: 'SEC-A', label: 'Main Entry', tech: '5G-SA', crs: 18, color: '#00FF88' },
-    gateB: { x: 440, y: 75, id: 'SEC-B', label: 'East Wing', tech: '5G-SA', crs: 24, color: '#00FF88' },
-    gateC: { x: 270, y: 265, id: 'SEC-C', label: 'VIP Corridor', tech: '5G NR Slice', crs: vipCrs, color: vipColor },
-    gateD: { x: 100, y: 245, id: 'SEC-D', label: 'South Exit', tech: 'LTE-A', crs: 15, color: '#00FF88' },
-    provider: { x: 440, y: 245, id: 'APEX-NET', label: 'On-Demand Slice', tech: 'HSK Provider', crs: null, color: '#00E5FF' },
+    core: { x: 270, y: 145, id: '5G-MACRO-GW', label: 'Aggregation Hub', tech: 'Core Backhaul' },
+    gateA: { x: 100, y: 70, id: 'SEC-A', label: 'Main Entry', tech: '5G-SA', crs: 18, color: '#00FF88' },
+    gateB: { x: 440, y: 70, id: 'SEC-B', label: 'East Wing', tech: '5G-SA', crs: 24, color: '#00FF88' },
+    gateC: { x: 270, y: 245, id: 'SEC-C', label: data.incident.zoneName, tech: '5G NR Slice', crs: vipCrs, color: vipColor },
+    gateD: { x: 100, y: 230, id: 'SEC-D', label: 'South Exit', tech: 'LTE-A', crs: 15, color: '#00FF88' },
+    provider: { x: 440, y: 230, id: 'APEX-NET', label: 'On-Demand Slice', tech: 'HSK Provider', crs: null, color: '#00E5FF' },
   };
 
   return (
-    <div className="relative w-full max-w-[620px] rounded-2xl bg-[#0D1520] border border-senpay-border shadow-[0_20px_50px_rgba(0,0,0,0.65)] overflow-hidden font-mono select-none">
-      {/* ── 1. Top Operational Replay Header & Stage Track ── */}
+    <div 
+      className="relative w-full max-w-[620px] rounded-2xl bg-[#0D1520] border border-senpay-border shadow-[0_20px_50px_rgba(0,0,0,0.65)] overflow-hidden font-mono select-none"
+      role="region"
+      aria-label="Interactive Autonomous Telecom Procurement Decision Replay"
+    >
+      {/* ── 1. Top Operational Replay Header ── */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 bg-[#0A0F16] border-b border-senpay-border/80 text-xs">
         {/* Left: Replay Status Pill */}
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-senpay-cyan/15 border border-senpay-cyan/40 text-[10px] text-senpay-cyan font-bold">
-            <span className={`w-1.5 h-1.5 rounded-full bg-senpay-cyan ${isPlaying && !prefersReducedMotion ? 'animate-pulse' : ''}`} />
+            <span className={`w-1.5 h-1.5 rounded-full bg-senpay-cyan ${isPlaying && !isMotionSuppressed ? 'animate-pulse' : ''}`} />
             <span>OPERATIONAL DECISION REPLAY</span>
           </div>
           <span className="text-[10px] text-slate-400 hidden sm:inline">
-            Runbook #TEL-2026-VIP
+            {data.runbookLabel}
           </span>
         </div>
 
-        {/* Right: Interactive Play / Pause / Replay Controls */}
-        <div className="flex items-center gap-1.5">
+        {/* Right: Controls (Play/Pause, Step Back, Step Forward, Restart) */}
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setCurrentStageIndex((p) => (p - 1 + STAGES.length) % STAGES.length)}
+            className="p-1 rounded bg-[#131D2A] hover:bg-[#1A283A] text-slate-300 hover:text-white transition focus-visible:ring-1 focus-visible:ring-senpay-cyan"
+            title="Step back to previous stage (Left Arrow)"
+            aria-label="Previous Stage"
+          >
+            <ChevronLeft size={13} />
+          </button>
           <button
             onClick={() => setIsPlaying(!isPlaying)}
-            className="p-1 rounded bg-[#131D2A] hover:bg-[#1A283A] text-slate-300 hover:text-white transition"
+            className="p-1 px-1.5 rounded bg-[#131D2A] hover:bg-[#1A283A] text-slate-300 hover:text-white transition flex items-center gap-1 focus-visible:ring-1 focus-visible:ring-senpay-cyan"
             title={isPlaying ? 'Pause simulation (Space)' : 'Play simulation (Space)'}
             aria-label={isPlaying ? 'Pause' : 'Play'}
           >
             {isPlaying ? <Pause size={12} /> : <Play size={12} />}
+            <span className="text-[9px] font-bold">{isPlaying ? 'PAUSE' : 'PLAY'}</span>
+          </button>
+          <button
+            onClick={() => setCurrentStageIndex((p) => (p + 1) % STAGES.length)}
+            className="p-1 rounded bg-[#131D2A] hover:bg-[#1A283A] text-slate-300 hover:text-white transition focus-visible:ring-1 focus-visible:ring-senpay-cyan"
+            title="Step forward to next stage (Right Arrow)"
+            aria-label="Next Stage"
+          >
+            <ChevronRight size={13} />
           </button>
           <button
             onClick={() => {
               setCurrentStageIndex(0);
               setIsPlaying(true);
             }}
-            className="p-1 rounded bg-[#131D2A] hover:bg-[#1A283A] text-slate-300 hover:text-white transition"
+            className="p-1 rounded bg-[#131D2A] hover:bg-[#1A283A] text-slate-300 hover:text-white transition focus-visible:ring-1 focus-visible:ring-senpay-cyan"
             title="Restart sequence from Step 1"
             aria-label="Restart"
           >
@@ -144,7 +270,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
       </div>
 
       {/* ── 2. Sequential Stage Step Indicators ── */}
-      <div className="grid grid-cols-6 border-b border-slate-800 text-[10px] bg-[#080D14]">
+      <div className="grid grid-cols-6 border-b border-slate-800 text-[9px] sm:text-[10px] bg-[#080D14]">
         {STAGES.map((s, idx) => {
           const isActive = idx === currentStageIndex;
           const isPast = idx < currentStageIndex;
@@ -155,13 +281,14 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
                 setCurrentStageIndex(idx);
                 setIsPlaying(false);
               }}
-              className={`py-1.5 px-1 text-center transition-all border-b-2 ${
+              className={`py-1.5 px-0.5 text-center transition-all border-b-2 focus-visible:outline-none focus-visible:bg-slate-800 ${
                 isActive
-                  ? 'border-senpay-cyan bg-senpay-cyan/10 text-white font-bold'
+                  ? 'border-senpay-cyan bg-senpay-cyan/15 text-white font-bold'
                   : isPast
                   ? 'border-emerald-500/60 text-slate-300 hover:text-white'
                   : 'border-transparent text-slate-500 hover:text-slate-400'
               }`}
+              title={`Jump to ${s.label}: ${s.desc}`}
             >
               <div className="truncate">{s.label}</div>
             </button>
@@ -170,11 +297,10 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
       </div>
 
       {/* ── 3. Visual Stage Canvas: Restrained 2D Schematic Network Topology ── */}
-      <div className="relative w-full h-[250px] bg-[#090E16] overflow-hidden">
-        {/* Subtle Telecom Grid Pattern */}
+      <div className="relative w-full h-[235px] sm:h-[245px] bg-[#090E16] overflow-hidden">
         <svg
           className="w-full h-full absolute inset-0"
-          viewBox="0 0 540 320"
+          viewBox="0 0 540 300"
           preserveAspectRatio="xMidYMid meet"
         >
           <defs>
@@ -189,13 +315,12 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
           </defs>
 
           {/* Grid Background */}
-          <rect width="540" height="320" fill="url(#heroGridPattern)" />
+          <rect width="540" height="300" fill="url(#heroGridPattern)" />
 
           {/* Core Gateway Central Aura */}
-          <circle cx={nodes.core.x} cy={nodes.core.y} r="75" fill="url(#gwAura)" />
+          <circle cx={nodes.core.x} cy={nodes.core.y} r="70" fill="url(#gwAura)" />
 
-          {/* ── Physical Backhaul Links ── */}
-          {/* Link: Core -> Gate A */}
+          {/* ── Normal Backhaul Links: Core -> Gate A, B, D ── */}
           <line
             x1={nodes.core.x}
             y1={nodes.core.y}
@@ -205,8 +330,6 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
             strokeWidth="1.6"
             strokeDasharray="4 3"
           />
-
-          {/* Link: Core -> Gate B */}
           <line
             x1={nodes.core.x}
             y1={nodes.core.y}
@@ -216,8 +339,6 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
             strokeWidth="1.6"
             strokeDasharray="4 3"
           />
-
-          {/* Link: Core -> Gate D */}
           <line
             x1={nodes.core.x}
             y1={nodes.core.y}
@@ -238,7 +359,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
             strokeWidth={isIncidentActive ? 2.8 : 2}
             strokeOpacity={isIncidentActive ? 0.95 : 0.6}
             strokeDasharray={isIncidentActive ? '6 4' : '4 3'}
-            className={!prefersReducedMotion && isIncidentActive ? 'animate-pulse' : ''}
+            className={!isMotionSuppressed && isIncidentActive ? 'animate-pulse' : ''}
           />
 
           {/* ── Autonomous Slice Link: Gate C -> Apex Provider (Active in Dispatch/Verify) ── */}
@@ -274,7 +395,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
             <text textAnchor="middle" y="3" fill="#00E5FF" fontSize="8.5" fontWeight="bold">
               5G-GW
             </text>
-            <text textAnchor="middle" y="33" fill="#94A3B8" fontSize="8">
+            <text textAnchor="middle" y="32" fill="#94A3B8" fontSize="8">
               5G Macro Core
             </text>
           </g>
@@ -295,7 +416,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
           {/* ── Monitored Incident Sector: Gate C (VIP Corridor) ── */}
           <g transform={`translate(${nodes.gateC.x}, ${nodes.gateC.y})`}>
             {/* Pulsing incident ring */}
-            {isIncidentActive && !prefersReducedMotion && (
+            {isIncidentActive && !isMotionSuppressed && (
               <circle
                 r="28"
                 fill="none"
@@ -354,31 +475,34 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
         {/* Floating Context Label in Top Left */}
         <div className="absolute top-2.5 left-3 flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#0A0F16]/90 border border-slate-800 text-[9px] text-slate-400">
           <Radio size={10} className="text-senpay-cyan" />
-          <span>Active Target: Gate C (VIP Core)</span>
+          <span>Active Target: {data.incident.zoneName}</span>
         </div>
       </div>
 
       {/* ── 4. Dynamic Operations & Decision Drawer ── */}
-      <div className="p-3.5 bg-[#0C121B] border-t border-senpay-border/80 min-h-[145px] text-xs">
+      <div 
+        className="p-3.5 bg-[#0C121B] border-t border-senpay-border/80 min-h-[155px] text-xs"
+        aria-live="polite"
+      >
         {/* SCENE 1: DETECT */}
         {stageId === 'detect' && (
           <div className="space-y-2 animate-fade-in">
             <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
               <span className="text-[10px] text-rose-400 font-bold flex items-center gap-1 uppercase">
                 <AlertTriangle size={12} />
-                <span>Incident Detected • Ingress Bottleneck</span>
+                <span>Incident Detected • Ingress Congestion Spike</span>
               </span>
               <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 text-[9px] font-bold">
-                CRITICAL (CRS 84)
+                CRITICAL (CRS {data.incident.initialCrs} &gt; {data.incident.triggerThreshold})
               </span>
             </div>
             <div className="flex items-center justify-between text-[11px] text-slate-300">
-              <span>Affected Node: Gate C (VIP Core Corridor)</span>
-              <span className="text-slate-400 font-mono">Trace ID: #INC-2026-VIP</span>
+              <span>Target: {data.incident.zoneName} ({data.incident.zoneId})</span>
+              <span className="text-slate-400 font-mono">Trace ID: #{data.incident.id}</span>
             </div>
             <div className="p-2 rounded bg-[#080D14] border border-rose-500/30 text-[10px] text-slate-300 flex items-center justify-between">
-              <span>Provenance: Simulated Event Engine</span>
-              <span className="font-bold text-rose-400">Predicted SLA Breach in 4.2 min</span>
+              <span>Data Source: {data.provenance.engineName} (Simulated Scenario)</span>
+              <span className="font-bold text-rose-400">Breach Horizon: {data.incident.timeToBreachMinutes} min</span>
             </div>
           </div>
         )}
@@ -389,31 +513,32 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
             <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
               <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1 uppercase">
                 <Cpu size={12} />
-                <span>Radio &amp; Flow Analysis • Buffer Bloat</span>
+                <span>Radio Link &amp; Flow Analysis • Buffer Bloat</span>
               </span>
-              <span className="text-[10px] text-slate-400">ML Model: RF-GB-v1.0</span>
+              <span className="text-[10px] text-slate-400">{data.telemetry.mlModel}</span>
             </div>
             <div className="grid grid-cols-4 gap-1.5 text-center text-[10px]">
               <div className="p-1 rounded bg-[#080D14] border border-slate-800">
-                <div className="text-slate-400">RSRP</div>
-                <div className="font-bold text-rose-400">-104 dBm</div>
+                <div className="text-slate-400">RSRP (Radio)</div>
+                <div className="font-bold text-rose-400">{data.telemetry.rsrpDbm} dBm</div>
               </div>
               <div className="p-1 rounded bg-[#080D14] border border-slate-800">
-                <div className="text-slate-400">Loss</div>
-                <div className="font-bold text-rose-400">14.2%</div>
+                <div className="text-slate-400">Packet Loss</div>
+                <div className="font-bold text-rose-400">{data.telemetry.packetLossPct}%</div>
               </div>
               <div className="p-1 rounded bg-[#080D14] border border-slate-800">
-                <div className="text-slate-400">Latency</div>
-                <div className="font-bold text-amber-400">142 ms</div>
+                <div className="text-slate-400">Queue Latency</div>
+                <div className="font-bold text-amber-400">{data.telemetry.latencyMs} ms</div>
               </div>
               <div className="p-1 rounded bg-[#080D14] border border-slate-800">
-                <div className="text-slate-400">Density</div>
-                <div className="font-bold text-slate-200">4.8 ppl/m²</div>
+                <div className="text-slate-400">Crowd Density</div>
+                <div className="font-bold text-slate-200">{data.telemetry.densityPplM2} ppl/m²</div>
               </div>
             </div>
-            <p className="text-[10px] text-slate-400">
-              Downlink capacity exhausted. Intervention optimizer triggered automatically.
-            </p>
+            <div className="flex justify-between items-center text-[10px] text-slate-400 pt-0.5">
+              <span>Provenance: Derived via Digital Twin QoS Models</span>
+              <span className="text-senpay-cyan font-semibold">{(data.telemetry.inferenceConfidence * 100).toFixed(0)}% Model Confidence</span>
+            </div>
           </div>
         )}
 
@@ -423,23 +548,28 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
             <div className="flex items-center justify-between pb-1 border-b border-slate-800">
               <span className="text-[10px] text-senpay-cyan font-bold flex items-center gap-1 uppercase">
                 <Sparkles size={12} />
-                <span>Intervention Options Evaluated</span>
+                <span>Intervention Options Evaluated (Multi-Attribute Scoring)</span>
               </span>
-              <span className="text-[10px] text-slate-400">3 Candidates</span>
+              <span className="text-[10px] text-slate-400">3 Candidates Evaluated</span>
             </div>
             <div className="space-y-1 text-[10px]">
-              <div className="flex items-center justify-between p-1 rounded bg-[#080D14] text-slate-400 opacity-60">
-                <span>1. Do Nothing</span>
-                <span>CRS 84 • $0 Cost • 94% Breach Risk</span>
-              </div>
-              <div className="flex items-center justify-between p-1 rounded bg-[#080D14] text-slate-400 opacity-70">
-                <span>2. Local Traffic Shaping</span>
-                <span>CRS 58 • $0 Cost • Moderate Mitigation</span>
-              </div>
-              <div className="flex items-center justify-between p-1.5 rounded bg-senpay-cyan/15 border border-senpay-cyan/50 text-white font-bold">
-                <span className="text-senpay-cyan">3. Autonomous 5G Slice (Apex)</span>
-                <span className="text-emerald-400">CRS 22 • 12.50 HSK • 96% Conf</span>
-              </div>
+              {data.interventions.map((opt) => (
+                <div
+                  key={opt.id}
+                  className={`flex items-center justify-between p-1.5 rounded transition ${
+                    opt.isSelected
+                      ? 'bg-senpay-cyan/15 border border-senpay-cyan/50 text-white font-bold'
+                      : 'bg-[#080D14] text-slate-400 opacity-60 border border-transparent'
+                  }`}
+                >
+                  <span className={opt.isSelected ? 'text-senpay-cyan' : ''}>
+                    {opt.title}
+                  </span>
+                  <span className={opt.isSelected ? 'text-emerald-400 font-mono' : 'font-mono'}>
+                    Predicted CRS: {opt.predictedCrs} {opt.crsUncertainty ? `(${opt.crsUncertainty})` : ''} • {opt.costHsk} HSK • {opt.slaRisk}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -447,28 +577,29 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
         {/* SCENE 4: AUTHORIZE & DISPATCH */}
         {stageId === 'authorize' && (
           <div className="space-y-2 animate-fade-in">
-            <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-1 border-b border-slate-800">
               <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1 uppercase">
                 <Wallet size={12} />
-                <span>Procurement &amp; Policy Validation</span>
+                <span>Procurement Lifecycle • Mandate Authorization</span>
               </span>
               <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[9px] font-bold">
-                MANDATE SIGNED
+                BUDGET RESERVED IN ESCROW
               </span>
             </div>
-            <div className="space-y-1 text-[10px] text-slate-300">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Delegation:</span>
-                <span className="font-bold text-white">del_sentinel_telecom_001 (50 HSK Limit)</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Atomic Budget Authorization:</span>
-                <span className="font-bold text-senpay-cyan">12.50 HSK (Reserved in Escrow)</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">HSP Dispatch:</span>
-                <span className="text-emerald-400 font-bold">Submitting slice route to Apex Net...</span>
-              </div>
+            <div className="grid grid-cols-2 gap-1.5 text-[10px] text-slate-300">
+              {data.procurement.steps.map((st) => (
+                <div key={st.key} className="p-1 rounded bg-[#080D14] border border-slate-800/80">
+                  <div className="flex justify-between items-center">
+                    <span className="text-slate-400 font-semibold">{st.label}:</span>
+                    <span className="text-emerald-400 font-bold text-[9px]">{st.status}</span>
+                  </div>
+                  <div className="text-[9px] text-slate-300 truncate mt-0.5">{st.detail}</div>
+                </div>
+              ))}
+            </div>
+            <div className="text-[9px] text-slate-400 pt-0.5 flex justify-between">
+              <span>Delegation: {data.procurement.delegationId}</span>
+              <span>Amount: {data.procurement.authorizedAmountHsk} {data.procurement.asset}</span>
             </div>
           </div>
         )}
@@ -482,45 +613,56 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
                 <span>Counterfactual SLA Outcome Verification</span>
               </span>
               <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-bold">
-                SLA RESTORED
+                SLA RESTORED (CRS {data.outcome.observedPostCrs} &lt; {data.outcome.targetThreshold})
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2 text-[10px]">
               <div className="p-1.5 rounded bg-[#080D14] border border-slate-800">
-                <span className="text-slate-400 block">Baseline (No Action):</span>
-                <span className="font-bold text-rose-400">CRS 84 (Critical Congestion)</span>
+                <span className="text-slate-400 block">Counterfactual Baseline (No Action):</span>
+                <span className="font-bold text-rose-400">CRS {data.outcome.counterfactualBaselineCrs} (Critical Congestion)</span>
               </div>
               <div className="p-1.5 rounded bg-[#080D14] border border-emerald-500/40">
-                <span className="text-slate-400 block">Observed Outcome:</span>
-                <span className="font-bold text-emerald-400">CRS 22 (-73.8% Reduction)</span>
+                <span className="text-slate-400 block">Observed Outcome Post-Mitigation:</span>
+                <span className="font-bold text-emerald-400">CRS {data.outcome.observedPostCrs} (-{data.outcome.reductionPct}% Reduction)</span>
               </div>
             </div>
-            <p className="text-[10px] text-slate-300">
-              Mitigation verified successfully. Escrow settlement unlocked.
-            </p>
+            <div className="text-[9px] text-slate-400 pt-0.5 flex justify-between">
+              <span>Method: {data.outcome.evaluationType}</span>
+              <span className="text-emerald-400 font-bold">Escrow Settlement Condition: SATISFIED</span>
+            </div>
           </div>
         )}
 
         {/* SCENE 6: STABLE OPERATIONAL STATE */}
         {stageId === 'stable' && (
-          <div className="space-y-2.5 animate-fade-in">
-            <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
+          <div className="space-y-2 animate-fade-in">
+            <div className="flex items-center justify-between pb-1 border-b border-slate-800">
               <span className="text-[10px] text-senpay-cyan font-bold flex items-center gap-1 uppercase">
                 <FileCheck2 size={12} />
-                <span>Autonomous Lifecycle Complete</span>
+                <span>Autonomous Procurement Lifecycle Complete</span>
               </span>
               <span className="px-1.5 py-0.5 rounded bg-senpay-cyan/20 text-senpay-cyan text-[9px] font-bold">
-                SETTLED ON HSK
+                SETTLED ON HSK TESTNET
               </span>
             </div>
-            <div className="flex items-center justify-between text-[10px] text-slate-300">
-              <span>Receipt: <strong className="text-white">RCPT-HSK-133-VIP</strong></span>
-              <span className="text-emerald-400 font-bold">12.50 HSK Transferred</span>
+            <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-300">
+              <div className="p-1.5 rounded bg-[#080D14] border border-slate-800">
+                <span className="text-slate-400 block">Settlement Receipt:</span>
+                <span className="font-bold text-white">{data.settlement.receiptId}</span>
+              </div>
+              <div className="p-1.5 rounded bg-[#080D14] border border-slate-800">
+                <span className="text-slate-400 block">Settled Amount:</span>
+                <span className="font-bold text-emerald-400">{data.procurement.authorizedAmountHsk} {data.procurement.asset}</span>
+              </div>
+            </div>
+            <div className="text-[9px] text-slate-400 flex items-center justify-between">
+              <span className="truncate">Adapter: {data.settlement.adapterType}</span>
+              <span className="text-slate-400">Tx: 0x8f2a...c4e1</span>
             </div>
             <div className="flex items-center gap-2 pt-1">
               <button
                 onClick={() => onLaunchConsole('command_center')}
-                className="flex-1 py-1 px-2.5 rounded bg-senpay-cyan hover:bg-cyan-300 text-slate-950 font-bold text-[10px] transition text-center"
+                className="flex-1 py-1.5 px-3 rounded-lg bg-senpay-cyan hover:bg-cyan-300 text-slate-950 font-bold text-[10px] transition text-center focus-visible:ring-1 focus-visible:ring-white"
               >
                 Inspect Live Console →
               </button>
@@ -529,21 +671,36 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
                   setCurrentStageIndex(0);
                   setIsPlaying(true);
                 }}
-                className="py-1 px-2.5 rounded bg-[#131D2A] hover:bg-[#1A283A] text-slate-300 font-medium text-[10px] transition"
+                className="py-1.5 px-3 rounded-lg bg-[#131D2A] hover:bg-[#1A283A] text-slate-300 font-medium text-[10px] transition focus-visible:ring-1 focus-visible:ring-white"
               >
-                Replay Cycle ↺
+                Replay Runbook ↺
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* ── 5. Bottom Progress Scrubber ── */}
-      <div className="h-1 bg-[#090D14] w-full overflow-hidden">
-        <div
-          className="h-full bg-senpay-cyan transition-all duration-300"
-          style={{ width: `${((currentStageIndex + 1) / STAGES.length) * 100}%` }}
-        />
+      {/* ── 5. Interactive Bottom Scrubber Track ── */}
+      <div 
+        className="h-1.5 bg-[#090D14] w-full flex cursor-pointer"
+        title="Interactive progress track: click any section to scrub"
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const ratio = Math.max(0, Math.min(1, clickX / rect.width));
+          const targetIndex = Math.min(STAGES.length - 1, Math.floor(ratio * STAGES.length));
+          setCurrentStageIndex(targetIndex);
+          setIsPlaying(false);
+        }}
+      >
+        {STAGES.map((s, idx) => (
+          <div
+            key={s.id}
+            className={`flex-1 h-full transition-all duration-300 ${
+              idx <= currentStageIndex ? 'bg-senpay-cyan' : 'bg-slate-800/60'
+            }`}
+          />
+        ))}
       </div>
     </div>
   );
