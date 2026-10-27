@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   AlertTriangle, MoreVertical, CheckCircle2, Circle, Radio,
-  Sparkles, Shield, ArrowRight, Zap, RefreshCw, Layers, Check
+  Sparkles, Shield, ArrowRight, Zap, RefreshCw, Layers, Check,
+  Cpu, Database, Activity, X, Sliders, BarChart3, ChevronRight
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+import { fetchModelInfo, fetchDatasetCatalog, runModelInference } from '../../data/api';
 
 export default function ActiveCommandCenter({
   onNavigate,
@@ -13,6 +15,53 @@ export default function ActiveCommandCenter({
   const [nodeDataEnabled, setNodeDataEnabled] = useState(true);
   const [manualZoom, setManualZoom] = useState(false);
   const [activeTab, setActiveTab] = useState('all');
+
+  // ML Intelligence & Provenance state
+  const [mlModalOpen, setMlModalOpen] = useState(false);
+  const [modelInfo, setModelInfo] = useState(null);
+  const [datasetInfo, setDatasetInfo] = useState(null);
+  const [testRsrp, setTestRsrp] = useState(-105.0);
+  const [testRsrq, setTestRsrq] = useState(-14.5);
+  const [testSnr, setTestSnr] = useState(2.0);
+  const [testDlBitrate, setTestDlBitrate] = useState(8500);
+  const [testCqi, setTestCqi] = useState(8);
+  const [predResult, setPredResult] = useState(null);
+  const [predLoading, setPredLoading] = useState(false);
+
+  useEffect(() => {
+    async function loadMlData() {
+      try {
+        const [mInfo, dInfo] = await Promise.all([
+          fetchModelInfo(),
+          fetchDatasetCatalog()
+        ]);
+        if (mInfo) setModelInfo(mInfo);
+        if (dInfo) setDatasetInfo(dInfo);
+      } catch (err) {
+        console.warn('[ML] Failed to load ML info:', err);
+      }
+    }
+    loadMlData();
+  }, []);
+
+  const handleRunInference = async (e) => {
+    if (e) e.preventDefault();
+    setPredLoading(true);
+    try {
+      const res = await runModelInference({
+        rsrp: Number(testRsrp),
+        rsrq: Number(testRsrq),
+        snr: Number(testSnr),
+        cqi: Number(testCqi),
+        dl_bitrate: Number(testDlBitrate),
+      });
+      setPredResult(res);
+    } catch (err) {
+      console.warn('[ML] Inference failed:', err);
+    } finally {
+      setPredLoading(false);
+    }
+  };
 
   // CRS Sparkline data
   const crsTrendData = [
@@ -59,6 +108,14 @@ export default function ActiveCommandCenter({
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            onClick={() => setMlModalOpen(true)}
+            className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold transition-all shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+            title="Inspect trained ML model metrics and run live inference"
+          >
+            <Cpu size={13} className="text-emerald-400" />
+            <span>ML Model: 98.7% Acc (UCC 5G)</span>
+          </button>
           <button
             onClick={() => onNavigate('incident_monitor')}
             className="px-2.5 py-1 rounded-lg bg-[#27231A] hover:bg-[#342D1E] text-senpay-amber border border-senpay-amber/30 text-xs font-mono font-bold transition-all"
@@ -374,12 +431,19 @@ export default function ActiveCommandCenter({
               </div>
             </div>
 
-            {/* Bottom Alert Count */}
-            <div className="flex items-center gap-2 pt-1">
+            {/* Bottom Alert Count & ML Source Link */}
+            <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#271418] border border-senpay-red/40 text-xs font-mono text-senpay-red font-bold">
                 <AlertTriangle size={13} />
                 <span>Active Alerts: 2</span>
               </div>
+              <button
+                onClick={() => setMlModalOpen(true)}
+                className="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 underline underline-offset-2 flex items-center gap-1"
+              >
+                <span>ML Model Specs</span>
+                <ChevronRight size={11} />
+              </button>
             </div>
           </div>
         </div>
@@ -617,6 +681,251 @@ export default function ActiveCommandCenter({
           </div>
         </div>
       </div>
+
+      {/* ── ML Intelligence & Dataset Provenance Modal ── */}
+      {mlModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden my-8 text-slate-100">
+            {/* Header */}
+            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-950/60">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                  <Cpu className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-bold text-white text-base flex items-center gap-2">
+                    SENPAY ML Architecture &amp; Data Provenance
+                    <span className="text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">
+                      ACTIVE MODEL
+                    </span>
+                  </h3>
+                  <p className="text-xs text-slate-400 font-mono">
+                    Model: SENPAY-5G-CRS-v1.0-RF-GB &bull; 96,028 Real Commercial 5G Traces
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setMlModalOpen(false)}
+                className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Content Body */}
+            <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+              {/* Top Metrics Cards */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800">
+                  <span className="text-[10px] font-mono text-slate-400 block uppercase">3-Class Accuracy</span>
+                  <span className="text-2xl font-black text-emerald-400 font-mono">98.7%</span>
+                  <span className="text-[10px] text-slate-500 block">F1 Macro: 97.6%</span>
+                </div>
+                <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800">
+                  <span className="text-[10px] font-mono text-slate-400 block uppercase">Continuous CRS MAE</span>
+                  <span className="text-2xl font-black text-cyan-400 font-mono">0.27</span>
+                  <span className="text-[10px] text-slate-500 block">R² Score: 0.999</span>
+                </div>
+                <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800">
+                  <span className="text-[10px] font-mono text-slate-400 block uppercase">Dataset Size</span>
+                  <span className="text-2xl font-black text-white font-mono">96,028</span>
+                  <span className="text-[10px] text-slate-500 block">Accepted Clean Rows</span>
+                </div>
+                <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800">
+                  <span className="text-[10px] font-mono text-slate-400 block uppercase">Top Risk Factor</span>
+                  <span className="text-xl font-black text-amber-400 font-mono">RSRQ</span>
+                  <span className="text-[10px] text-slate-500 block">35.7% Importance</span>
+                </div>
+              </div>
+
+              {/* Grid: Provenance & Live Simulator */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Column 1: Provenance & Architecture */}
+                <div className="space-y-4">
+                  <div className="p-4 bg-slate-950/50 rounded-xl border border-slate-800 space-y-2">
+                    <h4 className="text-xs font-bold font-mono text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <Database className="w-3.5 h-3.5 text-cyan-400" />
+                      Public Dataset Provenance
+                    </h4>
+                    <p className="text-xs text-slate-400 leading-relaxed">
+                      Trained on client-side cellular KPIs collected from a major commercial 5G production network via G-NetTrack Pro.
+                    </p>
+                    <div className="space-y-1 text-xs font-mono pt-1 text-slate-300">
+                      <div><span className="text-slate-500">Source:</span> University College Cork (UCC) MISL</div>
+                      <div><span className="text-slate-500">License:</span> GNU GPL-3.0 (Commercial Trace Benchmark)</div>
+                      <div><span className="text-slate-500">Normal / Congested / Critical:</span> 29K / 61.6K / 5.4K</div>
+                    </div>
+                  </div>
+
+                  <div className="p-4 bg-slate-950/50 rounded-xl border border-slate-800 space-y-2">
+                    <h4 className="text-xs font-bold font-mono text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+                      <BarChart3 className="w-3.5 h-3.5 text-amber-400" />
+                      Feature Importance Breakdown
+                    </h4>
+                    <div className="space-y-2 pt-1">
+                      <div>
+                        <div className="flex justify-between text-[11px] font-mono mb-0.5">
+                          <span>RSRQ (Signal Quality)</span>
+                          <span className="text-amber-400">35.7%</span>
+                        </div>
+                        <div className="w-full bg-slate-800 rounded-full h-1.5">
+                          <div className="bg-amber-400 h-1.5 rounded-full" style={{ width: '35.7%' }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-[11px] font-mono mb-0.5">
+                          <span>SNR (Signal-to-Noise Ratio)</span>
+                          <span className="text-cyan-400">32.6%</span>
+                        </div>
+                        <div className="w-full bg-slate-800 rounded-full h-1.5">
+                          <div className="bg-cyan-400 h-1.5 rounded-full" style={{ width: '32.6%' }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-[11px] font-mono mb-0.5">
+                          <span>DL Bitrate (Throughput)</span>
+                          <span className="text-emerald-400">9.4%</span>
+                        </div>
+                        <div className="w-full bg-slate-800 rounded-full h-1.5">
+                          <div className="bg-emerald-400 h-1.5 rounded-full" style={{ width: '9.4%' }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-[11px] font-mono mb-0.5">
+                          <span>RSRP (Signal Power)</span>
+                          <span className="text-slate-400">8.1%</span>
+                        </div>
+                        <div className="w-full bg-slate-800 rounded-full h-1.5">
+                          <div className="bg-slate-500 h-1.5 rounded-full" style={{ width: '8.1%' }} />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Column 2: Interactive Live Inference Simulator */}
+                <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-bold font-mono text-white uppercase tracking-wider flex items-center gap-1.5">
+                      <Sliders className="w-3.5 h-3.5 text-emerald-400" />
+                      Live Telemetry Inference Tester
+                    </h4>
+                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
+                      API: POST /api/ml/predict
+                    </span>
+                  </div>
+
+                  <form onSubmit={handleRunInference} className="space-y-3">
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <label className="block text-slate-400 font-mono text-[11px] mb-1">RSRP (dBm)</label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          value={testRsrp}
+                          onChange={(e) => setTestRsrp(e.target.value)}
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs font-mono text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 font-mono text-[11px] mb-1">RSRQ (dB)</label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          value={testRsrq}
+                          onChange={(e) => setTestRsrq(e.target.value)}
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs font-mono text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 font-mono text-[11px] mb-1">SNR (dB)</label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          value={testSnr}
+                          onChange={(e) => setTestSnr(e.target.value)}
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs font-mono text-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-400 font-mono text-[11px] mb-1">DL Bitrate (kbps)</label>
+                        <input
+                          type="number"
+                          step="500"
+                          value={testDlBitrate}
+                          onChange={(e) => setTestDlBitrate(e.target.value)}
+                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs font-mono text-white"
+                        />
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={predLoading}
+                      className="w-full py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold font-mono text-xs rounded-lg transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    >
+                      {predLoading ? (
+                        <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <Zap className="w-3.5 h-3.5" />
+                          <span>Run ML Model Inference</span>
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  {/* Prediction Output */}
+                  {predResult && (
+                    <div className="p-3 bg-slate-900/90 rounded-lg border border-slate-700 space-y-2 text-xs font-mono animate-fadeIn">
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Predicted CRS:</span>
+                        <span className={`text-base font-bold ${
+                          predResult.predicted_crs >= 75 ? 'text-rose-400' :
+                          predResult.predicted_crs >= 50 ? 'text-amber-400' : 'text-emerald-400'
+                        }`}>
+                          {predResult.predicted_crs} / 100
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-slate-400">Severity Class:</span>
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-white">
+                          {predResult.congestion_severity}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px]">
+                        <span className="text-slate-400">Confidence:</span>
+                        <span className="text-cyan-400">{(predResult.confidence_score * 100).toFixed(1)}%</span>
+                      </div>
+                      {predResult.contributing_risk_factors?.length > 0 && (
+                        <div className="pt-1.5 border-t border-slate-800">
+                          <span className="text-[10px] text-slate-400 block mb-1">Risk Factors Detected:</span>
+                          <ul className="list-disc list-inside text-[11px] text-amber-300/90 space-y-0.5">
+                            {predResult.contributing_risk_factors.map((f, i) => (
+                              <li key={i}>{f}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between text-xs font-mono text-slate-400">
+              <span>Reproducible pipeline: <code className="text-slate-300">python3 -m app.ml.train</code></span>
+              <button
+                onClick={() => setMlModalOpen(false)}
+                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition"
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

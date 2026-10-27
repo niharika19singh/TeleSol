@@ -1,0 +1,67 @@
+{
+  "model_version": "SENPAY-5G-CRS-v1.0-RF-GB",
+  "model_type": "RandomForestClassifier + GradientBoostingRegressor",
+  "training_time_seconds": 22.36,
+  "dataset_rows": 96028,
+  "train_rows": 76822,
+  "test_rows": 19206,
+  "feature_columns": [
+    "RSRP",
+    "RSRQ",
+    "SNR",
+    "CQI",
+    "RSSI",
+    "DL_bitrate",
+    "UL_bitrate",
+    "Speed",
+    "hour"
+  ],
+  "classification_metrics": {
+    "accuracy": 0.9874518379673018,
+    "precision_macro": 0.9879765427874103,
+    "recall_macro": 0.9655266650359708,
+    "f1_macro": 0.9763372966400928,
+    "f1_weighted": 0.9873736957370364,
+    "classes": [
+      "NORMAL (0)",
+      "CONGESTED (1)",
+      "CRITICAL (2)"
+    ],
+    "confusion_matrix": [
+      [
+        5632,
+        102,
+        0
+      ],
+      [
+        39,
+        12362,
+        14
+      ],
+      [
+        0,
+        86,
+        971
+      ]
+    ]
+  },
+  "regression_metrics": {
+    "target": "crs_score (0.0 - 100.0)",
+    "mean_absolute_error": 0.267376528997925,
+    "root_mean_squared_error": 0.3991552005626609,
+    "r2_score": 0.9992755213209349
+  },
+  "feature_importances": {
+    "RSRQ": 0.35709017066447174,
+    "SNR": 0.3255400811815969,
+    "DL_bitrate": 0.09411583678582351,
+    "CQI": 0.07645155329616143,
+    "UL_bitrate": 0.04978048653764215,
+    "RSRP": 0.04443423140356271,
+    "Speed": 0.02650300628679414,
+    "RSSI": 0.013465547231660166,
+    "hour": 0.012619086612287247
+  },
+  "trained_at": "2026-10-27T14:22:00.299407+00:00",
+  "artifact_path": "/Users/user/Documents/TeleSol-mac-release/backend/data/models/senpay_crs_model.joblib"
+}

@@ -11,7 +11,7 @@ try:
 except Exception:
     pass
 
-from app.routers import sensors, dashboard, paypilot
+from app.routers import sensors, dashboard, paypilot, auth, ml
 from app.paypilot.db import init_db, seed_initial_data
 
 logging.basicConfig(level=logging.INFO)
@@ -43,6 +43,8 @@ app.add_middleware(
 app.include_router(sensors.router)
 app.include_router(dashboard.router)
 app.include_router(paypilot.router)
+app.include_router(auth.router)
+app.include_router(ml.router)
 
 
 @app.on_event("startup")

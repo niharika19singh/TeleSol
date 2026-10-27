@@ -1,0 +1,42 @@
+{
+  "dataset_name": "UCC 5G Production Trace Dataset",
+  "official_source": "University College Cork (UCC), Mobile & Internet Systems Laboratory (MISL)",
+  "source_url": "https://github.com/uccmisl/5Gdataset",
+  "license": "GNU General Public License v3.0 (GPL-3.0)",
+  "provenance": "Client-side cellular KPIs collected from a major commercial 5G production network via G-NetTrack Pro",
+  "raw_rows_processed": 99046,
+  "accepted_rows": 96028,
+  "rejected_rows": 0,
+  "duplicates_removed": 3018,
+  "feature_columns": [
+    "RSRP",
+    "RSRQ",
+    "SNR",
+    "CQI",
+    "RSSI",
+    "DL_bitrate",
+    "UL_bitrate",
+    "Speed",
+    "hour",
+    "mobility_scenario",
+    "traffic_service"
+  ],
+  "target_columns": [
+    "congestion_class",
+    "crs_score"
+  ],
+  "class_distribution": {
+    "NORMAL (0)": 29025,
+    "CONGESTED (1)": 61644,
+    "CRITICAL (2)": 5359
+  },
+  "crs_stats": {
+    "mean": 45.88089619694256,
+    "median": 46.0,
+    "std": 14.904641160283395,
+    "min": 2.1,
+    "max": 100.0
+  },
+  "processed_at": "2026-10-27T14:21:37.867443+00:00",
+  "storage_path": "/Users/user/Documents/TeleSol-mac-release/backend/data/datasets/ucc_5g_processed.csv"
+}

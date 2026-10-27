@@ -82,6 +82,22 @@ def init_db():
         conn = get_db_connection()
         cursor = conn.cursor()
 
+        # 0. User Accounts Table (Authentication & Access Control)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            username TEXT UNIQUE NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            salt TEXT NOT NULL,
+            full_name TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'OPERATOR',
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL,
+            last_login_at TEXT
+        );
+        """)
+
         # 1. Agents Table
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS agents (
@@ -481,6 +497,8 @@ def init_db():
         # Indexes
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_mandate_id ON mandates (mandate_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_status ON payment_requests (status);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_agreements_task ON service_agreements (task_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_delegations_agent ON agent_delegations (agent_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_bundles_mandate ON evidence_bundles (mandate_id);")
@@ -492,6 +510,11 @@ def init_db():
 
         conn.commit()
         conn.close()
+        try:
+            from app.services.auth_service import AuthService
+            AuthService.seed_default_accounts()
+        except Exception as e:
+            logger.warning("[DB] Could not seed default auth account: %s", str(e))
         logger.info("[DB] TeleSol PayPilot 2.0 schema initialized successfully at %s", DB_PATH)
 
 
@@ -1031,4 +1054,9 @@ def seed_initial_data(force: bool = False):
 
         conn.commit()
         conn.close()
+        try:
+            from app.services.auth_service import AuthService
+            AuthService.seed_default_accounts()
+        except Exception as e:
+            logger.warning("[DB] Could not seed default auth account: %s", str(e))
         logger.info("[DB] TeleSol PayPilot 2.0 seeded with initial agents, providers, policies, delegations, agreements, and demo bundle.")

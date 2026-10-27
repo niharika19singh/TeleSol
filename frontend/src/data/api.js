@@ -218,3 +218,82 @@ export function getGPSLocation() {
     );
   });
 }
+
+/**
+ * Generic POST request to backend API
+ */
+async function apiPost(endpoint, body = {}, token = null) {
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}${endpoint}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.detail || `HTTP ${res.status}`);
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  } catch (err) {
+    console.warn(`[API POST] ${endpoint} failed:`, err.message);
+    throw err;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// USER AUTHENTICATION API
+// ═══════════════════════════════════════════════════════════════════
+
+export async function loginUser(credentials) {
+  return await apiPost('/api/auth/login', credentials);
+}
+
+export async function registerUser(userData) {
+  return await apiPost('/api/auth/register', userData);
+}
+
+export async function fetchCurrentUser(token) {
+  try {
+    const res = await fetch(`${API_BASE}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    console.warn('[API] /api/auth/me failed:', err.message);
+    return null;
+  }
+}
+
+export async function logoutUser(token) {
+  try {
+    return await apiPost('/api/auth/logout', {}, token);
+  } catch (e) {
+    return { status: 'logged_out' };
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// MACHINE LEARNING & INTELLIGENCE API
+// ═══════════════════════════════════════════════════════════════════
+
+export async function fetchModelInfo() {
+  return await apiFetch('/api/ml/model-info');
+}
+
+export async function fetchDatasetCatalog() {
+  return await apiFetch('/api/ml/datasets');
+}
+
+export async function runModelInference(telemetry) {
+  return await apiPost('/api/ml/predict', telemetry);
+}
+
+export async function triggerModelTraining() {
+  return await apiPost('/api/ml/train', {});
+}

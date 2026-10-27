@@ -5,6 +5,10 @@
 
 import { useState, useEffect } from 'react';
 
+// ── Authentication System ──
+import { AuthProvider, useAuth } from './context/AuthContext';
+import LoginPage from './components/auth/LoginPage';
+
 // ── SENPAY Reference UI Components ──
 import ActiveCommandCenter from './components/command/ActiveCommandCenter';
 import PaymentOperationsPage from './components/paypilot/PaymentOperationsPage';
@@ -41,7 +45,9 @@ import { useRealTimeData } from './hooks/useRealTimeData';
 import { useWeb3Wallet } from './hooks/useWeb3Wallet';
 import { controlSentinel, triggerTinyFishInvestigation } from './data/api';
 
-export default function App() {
+function AppContent() {
+  const { user, isAuthenticated, isLoading } = useAuth();
+
   const getInitialPage = () => {
     if (typeof window !== 'undefined') {
       const hash = window.location.hash.replace('#', '').trim();
@@ -151,7 +157,49 @@ export default function App() {
   if (currentPage === 'landing') {
     return (
       <SenPayLandingPage
-        onLaunchConsole={(page) => setCurrentPage(page || 'command_center')}
+        onLaunchConsole={(page) => {
+          if (!isAuthenticated) {
+            setCurrentPage('login');
+          } else {
+            setCurrentPage(page || 'command_center');
+          }
+        }}
+      />
+    );
+  }
+
+  // ── Loading Session Screen ──
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#0B1118] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+          <span className="font-mono text-xs text-slate-400">Verifying Operator Session...</span>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Render Login Screen Standalone ──
+  if (currentPage === 'login') {
+    if (isAuthenticated) {
+      setCurrentPage('command_center');
+      return null;
+    }
+    return (
+      <LoginPage
+        onLoginSuccess={() => setCurrentPage('command_center')}
+        onNavigateLanding={() => setCurrentPage('landing')}
+      />
+    );
+  }
+
+  // ── Protected Route Guard: If unauthenticated, redirect to Login ──
+  if (!isAuthenticated) {
+    return (
+      <LoginPage
+        onLoginSuccess={() => setCurrentPage(currentPage === 'login' ? 'command_center' : currentPage)}
+        onNavigateLanding={() => setCurrentPage('landing')}
       />
     );
   }
@@ -369,5 +417,13 @@ export default function App() {
         />
       )}
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <AppContent />
+    </AuthProvider>
   );
 }

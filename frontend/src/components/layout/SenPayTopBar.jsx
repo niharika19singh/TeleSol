@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import {
   Search, SlidersHorizontal, Bell, AlertTriangle, ChevronDown,
-  Moon, Sun, ExternalLink, ShieldCheck, Wallet, Terminal
+  Moon, Sun, ExternalLink, ShieldCheck, Wallet, Terminal, LogOut, User
 } from 'lucide-react';
 import SenPayLogo from '../shared/SenPayLogo';
+import { useAuth } from '../../context/AuthContext';
 
 export default function SenPayTopBar({
   currentPage,
@@ -13,9 +14,11 @@ export default function SenPayTopBar({
   wallet,
   alertCount = 2,
 }) {
+  const { user, isAuthenticated, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const [themeMenuOpen, setThemeMenuOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-30 h-14 bg-[#101821]/95 backdrop-blur-md border-b border-senpay-border flex items-center justify-between px-4 lg:px-6">
@@ -136,17 +139,63 @@ export default function SenPayTopBar({
           </button>
         )}
 
-        {/* User Avatar */}
-        <div className="w-7 h-7 rounded-full ring-1 ring-senpay-cyan/40 overflow-hidden flex items-center justify-center bg-gradient-to-tr from-senpay-panel to-senpay-cyan/20">
-          <img
-            src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80"
-            alt="Operator"
-            className="w-full h-full object-cover"
-            onError={(e) => {
-              e.currentTarget.style.display = 'none';
-            }}
-          />
-        </div>
+        {/* User Account / Profile Menu */}
+        {isAuthenticated ? (
+          <div className="relative">
+            <button
+              onClick={() => setUserMenuOpen(!userMenuOpen)}
+              className="flex items-center gap-2 px-2 py-1 rounded-lg bg-[#151F2A] hover:bg-[#1a2634] border border-senpay-border text-xs text-senpay-text-primary transition"
+              title="Operator Profile"
+            >
+              <div className="w-6 h-6 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 flex items-center justify-center font-bold text-[11px]">
+                {user?.full_name ? user.full_name[0].toUpperCase() : 'O'}
+              </div>
+              <div className="hidden xl:flex flex-col text-left">
+                <span className="text-[11px] font-medium leading-none text-white">{user?.full_name || user?.username || 'Operator'}</span>
+                <span className="text-[9px] font-mono leading-tight text-emerald-400 capitalize">{user?.role || 'Operator'}</span>
+              </div>
+              <ChevronDown size={11} className="text-senpay-text-muted" />
+            </button>
+
+            {userMenuOpen && (
+              <div className="absolute right-0 mt-2 w-48 rounded-xl bg-senpay-card border border-senpay-border shadow-2xl py-2 z-50 text-xs">
+                <div className="px-3 py-1.5 border-b border-senpay-border/60 mb-1">
+                  <div className="text-[11px] text-senpay-text-muted">Signed in as</div>
+                  <div className="font-mono text-xs text-white truncate">{user?.email || 'operator@telesol.io'}</div>
+                </div>
+                <button
+                  onClick={() => {
+                    setUserMenuOpen(false);
+                    onNavigate('audit');
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-senpay-text-secondary hover:text-white hover:bg-senpay-panel/50 flex items-center gap-2"
+                >
+                  <Terminal size={12} />
+                  <span>Audit Trail</span>
+                </button>
+                <button
+                  onClick={async () => {
+                    setUserMenuOpen(false);
+                    await logout();
+                    onNavigate('landing');
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-rose-400 hover:bg-rose-950/30 flex items-center gap-2 mt-1 border-t border-senpay-border/40 pt-1.5"
+                >
+                  <LogOut size={12} />
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            )}
+          </div>
+        ) : (
+          <button
+            onClick={() => onNavigate('login')}
+            className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-slate-950 text-xs font-bold font-mono transition"
+          >
+            <User size={12} />
+            <span>Sign In</span>
+          </button>
+        )}
 
         {/* Theme Selector */}
         <div className="relative">
