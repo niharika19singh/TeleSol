@@ -1,23 +1,64 @@
 // ═══════════════════════════════════════════════════════
-// TeleSol Sentinel — App Shell
-// Hardware-free predictive telecom & crowd congestion intelligence
+// TeleSol Unified App Shell — Version 2.0
+// TeleSol Sentinel (IoT Telecom Intelligence) +
+// TeleSol PayPilot 2.0 (Trust-Aware Autonomous Payments on HSK Chain)
 // ═══════════════════════════════════════════════════════
 
 import { useState } from 'react';
 import Sidebar from './components/layout/Sidebar';
 import TopBar from './components/layout/TopBar';
+
+// ── Sentinel Pages (Preserved) ──
 import DashboardPage from './components/dashboard/DashboardPage';
 import MapViewPage from './components/map/MapViewPage';
 import AnalyticsPage from './components/analytics/AnalyticsPage';
 import AlertsPage from './components/alerts/AlertsPage';
 import SimulationPage from './components/simulation/SimulationPage';
 import SensorDashboardPage from './components/sensors/SensorDashboardPage';
+
+// ── PayPilot 2.0 Pages ──
+import PayPilotDashboard from './components/paypilot/PayPilotDashboard';
+import DiscoveryPage from './components/paypilot/DiscoveryPage';
+import AgentsPage from './components/paypilot/AgentsPage';
+import CreatePaymentPage from './components/paypilot/CreatePaymentPage';
+import MandatePolicyPage from './components/paypilot/MandatePolicyPage';
+import TransactionsPage from './components/paypilot/TransactionsPage';
+import AiAgentWorkflowPage from './components/paypilot/AiAgentWorkflowPage';
+import AuditTrailPage from './components/paypilot/AuditTrailPage';
+import WalletExecutionModal from './components/paypilot/WalletExecutionModal';
+
+// ── PayPilot 2.0 Innovations ──
+import ServiceAgreementsPage from './components/paypilot/ServiceAgreementsPage';
+import SafetySimulatorView from './components/paypilot/SafetySimulatorView';
+import DelegationsPage from './components/paypilot/DelegationsPage';
+import EvidenceBundlesPage from './components/paypilot/EvidenceBundlesPage';
+import DisputesPage from './components/paypilot/DisputesPage';
+import SentinelBridgeBanner from './components/paypilot/SentinelBridgeBanner';
+
+// Hooks
 import { useSimulation } from './hooks/useSimulation';
 import { useRealTimeData } from './hooks/useRealTimeData';
+import { useWeb3Wallet } from './hooks/useWeb3Wallet';
 import { controlSentinel, triggerTinyFishInvestigation } from './data/api';
 
 const PAGE_TITLES = {
-  dashboard: 'Command Center',
+  // PayPilot Pages
+  paypilot_dashboard: 'PayPilot Overview',
+  discovery: 'Service & Provider Discovery',
+  agreements: 'Service Agreements (RFC 8785)',
+  mandates: 'Mandates & Policies',
+  simulator: 'Pre-Execution Safety Simulator',
+  delegations: 'Agent Delegations & Budgets',
+  evidence_bundles: 'Evidence Bundles & 8-Point Verification',
+  disputes: 'Payment Incidents & Safe Recovery',
+  transactions: 'Transaction Ledger & Receipts',
+  agents: 'Agent Identity & Roles',
+  create_payment: 'New Payment Mandate',
+  ai_workflow: 'AI Conversational Agent',
+  audit: 'Cryptographic Audit Trail',
+
+  // Sentinel Pages
+  sentinel_dashboard: 'Sentinel Command Center',
   sensors: 'Hardware & Sensor Feed',
   map: 'Venue Zone Map',
   analytics: 'Crowd & Telecom Analytics',
@@ -26,11 +67,16 @@ const PAGE_TITLES = {
 };
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [activeProduct, setActiveProduct] = useState('paypilot'); // 'paypilot' | 'sentinel'
+  const [currentPage, setCurrentPage] = useState('paypilot_dashboard');
+  const [prefilledProvider, setPrefilledProvider] = useState(null);
+  const [activeMandateForSigning, setActiveMandateForSigning] = useState(null);
+
   const realtime = useRealTimeData();
   const sim = useSimulation();
+  const wallet = useWeb3Wallet();
 
-  // Prefer live backend streaming sentinel zones and alerts, with client simulation fallback
+  // Sentinel Active Zones & Alerts
   const activeZones = realtime.zones && realtime.zones.length > 0 ? realtime.zones : sim.zones;
   const activeAlerts = realtime.alerts && realtime.alerts.length > 0 ? realtime.alerts : sim.alerts;
 
@@ -48,11 +94,9 @@ export default function App() {
   };
 
   const handleControlSentinel = async (params) => {
-    // If backend is connected, control backend sentinel
     if (realtime.isConnected) {
       await controlSentinel(params);
     }
-    // Also mirror to client simulation if scenario changed
     if (params.scenario) {
       if (params.scenario === 'normal') {
         sim.updateParam('crowdDensity', 2.2);
@@ -81,9 +125,125 @@ export default function App() {
     return await triggerTinyFishInvestigation(zoneId, reason);
   };
 
+  const handleSwitchProduct = (product) => {
+    setActiveProduct(product);
+    if (product === 'paypilot') {
+      setCurrentPage('paypilot_dashboard');
+    } else {
+      setCurrentPage('sentinel_dashboard');
+    }
+  };
+
+  const handleSelectProviderForPayment = (provider) => {
+    setPrefilledProvider(provider);
+    setCurrentPage('create_payment');
+  };
+
+  const handleMandateCreated = (result) => {
+    if (result.requires_wallet_authorization) {
+      setActiveMandateForSigning({
+        mandate_id: result.mandate_id,
+        amount: result.policy_decision?.rules?.find((r) => r.rule === 'max_amount_per_tx')?.requested || 12.5,
+        asset: 'HSK',
+        network_id: 133,
+        recipient_address: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
+        purpose: 'Autonomous Telecom Slice Payment',
+      });
+    }
+  };
+
   function renderPage() {
+    // ── PayPilot Navigation ──
+    if (activeProduct === 'paypilot') {
+      switch (currentPage) {
+        case 'paypilot_dashboard':
+          return (
+            <PayPilotDashboard
+              onNavigate={setCurrentPage}
+              onSelectMandateToExecute={setActiveMandateForSigning}
+              wallet={wallet}
+            />
+          );
+        case 'discovery':
+          return (
+            <DiscoveryPage
+              onSelectProviderForPayment={handleSelectProviderForPayment}
+            />
+          );
+        case 'agreements':
+          return (
+            <ServiceAgreementsPage
+              onNavigate={setCurrentPage}
+              onSelectAgreementForMandate={(agr) => {
+                setPrefilledProvider({
+                  id: agr.provider_id,
+                  name: agr.provider_name || agr.provider_id,
+                  category: agr.service_category || agr.service_type || 'TELECOM_BANDWIDTH',
+                  unit_price: agr.agreed_price || agr.price_amount,
+                  asset: agr.asset || agr.currency || 'HSK',
+                  payment_address: agr.provider_address || '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
+                  agreement_id: agr.agreement_id || agr.id,
+                  agreement_hash: agr.agreement_hash,
+                  delegation_id: agr.delegation_id
+                });
+                setCurrentPage('create_payment');
+              }}
+            />
+          );
+        case 'mandates':
+          return (
+            <MandatePolicyPage
+              onSelectMandateToExecute={setActiveMandateForSigning}
+              onNavigate={setCurrentPage}
+            />
+          );
+        case 'simulator':
+          return (
+            <SafetySimulatorView
+              onNavigate={setCurrentPage}
+              onAuthorizeMandate={setActiveMandateForSigning}
+            />
+          );
+        case 'delegations':
+          return <DelegationsPage />;
+        case 'evidence_bundles':
+          return <EvidenceBundlesPage />;
+        case 'disputes':
+          return <DisputesPage />;
+        case 'transactions':
+          return <TransactionsPage />;
+        case 'agents':
+          return <AgentsPage />;
+        case 'create_payment':
+          return (
+            <CreatePaymentPage
+              prefilledProvider={prefilledProvider}
+              onMandateCreated={handleMandateCreated}
+              onNavigate={setCurrentPage}
+            />
+          );
+        case 'ai_workflow':
+          return (
+            <AiAgentWorkflowPage
+              onSelectMandateToExecute={setActiveMandateForSigning}
+            />
+          );
+        case 'audit':
+          return <AuditTrailPage />;
+        default:
+          return (
+            <PayPilotDashboard
+              onNavigate={setCurrentPage}
+              onSelectMandateToExecute={setActiveMandateForSigning}
+              wallet={wallet}
+            />
+          );
+      }
+    }
+
+    // ── Sentinel Navigation (Preserved) ──
     switch (currentPage) {
-      case 'dashboard':
+      case 'sentinel_dashboard':
         return (
           <DashboardPage
             zones={activeZones}
@@ -140,38 +300,57 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-crowd-bg text-crowd-text-primary">
-      {/* Ambient glow */}
+      {/* Ambient background glow */}
       <div className="ambient-bg" />
 
-      {/* Sidebar */}
+      {/* Sidebar Navigation */}
       <Sidebar
         currentPage={currentPage}
-        onNavigate={(page) => {
-          setCurrentPage(page);
-          if (page === 'simulation' && sim.mode !== 'simulation') sim.toggleMode();
-          if (page !== 'simulation' && sim.mode === 'simulation') sim.toggleMode();
-        }}
+        onNavigate={setCurrentPage}
+        activeProduct={activeProduct}
+        onSwitchProduct={handleSwitchProduct}
         isConnected={realtime.isConnected}
         alertCount={criticalCount}
       />
 
-      {/* Main Content Area */}
-      <div className="ml-[68px] lg:ml-[220px] transition-all duration-300">
+      {/* Main Workspace Area */}
+      <div className="ml-[68px] lg:ml-[230px] transition-all duration-300">
         <TopBar
-          pageTitle={PAGE_TITLES[currentPage] || 'Dashboard'}
+          pageTitle={PAGE_TITLES[currentPage] || 'TeleSol PayPilot'}
+          activeProduct={activeProduct}
           mode={sim.mode}
           scenario={realtime.sentinel?.scenario || 'normal'}
           tinyfish={realtime.tinyfish}
+          wallet={wallet}
           onToggleMode={() => {
             sim.toggleMode();
             if (sim.mode === 'live') setCurrentPage('simulation');
           }}
         />
 
-        <main className="p-4 lg:p-5 relative z-10">
+        <main className="p-4 lg:p-6 relative z-10 space-y-5">
+          {/* Real-time Sentinel Congestion Alert Banner (1-Click PayPilot Mitigation) */}
+          <SentinelBridgeBanner
+            zones={activeZones}
+            onNavigate={setCurrentPage}
+            onSelectMandateForSigning={setActiveMandateForSigning}
+          />
+
           {renderPage()}
         </main>
       </div>
+
+      {/* Wallet Execution Modal */}
+      {activeMandateForSigning && (
+        <WalletExecutionModal
+          mandate={activeMandateForSigning}
+          wallet={wallet}
+          onClose={() => setActiveMandateForSigning(null)}
+          onSettled={() => {
+            // Can reload or navigate
+          }}
+        />
+      )}
     </div>
   );
 }

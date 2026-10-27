@@ -11,7 +11,8 @@ try:
 except Exception:
     pass
 
-from app.routers import sensors, dashboard
+from app.routers import sensors, dashboard, paypilot
+from app.paypilot.db import init_db, seed_initial_data
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("telesol")
@@ -41,11 +42,19 @@ app.add_middleware(
 
 app.include_router(sensors.router)
 app.include_router(dashboard.router)
+app.include_router(paypilot.router)
 
 
 @app.on_event("startup")
 async def startup_event():
-    """Launch CoAP server and Virtual Sentinel as background tasks."""
+    """Launch DB schema initialization, CoAP server and Virtual Sentinel."""
+    # ── TeleSol PayPilot Persistent DB & Seed ──
+    try:
+        init_db()
+        seed_initial_data(force=False)
+        logger.info("[STARTUP] TeleSol PayPilot SQLite DB initialized")
+    except Exception as e:
+        logger.error("[STARTUP] PayPilot DB initialization error: %s", str(e))
     # ── CoAP ──
     try:
         from app.services.coap_service import coap_service
@@ -66,9 +75,13 @@ async def startup_event():
 @app.get("/")
 async def root():
     from app.services.tinyfish_service import tinyfish_service
+    from app.paypilot.hsp_service import hsp_service
     return {
         "name": "TeleSol Sentinel API",
-        "version": "3.5.0",
+        "subsystem": "TeleSol PayPilot",
+        "version": "4.0.0",
+        "product": "TeleSol PayPilot — Agent Payments on HSK Chain",
+        "track": "Agent Payments & A2A Settlement (HSP)",
         "status": "running",
         "hardware_free_mode": True,
         "protocols": {
@@ -80,6 +93,11 @@ async def root():
             "configured": tinyfish_service.is_configured(),
             "masked_key": tinyfish_service.get_masked_key(),
         },
+        "paypilot": {
+            "hsp_gateway_mode": hsp_service.get_status()["mode"],
+            "supported_networks": [133, 177],
+            "hsk_chain": "HashKey Chain",
+        }
     }
 
 
