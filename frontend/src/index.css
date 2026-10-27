@@ -5,94 +5,153 @@
 @tailwind utilities;
 
 /* ═══════════════════════════════════════════
-   CROWDSHIELD — Global Design System
+   SENPAY (TeleSol Sentinel + PayPilot 2.0)
+   Reference Design System & Tokens
    ═══════════════════════════════════════════ */
+
+:root {
+  --senpay-bg: #0B1118;
+  --senpay-sidebar: #101821;
+  --senpay-card: #151F2A;
+  --senpay-panel: #1B2733;
+  --senpay-border: #1E2D3D;
+  --senpay-cyan: #00E5FF;
+  --senpay-amber: #FFB800;
+  --senpay-red: #FF3B5C;
+  --senpay-green: #00FF88;
+  --senpay-violet: #A855F7;
+}
 
 * {
   scrollbar-width: thin;
-  scrollbar-color: #1E2D4A #0C1220;
+  scrollbar-color: #1E2D3D #101821;
 }
 
 body {
-  background-color: #06090F;
+  background-color: #0B1118;
   color: #F1F5F9;
   font-family: 'Inter', system-ui, sans-serif;
   overflow-x: hidden;
 }
 
 /* ── Custom Scrollbar ── */
-::-webkit-scrollbar { width: 6px; height: 6px; }
-::-webkit-scrollbar-track { background: #0C1220; }
-::-webkit-scrollbar-thumb { background: #1E2D4A; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #2A3F6A; }
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #101821; }
+::-webkit-scrollbar-thumb { background: #1E2D3D; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #2A3F55; }
 
-/* ── Glassmorphism Utility ── */
+/* ── Card & Panel Primitives ── */
 @layer components {
+  .senpay-card {
+    background-color: #151F2A;
+    border: 1px solid #1E2D3D;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    position: relative;
+  }
+
+  .senpay-card-elevated {
+    background-color: #1B2733;
+    border: 1px solid #26384D;
+    border-radius: 10px;
+  }
+
+  .senpay-glow-cyan {
+    box-shadow: 0 0 15px rgba(0, 229, 255, 0.25);
+  }
+
+  .senpay-glow-amber {
+    box-shadow: 0 0 15px rgba(255, 184, 0, 0.25);
+  }
+
+  .senpay-glow-violet {
+    box-shadow: 0 0 15px rgba(168, 85, 247, 0.25);
+  }
+
+  .senpay-glow-green {
+    box-shadow: 0 0 15px rgba(0, 255, 136, 0.25);
+  }
+
+  /* Backwards compatibility */
   .glass {
-    background: rgba(12, 18, 32, 0.6);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    border: 1px solid rgba(30, 45, 74, 0.6);
+    background: rgba(21, 31, 42, 0.85);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid #1E2D3D;
   }
 
   .glass-card {
-    background: linear-gradient(135deg, rgba(12, 18, 32, 0.8) 0%, rgba(17, 24, 39, 0.6) 100%);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid rgba(30, 45, 74, 0.5);
+    background: #151F2A;
+    border: 1px solid #1E2D3D;
     border-radius: 12px;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .glass-card:hover {
-    border-color: rgba(42, 63, 106, 0.8);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.35);
   }
 }
 
-/* ── Neon Glow Utilities ── */
-.glow-cyan { box-shadow: 0 0 20px rgba(0, 212, 255, 0.25), inset 0 0 20px rgba(0, 212, 255, 0.05); }
-.glow-green { box-shadow: 0 0 20px rgba(0, 255, 136, 0.25), inset 0 0 20px rgba(0, 255, 136, 0.05); }
-.glow-red { box-shadow: 0 0 20px rgba(255, 59, 92, 0.25), inset 0 0 20px rgba(255, 59, 92, 0.05); }
-.glow-warning { box-shadow: 0 0 20px rgba(255, 184, 0, 0.25), inset 0 0 20px rgba(255, 184, 0, 0.05); }
-.glow-purple { box-shadow: 0 0 20px rgba(168, 85, 247, 0.25), inset 0 0 20px rgba(168, 85, 247, 0.05); }
-
-/* ── Pulse Ring (Danger Zones on Map) ── */
-@keyframes pulseRingMap {
-  0% { box-shadow: 0 0 0 0 rgba(255, 59, 92, 0.5); }
-  70% { box-shadow: 0 0 0 20px rgba(255, 59, 92, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(255, 59, 92, 0); }
-}
-.danger-pulse {
-  animation: pulseRingMap 1.5s infinite;
+/* ── Technical Grid Background Patterns ── */
+.senpay-grid-pattern {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(30, 45, 61, 0.3) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(30, 45, 61, 0.3) 1px, transparent 1px);
 }
 
-/* ── Skeleton Shimmer ── */
-.skeleton {
-  background: linear-gradient(90deg, #111827 25%, #1E2D4A 50%, #111827 75%);
-  background-size: 200% 100%;
-  animation: shimmer 2s infinite linear;
+.senpay-circuit-pattern {
+  background-size: 24px 24px;
+  background-image: 
+    radial-gradient(circle, rgba(0, 229, 255, 0.12) 1px, transparent 1px);
 }
 
-/* ── Scanner Line Effect ── */
-.scanner-line {
-  position: absolute;
-  left: 0;
-  right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(0, 212, 255, 0.6), transparent);
-  animation: scanner 3s linear infinite;
-  pointer-events: none;
+/* ── Hotspot Pulse Rings ── */
+@keyframes hotspotPulse {
+  0% { transform: scale(0.9); opacity: 0.9; }
+  50% { transform: scale(1.6); opacity: 0.4; }
+  100% { transform: scale(2.4); opacity: 0; }
 }
 
-/* ── Leaflet Dark Theme ── */
+.hotspot-ring-1 {
+  animation: hotspotPulse 2.4s ease-out infinite;
+}
+
+.hotspot-ring-2 {
+  animation: hotspotPulse 2.4s ease-out infinite 0.8s;
+}
+
+.hotspot-ring-3 {
+  animation: hotspotPulse 2.4s ease-out infinite 1.6s;
+}
+
+/* ── Flowing Stream Dash Animation ── */
+@keyframes flowDash {
+  to {
+    stroke-dashoffset: -40;
+  }
+}
+
+.animate-flow-dash {
+  stroke-dasharray: 6 6;
+  animation: flowDash 1.2s linear infinite;
+}
+
+/* ── Isometric 3D Container ── */
+.isometric-stage {
+  perspective: 1200px;
+  transform-style: preserve-3d;
+}
+
+.isometric-plane {
+  transform: rotateX(54deg) rotateZ(-32deg) rotateY(0deg);
+  transform-style: preserve-3d;
+  transition: transform 0.4s ease;
+}
+
+/* ── Leaflet Dark Overrides ── */
 .leaflet-container {
-  background: #06090F;
-  border-radius: 8px;
+  background: #0B1118 !important;
 }
 
 .leaflet-tile {
-  filter: brightness(0.75) contrast(1.1) saturate(0.4);
+  filter: brightness(0.65) contrast(1.2) saturate(0.2) invert(0.05);
 }
 
 .leaflet-control-zoom a {

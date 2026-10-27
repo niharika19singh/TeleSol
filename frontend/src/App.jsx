@@ -1,22 +1,25 @@
 // ═══════════════════════════════════════════════════════
-// TeleSol Unified App Shell — Version 2.0
-// TeleSol Sentinel (IoT Telecom Intelligence) +
-// TeleSol PayPilot 2.0 (Trust-Aware Autonomous Payments on HSK Chain)
+// SENPAY: TeleSol Sentinel + PayPilot 2.0
+// Unified Autonomous Telecom Procurement & Payment Console
 // ═══════════════════════════════════════════════════════
 
-import { useState } from 'react';
-import Sidebar from './components/layout/Sidebar';
-import TopBar from './components/layout/TopBar';
+import { useState, useEffect } from 'react';
 
-// ── Sentinel Pages (Preserved) ──
+// ── SENPAY Reference UI Components ──
+import ActiveCommandCenter from './components/command/ActiveCommandCenter';
+import PaymentOperationsPage from './components/paypilot/PaymentOperationsPage';
+import SenPayLandingPage from './components/landing/SenPayLandingPage';
+import SenPayTopBar from './components/layout/SenPayTopBar';
+import SenPaySidebar from './components/layout/SenPaySidebar';
+import SystemStatusBar from './components/layout/SystemStatusBar';
+
+// ── Sentinel & PayPilot Core Pages (Fully Preserved) ──
 import DashboardPage from './components/dashboard/DashboardPage';
 import MapViewPage from './components/map/MapViewPage';
 import AnalyticsPage from './components/analytics/AnalyticsPage';
 import AlertsPage from './components/alerts/AlertsPage';
 import SimulationPage from './components/simulation/SimulationPage';
 import SensorDashboardPage from './components/sensors/SensorDashboardPage';
-
-// ── PayPilot 2.0 Pages ──
 import PayPilotDashboard from './components/paypilot/PayPilotDashboard';
 import DiscoveryPage from './components/paypilot/DiscoveryPage';
 import AgentsPage from './components/paypilot/AgentsPage';
@@ -26,14 +29,11 @@ import TransactionsPage from './components/paypilot/TransactionsPage';
 import AiAgentWorkflowPage from './components/paypilot/AiAgentWorkflowPage';
 import AuditTrailPage from './components/paypilot/AuditTrailPage';
 import WalletExecutionModal from './components/paypilot/WalletExecutionModal';
-
-// ── PayPilot 2.0 Innovations ──
 import ServiceAgreementsPage from './components/paypilot/ServiceAgreementsPage';
 import SafetySimulatorView from './components/paypilot/SafetySimulatorView';
 import DelegationsPage from './components/paypilot/DelegationsPage';
 import EvidenceBundlesPage from './components/paypilot/EvidenceBundlesPage';
 import DisputesPage from './components/paypilot/DisputesPage';
-import SentinelBridgeBanner from './components/paypilot/SentinelBridgeBanner';
 
 // Hooks
 import { useSimulation } from './hooks/useSimulation';
@@ -41,34 +41,39 @@ import { useRealTimeData } from './hooks/useRealTimeData';
 import { useWeb3Wallet } from './hooks/useWeb3Wallet';
 import { controlSentinel, triggerTinyFishInvestigation } from './data/api';
 
-const PAGE_TITLES = {
-  // PayPilot Pages
-  paypilot_dashboard: 'PayPilot Overview',
-  discovery: 'Service & Provider Discovery',
-  agreements: 'Service Agreements (RFC 8785)',
-  mandates: 'Mandates & Policies',
-  simulator: 'Pre-Execution Safety Simulator',
-  delegations: 'Agent Delegations & Budgets',
-  evidence_bundles: 'Evidence Bundles & 8-Point Verification',
-  disputes: 'Payment Incidents & Safe Recovery',
-  transactions: 'Transaction Ledger & Receipts',
-  agents: 'Agent Identity & Roles',
-  create_payment: 'New Payment Mandate',
-  ai_workflow: 'AI Conversational Agent',
-  audit: 'Cryptographic Audit Trail',
-
-  // Sentinel Pages
-  sentinel_dashboard: 'Sentinel Command Center',
-  sensors: 'Hardware & Sensor Feed',
-  map: 'Venue Zone Map',
-  analytics: 'Crowd & Telecom Analytics',
-  alerts: 'Incident & Alert Management',
-  simulation: 'Simulation Lab',
-};
-
 export default function App() {
-  const [activeProduct, setActiveProduct] = useState('paypilot'); // 'paypilot' | 'sentinel'
-  const [currentPage, setCurrentPage] = useState('paypilot_dashboard');
+  const getInitialPage = () => {
+    if (typeof window !== 'undefined') {
+      const hash = window.location.hash.replace('#', '').trim();
+      if (hash) return hash;
+      const params = new URLSearchParams(window.location.search);
+      const pageParam = params.get('page');
+      if (pageParam) return pageParam;
+      const path = window.location.pathname.replace(/^\//, '').trim();
+      if (path && path !== 'index.html') return path;
+    }
+    return 'command_center';
+  };
+
+  const [currentPage, setCurrentPageRaw] = useState(getInitialPage);
+
+  const setCurrentPage = (page) => {
+    setCurrentPageRaw(page);
+    if (typeof window !== 'undefined' && window.location.hash !== `#${page}`) {
+      window.history.pushState(null, '', `#${page}`);
+    }
+  };
+
+  // Sync with browser back/forward and hash changes
+  useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '').trim();
+      if (hash) setCurrentPageRaw(hash);
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+  const [collapsed, setCollapsed] = useState(false);
   const [prefilledProvider, setPrefilledProvider] = useState(null);
   const [activeMandateForSigning, setActiveMandateForSigning] = useState(null);
 
@@ -76,7 +81,6 @@ export default function App() {
   const sim = useSimulation();
   const wallet = useWeb3Wallet();
 
-  // Sentinel Active Zones & Alerts
   const activeZones = realtime.zones && realtime.zones.length > 0 ? realtime.zones : sim.zones;
   const activeAlerts = realtime.alerts && realtime.alerts.length > 0 ? realtime.alerts : sim.alerts;
 
@@ -125,15 +129,6 @@ export default function App() {
     return await triggerTinyFishInvestigation(zoneId, reason);
   };
 
-  const handleSwitchProduct = (product) => {
-    setActiveProduct(product);
-    if (product === 'paypilot') {
-      setCurrentPage('paypilot_dashboard');
-    } else {
-      setCurrentPage('sentinel_dashboard');
-    }
-  };
-
   const handleSelectProviderForPayment = (provider) => {
     setPrefilledProvider(provider);
     setCurrentPage('create_payment');
@@ -152,119 +147,52 @@ export default function App() {
     }
   };
 
-  function renderPage() {
-    // ── PayPilot Navigation ──
-    if (activeProduct === 'paypilot') {
-      switch (currentPage) {
-        case 'paypilot_dashboard':
-          return (
-            <PayPilotDashboard
-              onNavigate={setCurrentPage}
-              onSelectMandateToExecute={setActiveMandateForSigning}
-              wallet={wallet}
-            />
-          );
-        case 'discovery':
-          return (
-            <DiscoveryPage
-              onSelectProviderForPayment={handleSelectProviderForPayment}
-            />
-          );
-        case 'agreements':
-          return (
-            <ServiceAgreementsPage
-              onNavigate={setCurrentPage}
-              onSelectAgreementForMandate={(agr) => {
-                setPrefilledProvider({
-                  id: agr.provider_id,
-                  name: agr.provider_name || agr.provider_id,
-                  category: agr.service_category || agr.service_type || 'TELECOM_BANDWIDTH',
-                  unit_price: agr.agreed_price || agr.price_amount,
-                  asset: agr.asset || agr.currency || 'HSK',
-                  payment_address: agr.provider_address || '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
-                  agreement_id: agr.agreement_id || agr.id,
-                  agreement_hash: agr.agreement_hash,
-                  delegation_id: agr.delegation_id
-                });
-                setCurrentPage('create_payment');
-              }}
-            />
-          );
-        case 'mandates':
-          return (
-            <MandatePolicyPage
-              onSelectMandateToExecute={setActiveMandateForSigning}
-              onNavigate={setCurrentPage}
-            />
-          );
-        case 'simulator':
-          return (
-            <SafetySimulatorView
-              onNavigate={setCurrentPage}
-              onAuthorizeMandate={setActiveMandateForSigning}
-            />
-          );
-        case 'delegations':
-          return <DelegationsPage />;
-        case 'evidence_bundles':
-          return <EvidenceBundlesPage />;
-        case 'disputes':
-          return <DisputesPage />;
-        case 'transactions':
-          return <TransactionsPage />;
-        case 'agents':
-          return <AgentsPage />;
-        case 'create_payment':
-          return (
-            <CreatePaymentPage
-              prefilledProvider={prefilledProvider}
-              onMandateCreated={handleMandateCreated}
-              onNavigate={setCurrentPage}
-            />
-          );
-        case 'ai_workflow':
-          return (
-            <AiAgentWorkflowPage
-              onSelectMandateToExecute={setActiveMandateForSigning}
-            />
-          );
-        case 'audit':
-          return <AuditTrailPage />;
-        default:
-          return (
-            <PayPilotDashboard
-              onNavigate={setCurrentPage}
-              onSelectMandateToExecute={setActiveMandateForSigning}
-              wallet={wallet}
-            />
-          );
-      }
-    }
+  // ── Render Landing Page Standalone ──
+  if (currentPage === 'landing') {
+    return (
+      <SenPayLandingPage
+        onLaunchConsole={(page) => setCurrentPage(page || 'command_center')}
+      />
+    );
+  }
 
-    // ── Sentinel Navigation (Preserved) ──
+  // ── Render Application Console Routes ──
+  const renderCurrentView = () => {
     switch (currentPage) {
+      // ── Reference Screen 1: Active Command Center ──
+      case 'command_center':
+      case 'paypilot_dashboard':
       case 'sentinel_dashboard':
         return (
-          <DashboardPage
-            zones={activeZones}
-            alerts={activeAlerts}
-            kpis={activeKpis}
-            sentinel={realtime.sentinel}
-            aiForecast={realtime.aiForecast}
-            tinyfish={realtime.tinyfish}
-            timeline={realtime.timeline}
-            onControlSentinel={handleControlSentinel}
-            onTriggerTinyFish={handleTriggerTinyFish}
+          <ActiveCommandCenter
+            onNavigate={setCurrentPage}
+            onSelectMandateForSigning={setActiveMandateForSigning}
+            wallet={wallet}
           />
         );
-      case 'sensors':
-        return <SensorDashboardPage />;
-      case 'map':
-        return <MapViewPage zones={activeZones} />;
-      case 'analytics':
-        return <AnalyticsPage zones={activeZones} />;
+
+      // ── Reference Screen 2: Payment Operations & Settlement ──
+      case 'operations':
+      case 'transactions':
+        return (
+          <PaymentOperationsPage
+            onNavigate={setCurrentPage}
+            onOpenDispute={() => setCurrentPage('disputes')}
+            onViewProof={() => setCurrentPage('evidence')}
+          />
+        );
+
+      // ── Group: OVERVIEW ──
+      case 'incident_monitor':
       case 'alerts':
         return <AlertsPage alerts={activeAlerts} zones={activeZones} />;
+
+      // ── Group: INTELLIGENCE ──
+      case 'digital_twin':
+      case 'map':
+        return <MapViewPage zones={activeZones} />;
+
+      case 'optimizer':
       case 'simulation':
         return (
           <SimulationPage
@@ -281,73 +209,162 @@ export default function App() {
             kpis={activeKpis}
           />
         );
+
+      case 'counterfactual':
+      case 'analytics':
+        return <AnalyticsPage zones={activeZones} />;
+
+      case 'sensors':
+        return <SensorDashboardPage />;
+
+      // ── Group: PROCUREMENT ──
+      case 'agreements':
+        return (
+          <ServiceAgreementsPage
+            onNavigate={setCurrentPage}
+            onSelectAgreementForMandate={(agr) => {
+              setPrefilledProvider({
+                id: agr.provider_id,
+                name: agr.provider_name || agr.provider_id,
+                category: agr.service_category || agr.service_type || 'TELECOM_BANDWIDTH',
+                unit_price: agr.agreed_price || agr.price_amount,
+                asset: agr.asset || agr.currency || 'HSK',
+                payment_address: agr.provider_address || '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
+                agreement_id: agr.agreement_id || agr.id,
+                agreement_hash: agr.agreement_hash,
+                delegation_id: agr.delegation_id
+              });
+              setCurrentPage('create_payment');
+            }}
+          />
+        );
+
+      case 'providers':
+      case 'discovery':
+        return (
+          <DiscoveryPage
+            onSelectProviderForPayment={handleSelectProviderForPayment}
+          />
+        );
+
+      case 'delegations':
+        return <DelegationsPage />;
+
+      // ── Group: PAYMENTS & TRUST ──
+      case 'safety':
+      case 'simulator':
+        return (
+          <SafetySimulatorView
+            onNavigate={setCurrentPage}
+            onAuthorizeMandate={setActiveMandateForSigning}
+          />
+        );
+
+      case 'evidence':
+      case 'evidence_bundles':
+        return <EvidenceBundlesPage />;
+
+      case 'disputes':
+        return <DisputesPage />;
+
+      case 'trust':
+        return (
+          <DiscoveryPage
+            onSelectProviderForPayment={handleSelectProviderForPayment}
+          />
+        );
+
+      // ── Group: GOVERNANCE ──
+      case 'policies':
+      case 'mandates':
+        return (
+          <MandatePolicyPage
+            onSelectMandateToExecute={setActiveMandateForSigning}
+            onNavigate={setCurrentPage}
+          />
+        );
+
+      case 'audit':
+        return <AuditTrailPage />;
+
+      case 'wallet':
+      case 'agents':
+        return <AgentsPage />;
+
+      case 'create_payment':
+        return (
+          <CreatePaymentPage
+            prefilledProvider={prefilledProvider}
+            onMandateCreated={handleMandateCreated}
+            onNavigate={setCurrentPage}
+          />
+        );
+
+      case 'ai_workflow':
+        return (
+          <AiAgentWorkflowPage
+            onSelectMandateToExecute={setActiveMandateForSigning}
+          />
+        );
+
       default:
         return (
-          <DashboardPage
-            zones={activeZones}
-            alerts={activeAlerts}
-            kpis={activeKpis}
-            sentinel={realtime.sentinel}
-            aiForecast={realtime.aiForecast}
-            tinyfish={realtime.tinyfish}
-            timeline={realtime.timeline}
-            onControlSentinel={handleControlSentinel}
-            onTriggerTinyFish={handleTriggerTinyFish}
+          <ActiveCommandCenter
+            onNavigate={setCurrentPage}
+            onSelectMandateForSigning={setActiveMandateForSigning}
+            wallet={wallet}
           />
         );
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-crowd-bg text-crowd-text-primary">
-      {/* Ambient background glow */}
-      <div className="ambient-bg" />
-
-      {/* Sidebar Navigation */}
-      <Sidebar
+    <div className="min-h-screen bg-[#0B1118] text-[#F1F5F9] font-sans antialiased">
+      {/* ── SENPAY TopBar ── */}
+      <SenPayTopBar
         currentPage={currentPage}
         onNavigate={setCurrentPage}
-        activeProduct={activeProduct}
-        onSwitchProduct={handleSwitchProduct}
-        isConnected={realtime.isConnected}
+        mode={sim.mode}
+        onToggleMode={sim.toggleMode}
+        wallet={wallet}
         alertCount={criticalCount}
       />
 
-      {/* Main Workspace Area */}
-      <div className="ml-[68px] lg:ml-[230px] transition-all duration-300">
-        <TopBar
-          pageTitle={PAGE_TITLES[currentPage] || 'TeleSol PayPilot'}
-          activeProduct={activeProduct}
-          mode={sim.mode}
-          scenario={realtime.sentinel?.scenario || 'normal'}
-          tinyfish={realtime.tinyfish}
-          wallet={wallet}
-          onToggleMode={() => {
-            sim.toggleMode();
-            if (sim.mode === 'live') setCurrentPage('simulation');
-          }}
-        />
+      {/* ── SENPAY Grouped Sidebar ── */}
+      <SenPaySidebar
+        currentPage={currentPage}
+        onNavigate={setCurrentPage}
+        collapsed={collapsed}
+        onToggleCollapse={() => setCollapsed(!collapsed)}
+      />
 
-        <main className="p-4 lg:p-6 relative z-10 space-y-5">
-          {/* Real-time Sentinel Congestion Alert Banner (1-Click PayPilot Mitigation) */}
-          <SentinelBridgeBanner
-            zones={activeZones}
-            onNavigate={setCurrentPage}
-            onSelectMandateForSigning={setActiveMandateForSigning}
-          />
-
-          {renderPage()}
+      {/* ── Main Workspace Area ── */}
+      <div
+        className={`
+          pt-4 pb-12 px-4 lg:px-6
+          transition-all duration-300
+          ${collapsed ? 'ml-16' : 'ml-56 lg:ml-60'}
+        `}
+      >
+        <main className="relative z-10 max-w-[1680px] mx-auto">
+          {renderCurrentView()}
         </main>
       </div>
 
-      {/* Wallet Execution Modal */}
+      {/* ── Pinned Bottom System Status Bar ── */}
+      <SystemStatusBar
+        isConnected={realtime.isConnected}
+        onOpenLogs={() => setCurrentPage('audit')}
+      />
+
+      {/* ── Wallet Authorization Modal ── */}
       {activeMandateForSigning && (
         <WalletExecutionModal
           mandate={activeMandateForSigning}
           wallet={wallet}
           onClose={() => setActiveMandateForSigning(null)}
           onSettled={() => {
-            // Can reload or navigate
+            setCurrentPage('operations');
           }}
         />
       )}

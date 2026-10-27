@@ -1,24 +1,25 @@
 // ═══════════════════════════════════════════════════════
-// CrowdShield — GlassCard Component
-// Reusable glassmorphism card with glow + pulse options
+// SENPAY — Elevated Card Component
+// Consistent reference styling with dark obsidian panel,
+// subtle blue-gray borders, and luminous accent glows.
 // ═══════════════════════════════════════════════════════
 
 export default function GlassCard({ children, className = '', glow = '', pulse = false, onClick = null }) {
   const glowStyles = {
-    cyan: 'border-crowd-cyan/20 hover:border-crowd-cyan/40 hover:shadow-[0_0_20px_rgba(0,212,255,0.15)]',
-    green: 'border-crowd-safe/20 hover:border-crowd-safe/40 hover:shadow-[0_0_20px_rgba(0,255,136,0.15)]',
-    red: 'border-crowd-danger/20 hover:border-crowd-danger/40 hover:shadow-[0_0_20px_rgba(255,59,92,0.15)]',
-    warning: 'border-crowd-warning/20 hover:border-crowd-warning/40 hover:shadow-[0_0_20px_rgba(255,184,0,0.15)]',
-    purple: 'border-crowd-purple/20 hover:border-crowd-purple/40 hover:shadow-[0_0_20px_rgba(168,85,247,0.15)]',
+    cyan: 'border-senpay-cyan/30 hover:border-senpay-cyan/60 hover:shadow-[0_0_18px_rgba(0,229,255,0.2)]',
+    green: 'border-senpay-green/30 hover:border-senpay-green/60 hover:shadow-[0_0_18px_rgba(0,255,136,0.2)]',
+    red: 'border-senpay-red/30 hover:border-senpay-red/60 hover:shadow-[0_0_18px_rgba(255,59,92,0.2)]',
+    warning: 'border-senpay-amber/30 hover:border-senpay-amber/60 hover:shadow-[0_0_18px_rgba(255,184,0,0.2)]',
+    purple: 'border-senpay-violet/30 hover:border-senpay-violet/60 hover:shadow-[0_0_18px_rgba(168,85,247,0.2)]',
   };
 
   return (
     <div
       className={`
-        glass-card p-4
+        bg-[#151F2A] border border-senpay-border rounded-xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.4)]
         ${glow ? glowStyles[glow] || '' : ''}
         ${pulse ? 'animate-glow-pulse' : ''}
-        ${onClick ? 'cursor-pointer' : ''}
+        ${onClick ? 'cursor-pointer hover:bg-[#182330] transition-colors' : ''}
         ${className}
       `}
       onClick={onClick}

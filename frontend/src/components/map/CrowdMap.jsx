@@ -37,7 +37,7 @@ export default function CrowdMap({ zones, selectedZone, onSelectZone, height = '
         ref={mapRef}
         center={center}
         zoom={16}
-        style={{ height: '100%', width: '100%', background: '#06090F' }}
+        style={{ height: '100%', width: '100%', background: '#0B1118' }}
         zoomControl={true}
         whenReady={() => setMapReady(true)}
       >
