@@ -238,7 +238,7 @@ function AppContent() {
       // ── Group: INTELLIGENCE ──
       case 'digital_twin':
       case 'map':
-        return <MapViewPage zones={activeZones} />;
+        return <MapViewPage zones={activeZones} isLive={realtime.isConnected} />;
 
       case 'optimizer':
       case 'simulation':
