@@ -245,6 +245,48 @@ async function apiPost(endpoint, body = {}, token = null) {
   }
 }
 
+async function apiGetAuth(endpoint, token = null) {
+  try {
+    const headers = {};
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}${endpoint}`, { headers });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.detail || `HTTP ${res.status}`);
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  } catch (err) {
+    console.warn(`[API GET] ${endpoint} failed:`, err.message);
+    throw err;
+  }
+}
+
+async function apiPatch(endpoint, body = {}, token = null) {
+  try {
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}${endpoint}`, {
+      method: 'PATCH',
+      headers,
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const err = new Error(data.detail || `HTTP ${res.status}`);
+      err.status = res.status;
+      err.data = data;
+      throw err;
+    }
+    return data;
+  } catch (err) {
+    console.warn(`[API PATCH] ${endpoint} failed:`, err.message);
+    throw err;
+  }
+}
+
 // ═══════════════════════════════════════════════════════════════════
 // USER AUTHENTICATION API
 // ═══════════════════════════════════════════════════════════════════
@@ -255,6 +297,26 @@ export async function loginUser(credentials) {
 
 export async function registerUser(userData) {
   return await apiPost('/api/auth/register', userData);
+}
+
+export async function verifyEmail(token) {
+  return await apiPost('/api/auth/verify-email', { token });
+}
+
+export async function resendVerification(email) {
+  return await apiPost('/api/auth/resend-verification', { email });
+}
+
+export async function forgotPassword(email) {
+  return await apiPost('/api/auth/forgot-password', { email });
+}
+
+export async function resetPassword(token, new_password) {
+  return await apiPost('/api/auth/reset-password', { token, new_password });
+}
+
+export async function bootstrapAdmin(adminData) {
+  return await apiPost('/api/auth/bootstrap-admin', adminData);
 }
 
 export async function fetchCurrentUser(token) {
@@ -277,6 +339,73 @@ export async function logoutUser(token) {
   } catch (e) {
     return { status: 'logged_out' };
   }
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PLATFORM ADMINISTRATION API (PLATFORM_ADMIN ONLY)
+// ═══════════════════════════════════════════════════════════════════
+
+export async function fetchAdminOverview(token) {
+  return await apiGetAuth('/api/admin/overview', token);
+}
+
+export async function fetchAdminUsers(token, params = {}) {
+  const q = new URLSearchParams();
+  if (params.limit) q.set('limit', params.limit);
+  if (params.offset) q.set('offset', params.offset);
+  if (params.role) q.set('role', params.role);
+  if (params.search) q.set('search', params.search);
+  const qs = q.toString();
+  return await apiGetAuth(`/api/admin/users${qs ? `?${qs}` : ''}`, token);
+}
+
+export async function updateUserRole(userId, role, token) {
+  return await apiPatch(`/api/admin/users/${encodeURIComponent(userId)}/role`, { role }, token);
+}
+
+export async function updateUserStatus(userId, is_active, token) {
+  return await apiPatch(`/api/admin/users/${encodeURIComponent(userId)}/status`, { is_active }, token);
+}
+
+export async function fetchAdminWorkspaces(token) {
+  return await apiGetAuth('/api/admin/workspaces', token);
+}
+
+export async function createAdminWorkspace(workspaceData, token) {
+  return await apiPost('/api/admin/workspaces', workspaceData, token);
+}
+
+export async function fetchAdminSecurityEvents(token, params = {}) {
+  const q = new URLSearchParams();
+  if (params.limit) q.set('limit', params.limit);
+  if (params.offset) q.set('offset', params.offset);
+  if (params.event_type) q.set('event_type', params.event_type);
+  const qs = q.toString();
+  return await apiGetAuth(`/api/admin/security-events${qs ? `?${qs}` : ''}`, token);
+}
+
+export async function fetchAdminIntegrations(token) {
+  return await apiGetAuth('/api/admin/integrations', token);
+}
+
+export async function fetchAdminSettings(token) {
+  return await apiGetAuth('/api/admin/settings', token);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// OUTCOME-DRIVEN PROCUREMENT & RELIABILITY API
+// ═══════════════════════════════════════════════════════════════════
+
+export async function verifyAgreementOutcome(agreementId, payload = {}, token = null) {
+  return await apiPost(`/api/paypilot/agreements/${encodeURIComponent(agreementId)}/verify-outcome`, payload, token);
+}
+
+export async function fetchProviderReliability(providerId) {
+  return await apiFetch(`/api/paypilot/providers/${encodeURIComponent(providerId)}/reliability`);
+}
+
+export async function triggerIncidentRecovery(incidentId, payload = {}, token = null) {
+  return await apiPost(`/api/paypilot/incidents/${encodeURIComponent(incidentId)}/recovery`, payload, token);
 }
 
 // ═══════════════════════════════════════════════════════════════════

@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { loginUser, registerUser, fetchCurrentUser, logoutUser } from '../data/api';
+import {
+  loginUser,
+  registerUser,
+  fetchCurrentUser,
+  logoutUser,
+  verifyEmail,
+  resendVerification,
+  forgotPassword,
+  resetPassword,
+} from '../data/api';
 
 const AuthContext = createContext(null);
 
@@ -13,7 +22,10 @@ export function AuthProvider({ children }) {
     username: 'operator',
     email: 'operator@telesol.io',
     full_name: 'SENPAY Lead NOC Engineer',
-    role: 'operator'
+    role: 'NOC_OPERATOR',
+    workspace_id: 'ws_telesol_default',
+    org_name: 'TeleSol Global',
+    email_verified: true,
   };
 
   const [token, setToken] = useState(() => {
@@ -98,9 +110,9 @@ export function AuthProvider({ children }) {
       setUser(createdUser);
       localStorage.setItem(TOKEN_STORAGE_KEY, userToken);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(createdUser));
-      return createdUser;
+      return { user: createdUser, raw: res };
     }
-    throw new Error('Registration failed: no token returned');
+    return { user: createdUser, raw: res };
   };
 
   const logout = async () => {
@@ -121,6 +133,23 @@ export function AuthProvider({ children }) {
     return await login('operator@telesol.io', 'senpay-telecom-2026');
   };
 
+  const demoAdminSignIn = async () => {
+    return await login('admin@telesol.io', 'SenPayAdmin2026!');
+  };
+
+  const normalizedRole = (user?.role || '').toUpperCase();
+  const isAdmin = normalizedRole === 'PLATFORM_ADMIN' || normalizedRole === 'ADMIN';
+  const isOwner = normalizedRole === 'WORKSPACE_OWNER' || isAdmin;
+  const isOperator = normalizedRole === 'NOC_OPERATOR' || normalizedRole === 'OPERATOR' || isOwner;
+  const isFinance = normalizedRole === 'FINANCE' || isOwner;
+
+  const hasRole = (allowedRoles = []) => {
+    if (!user) return false;
+    if (isAdmin) return true;
+    const normalizedAllowed = allowedRoles.map((r) => r.toUpperCase());
+    return normalizedAllowed.includes(normalizedRole);
+  };
+
   const value = {
     user,
     token,
@@ -130,6 +159,18 @@ export function AuthProvider({ children }) {
     register,
     logout,
     demoSignIn,
+    demoAdminSignIn,
+    verifyEmail,
+    resendVerification,
+    forgotPassword,
+    resetPassword,
+    hasRole,
+    isAdmin,
+    isOwner,
+    isOperator,
+    isFinance,
+    role: normalizedRole,
+    workspace: user?.org_name || user?.workspace_id || 'TeleSol Operations',
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

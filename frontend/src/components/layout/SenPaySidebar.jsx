@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import {
   LayoutDashboard, AlertCircle, Network, Sparkles, Scale,
   FileCheck2, Building2, Users2, ShieldCheck, CreditCard,
   PackageCheck, AlertOctagon, Award, FileText, History,
-  KeyRound, ChevronDown, ChevronRight, ChevronLeft
+  KeyRound, ChevronDown, ChevronRight, ChevronLeft, Shield
 } from 'lucide-react';
 
 const NAVIGATION_GROUPS = [
@@ -57,7 +58,18 @@ export default function SenPaySidebar({
   collapsed,
   onToggleCollapse,
 }) {
+  const { user, isAdmin } = useAuth();
   const [governanceOpen, setGovernanceOpen] = useState(true);
+
+  const displayedGroups = [...NAVIGATION_GROUPS];
+  if (isAdmin) {
+    displayedGroups.push({
+      title: 'ADMINISTRATION',
+      items: [
+        { id: 'admin', label: 'Platform Admin', icon: Shield, color: 'text-emerald-500' },
+      ],
+    });
+  }
 
   return (
     <aside
@@ -71,7 +83,7 @@ export default function SenPaySidebar({
     >
       {/* ── Grouped Navigation ── */}
       <nav className="flex-1 py-3 px-2 space-y-4 overflow-y-auto">
-        {NAVIGATION_GROUPS.map((group) => {
+        {displayedGroups.map((group) => {
           const isCollapsible = group.collapsible;
           const isOpen = isCollapsible ? governanceOpen : true;
 
@@ -142,6 +154,17 @@ export default function SenPaySidebar({
           );
         })}
       </nav>
+
+      {/* ── Active Identity Badge ── */}
+      {!collapsed && user && (
+        <div className="px-3 py-2 mx-2 mb-2 rounded bg-senpay-panel/40 border border-senpay-border/60 text-[10px] font-mono">
+          <div className="text-senpay-text-muted truncate">{user.org_name || user.workspace_id || 'TeleSol Global'}</div>
+          <div className="text-senpay-cyan font-bold truncate flex items-center gap-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span>{user.role || 'NOC_OPERATOR'}</span>
+          </div>
+        </div>
+      )}
 
       {/* ── Collapse Toggle Footer ── */}
       <div className="p-2 border-t border-senpay-border/60">

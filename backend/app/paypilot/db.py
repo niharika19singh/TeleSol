@@ -91,10 +91,74 @@ def init_db():
             password_hash TEXT NOT NULL,
             salt TEXT NOT NULL,
             full_name TEXT NOT NULL,
-            role TEXT NOT NULL DEFAULT 'OPERATOR',
+            role TEXT NOT NULL DEFAULT 'NOC_OPERATOR',
             is_active INTEGER NOT NULL DEFAULT 1,
+            email_verified INTEGER NOT NULL DEFAULT 0,
+            email_verified_at TEXT,
+            workspace_id TEXT,
+            org_name TEXT,
             created_at TEXT NOT NULL,
             last_login_at TEXT
+        );
+        """)
+
+        # 0b. Workspaces / Organizations Table (Multi-Tenancy Isolation)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS workspaces (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            slug TEXT UNIQUE NOT NULL,
+            owner_id TEXT NOT NULL,
+            description TEXT,
+            settings TEXT DEFAULT '{}',
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+        """)
+
+        # 0c. Workspace Memberships Table
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS workspace_memberships (
+            id TEXT PRIMARY KEY,
+            workspace_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            role TEXT NOT NULL DEFAULT 'NOC_OPERATOR',
+            is_active INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE(workspace_id, user_id)
+        );
+        """)
+
+        # 0d. Cryptographic Single-Use Verification Tokens (Email & Password Reset)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS verification_tokens (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            token TEXT UNIQUE NOT NULL,
+            token_type TEXT NOT NULL, -- 'EMAIL_VERIFICATION', 'PASSWORD_RESET'
+            expires_at TEXT NOT NULL,
+            used_at TEXT,
+            created_at TEXT NOT NULL
+        );
+        """)
+
+        # 0e. Tamper-Evident Security Events & Audit Trail
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS security_events (
+            id TEXT PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            actor_id TEXT,
+            actor_email TEXT,
+            target_resource TEXT,
+            action TEXT NOT NULL,
+            outcome TEXT NOT NULL,
+            ip_address TEXT,
+            details TEXT,
+            timestamp TEXT NOT NULL,
+            prev_hash TEXT,
+            hash TEXT NOT NULL
         );
         """)
 
@@ -489,16 +553,50 @@ def init_db():
         _add_column_if_missing(cursor, "service_agreements", "outcome_evaluation_id TEXT")
         _add_column_if_missing(cursor, "service_agreements", "outcome_notes TEXT")
 
+        # Multi-Tenancy & User Profile Migrations
+        _add_column_if_missing(cursor, "users", "email_verified INTEGER DEFAULT 0")
+        _add_column_if_missing(cursor, "users", "email_verified_at TEXT")
+        _add_column_if_missing(cursor, "users", "workspace_id TEXT")
+        _add_column_if_missing(cursor, "users", "org_name TEXT")
+
+        # Outcome-Driven Procurement Contract Specifications
+        _add_column_if_missing(cursor, "service_agreements", "service_requirements TEXT")
+        _add_column_if_missing(cursor, "service_agreements", "max_cost_hsk REAL")
+        _add_column_if_missing(cursor, "service_agreements", "delivery_deadline TEXT")
+        _add_column_if_missing(cursor, "service_agreements", "baseline_metrics TEXT")
+        _add_column_if_missing(cursor, "service_agreements", "target_outcome TEXT")
+        _add_column_if_missing(cursor, "service_agreements", "required_evidence TEXT")
+        _add_column_if_missing(cursor, "service_agreements", "verification_methodology TEXT")
+        _add_column_if_missing(cursor, "service_agreements", "acceptable_uncertainty REAL DEFAULT 0.05")
+        _add_column_if_missing(cursor, "service_agreements", "failure_handling_rules TEXT")
+        _add_column_if_missing(cursor, "service_agreements", "settlement_criteria TEXT")
+        _add_column_if_missing(cursor, "service_agreements", "outcome_status TEXT DEFAULT 'PENDING'")
+        _add_column_if_missing(cursor, "service_agreements", "recovery_status TEXT DEFAULT 'NONE'")
+        _add_column_if_missing(cursor, "service_agreements", "workspace_id TEXT DEFAULT 'ws_telesol_default'")
+
+        # Tenant Isolation on Financial Objects
+        _add_column_if_missing(cursor, "agent_delegations", "workspace_id TEXT DEFAULT 'ws_telesol_default'")
+        _add_column_if_missing(cursor, "payment_requests", "workspace_id TEXT DEFAULT 'ws_telesol_default'")
+        _add_column_if_missing(cursor, "mandates", "workspace_id TEXT DEFAULT 'ws_telesol_default'")
+        _add_column_if_missing(cursor, "settlement_receipts", "workspace_id TEXT DEFAULT 'ws_telesol_default'")
+        _add_column_if_missing(cursor, "evidence_bundles", "workspace_id TEXT DEFAULT 'ws_telesol_default'")
+
         # Sentinel Incidents outcome binding
         _add_column_if_missing(cursor, "sentinel_incidents", "evaluation_id TEXT")
         _add_column_if_missing(cursor, "sentinel_incidents", "recovery_action_id TEXT")
         _add_column_if_missing(cursor, "sentinel_incidents", "outcome_status TEXT DEFAULT 'PENDING'")
+        _add_column_if_missing(cursor, "sentinel_incidents", "workspace_id TEXT DEFAULT 'ws_telesol_default'")
 
         # Indexes
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_mandate_id ON mandates (mandate_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_requests_status ON payment_requests (status);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users (username);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_email ON users (email);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_workspaces_slug ON workspaces (slug);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_memberships_ws ON workspace_memberships (workspace_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_memberships_user ON workspace_memberships (user_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_verif_tokens_token ON verification_tokens (token);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_security_events_time ON security_events (timestamp);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_agreements_task ON service_agreements (task_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_delegations_agent ON agent_delegations (agent_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_bundles_mandate ON evidence_bundles (mandate_id);")
@@ -507,6 +605,25 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_intervention_evals_inc ON intervention_evaluations (incident_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_counterfactual_agr ON counterfactual_evaluations (agreement_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_recovery_incident ON recovery_actions (incident_id);")
+
+        # Seed default workspace if not present
+        cursor.execute("SELECT id FROM workspaces WHERE id = 'ws_telesol_default'")
+        if not cursor.fetchone():
+            now_iso = datetime.now(timezone.utc).isoformat()
+            cursor.execute(
+                """
+                INSERT INTO workspaces (id, name, slug, owner_id, description, settings, is_active, created_at, updated_at)
+                VALUES ('ws_telesol_default', 'TeleSol Global Telecom Operations', 'telesol-global', 'usr_seeded_operator', 'Primary production telecom network workspace', '{}', 1, ?, ?)
+                """,
+                (now_iso, now_iso)
+            )
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO workspace_memberships (id, workspace_id, user_id, role, is_active, created_at, updated_at)
+                VALUES ('mem_default_seed', 'ws_telesol_default', 'usr_seeded_operator', 'WORKSPACE_OWNER', 1, ?, ?)
+                """,
+                (now_iso, now_iso)
+            )
 
         conn.commit()
         conn.close()

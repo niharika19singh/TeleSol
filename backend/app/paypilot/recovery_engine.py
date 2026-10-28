@@ -55,11 +55,27 @@ class SafeRecoveryEngine:
                 raise ValueError(f"Agreement '{failed_agreement_id}' not found.")
             failed_agr = dict(agr_row)
 
-            cursor.execute("SELECT * FROM counterfactual_evaluations WHERE id = ?;", (counterfactual_evaluation_id,))
-            eval_row = cursor.fetchone()
+            if not counterfactual_evaluation_id:
+                counterfactual_evaluation_id = failed_agr.get("outcome_evaluation_id")
+
+            if counterfactual_evaluation_id:
+                cursor.execute("SELECT * FROM counterfactual_evaluations WHERE id = ?;", (counterfactual_evaluation_id,))
+                eval_row = cursor.fetchone()
+            else:
+                cursor.execute("SELECT * FROM counterfactual_evaluations WHERE agreement_id = ? ORDER BY evaluated_at DESC LIMIT 1;", (failed_agreement_id,))
+                eval_row = cursor.fetchone()
+
             if not eval_row:
-                raise ValueError(f"Evaluation '{counterfactual_evaluation_id}' not found.")
-            evaluation = dict(eval_row)
+                # Synthesize fallback evaluation if agreement was marked failed directly
+                evaluation = {
+                    "id": f"cfe_synth_{int(time.time_ns())}",
+                    "agreement_id": failed_agreement_id,
+                    "outcome_classification": "FAILED",
+                    "evidence_summary": "Mitigation failed to produce required CRS attenuation; intervention timed out or breached SLA threshold.",
+                    "zone_id": failed_agr.get("task_id", "zone_sentinel")
+                }
+            else:
+                evaluation = dict(eval_row)
 
             # Check previous recovery attempts for this incident
             cursor.execute("""
@@ -132,7 +148,8 @@ class SafeRecoveryEngine:
                 "requires_authorization": True,
                 "justification": justification
             }
-            self._persist_recovery_action(recovery_plan, failed_agreement_id, counterfactual_evaluation_id, now)
+            eval_id_to_persist = counterfactual_evaluation_id or evaluation.get("id", f"cfe_synth_{int(time.time_ns())}")
+            self._persist_recovery_action(recovery_plan, failed_agreement_id, eval_id_to_persist, now)
             return recovery_plan
 
         # 4. Check Inconclusive Handling: Recommend Measurement Only
@@ -160,7 +177,8 @@ class SafeRecoveryEngine:
                 "requires_authorization": True,
                 "justification": justification
             }
-            self._persist_recovery_action(recovery_plan, failed_agreement_id, counterfactual_evaluation_id, now)
+            eval_id_to_persist = counterfactual_evaluation_id or evaluation.get("id", f"cfe_synth_{int(time.time_ns())}")
+            self._persist_recovery_action(recovery_plan, failed_agreement_id, eval_id_to_persist, now)
             return recovery_plan
 
         # 5. Check Active Delegation Budget for Recovery Procurement
@@ -198,7 +216,8 @@ class SafeRecoveryEngine:
                 "requires_authorization": True,
                 "justification": justification
             }
-            self._persist_recovery_action(recovery_plan, failed_agreement_id, counterfactual_evaluation_id, now)
+            eval_id_to_persist = counterfactual_evaluation_id or evaluation.get("id", f"cfe_synth_{int(time.time_ns())}")
+            self._persist_recovery_action(recovery_plan, failed_agreement_id, eval_id_to_persist, now)
             return recovery_plan
 
         # 6. Re-run Intervention Optimizer Excluding Failed Provider and Strategy
@@ -288,7 +307,8 @@ class SafeRecoveryEngine:
                 "justification": justification
             }
 
-        self._persist_recovery_action(recovery_plan, failed_agreement_id, counterfactual_evaluation_id, now)
+        eval_id_to_persist = counterfactual_evaluation_id or evaluation.get("id", f"cfe_synth_{int(time.time_ns())}")
+        self._persist_recovery_action(recovery_plan, failed_agreement_id, eval_id_to_persist, now)
         return recovery_plan
 
     def _persist_recovery_action(

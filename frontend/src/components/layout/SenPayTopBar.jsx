@@ -15,7 +15,7 @@ export default function SenPayTopBar({
   wallet,
   alertCount = 2,
 }) {
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, isAdmin, logout } = useAuth();
   const { theme, setTheme, isHighContrast } = useTheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [filterMenuOpen, setFilterMenuOpen] = useState(false);
@@ -164,7 +164,20 @@ export default function SenPayTopBar({
                 <div className="px-3 py-1.5 border-b border-senpay-border/60 mb-1">
                   <div className="text-[11px] text-senpay-text-muted">Signed in as</div>
                   <div className="font-mono text-xs text-senpay-text-primary truncate">{user?.email || 'operator@telesol.io'}</div>
+                  <div className="font-mono text-[10px] text-emerald-500 font-bold truncate mt-0.5">{user?.role || 'NOC_OPERATOR'}</div>
                 </div>
+                {isAdmin && (
+                  <button
+                    onClick={() => {
+                      setUserMenuOpen(false);
+                      onNavigate('admin');
+                    }}
+                    className="w-full text-left px-3 py-1.5 text-emerald-500 hover:bg-emerald-500/10 flex items-center gap-2 font-bold"
+                  >
+                    <ShieldCheck size={12} />
+                    <span>Platform Admin</span>
+                  </button>
+                )}
                 <button
                   onClick={() => {
                     setUserMenuOpen(false);

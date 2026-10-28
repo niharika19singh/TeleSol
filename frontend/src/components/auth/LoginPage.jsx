@@ -3,8 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Shield, Lock, Mail, User, Eye, EyeOff, Radio, CheckCircle, ArrowRight, ArrowLeft, AlertCircle, Sun, Moon } from 'lucide-react';
 
-export default function LoginPage({ onLoginSuccess, onNavigateLanding }) {
-  const { login, register, demoSignIn } = useAuth();
+export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigateSignup, onNavigateForgotPassword }) {
+  const { login, register, demoSignIn, demoAdminSignIn } = useAuth();
   const { theme, toggleTheme, isLight } = useTheme();
   const [mode, setMode] = useState('login'); // 'login' | 'register'
   const [showPassword, setShowPassword] = useState(false);
@@ -143,21 +143,49 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding }) {
             </p>
           </div>
 
-          {/* Quick Demo Sign-In Banner */}
-          <div className="mb-6 p-3 bg-senpay-green/10 border border-senpay-green/30 rounded-xl flex items-center justify-between text-xs">
-            <div className="flex items-center gap-2 text-senpay-green font-medium">
-              <Shield className="w-4 h-4 text-senpay-green flex-shrink-0" />
-              <span>Hackathon Evaluation Account ready</span>
+          {/* Quick Demo Sign-In Banners */}
+          <div className="mb-6 space-y-2">
+            <div className="p-3 bg-senpay-green/10 border border-senpay-green/30 rounded-xl flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-senpay-green font-medium">
+                <Shield className="w-4 h-4 text-senpay-green flex-shrink-0" />
+                <span>NOC Operator Account</span>
+              </div>
+              <button
+                type="button"
+                onClick={handleDemoFill}
+                disabled={loading}
+                className="bg-senpay-green hover:opacity-90 text-white font-semibold px-2.5 py-1 rounded shadow text-xs transition flex items-center gap-1 disabled:opacity-50"
+              >
+                Sign In &rarr;
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={handleDemoFill}
-              disabled={loading}
-              className="bg-senpay-green hover:opacity-90 text-white font-semibold px-2.5 py-1 rounded shadow text-xs transition flex items-center gap-1 disabled:opacity-50"
-            >
-              1-Click Sign In
-              <ArrowRight className="w-3 h-3" />
-            </button>
+
+            <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2 text-emerald-500 font-medium">
+                <Lock className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                <span>Platform Admin Account</span>
+              </div>
+              <button
+                type="button"
+                onClick={async () => {
+                  setError('');
+                  setLoading(true);
+                  try {
+                    await demoAdminSignIn();
+                    if (onLoginSuccess) onLoginSuccess();
+                    else window.location.hash = '#command_center';
+                  } catch (err) {
+                    setError(err.message || 'Admin login failed');
+                  } finally {
+                    setLoading(false);
+                  }
+                }}
+                disabled={loading}
+                className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-2.5 py-1 rounded shadow text-xs transition flex items-center gap-1 disabled:opacity-50"
+              >
+                Admin In &rarr;
+              </button>
+            </div>
           </div>
 
           {/* Mode Switcher Tabs */}
@@ -228,7 +256,17 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding }) {
                   <label className="text-xs font-medium text-senpay-text-secondary">
                     Password
                   </label>
-                  <span className="text-[11px] text-senpay-text-muted font-mono">PBKDF2-SHA256</span>
+                  <a
+                    href="#forgot-password"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      if (onNavigateForgotPassword) onNavigateForgotPassword();
+                      else window.location.hash = '#forgot-password';
+                    }}
+                    className="text-[11px] text-senpay-cyan hover:underline font-mono"
+                  >
+                    Forgot password?
+                  </a>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-senpay-text-muted">
@@ -267,6 +305,20 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding }) {
                     </>
                   )}
                 </button>
+              </div>
+
+              <div className="text-center pt-2">
+                <a
+                  href="#signup"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onNavigateSignup) onNavigateSignup();
+                    else window.location.hash = '#signup';
+                  }}
+                  className="text-xs text-senpay-text-secondary hover:text-senpay-text-primary hover:underline font-medium"
+                >
+                  Need an organization account? Register &rarr;
+                </a>
               </div>
             </form>
           ) : (
@@ -382,6 +434,20 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding }) {
                     </>
                   )}
                 </button>
+              </div>
+
+              <div className="text-center pt-2">
+                <a
+                  href="#signup"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onNavigateSignup) onNavigateSignup();
+                    else window.location.hash = '#signup';
+                  }}
+                  className="text-xs text-senpay-text-secondary hover:text-senpay-text-primary hover:underline font-medium"
+                >
+                  Need an organization account? Register &rarr;
+                </a>
               </div>
             </form>
           )}

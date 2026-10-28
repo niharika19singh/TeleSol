@@ -8,6 +8,12 @@ import { useState, useEffect } from 'react';
 // ── Authentication System ──
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './components/auth/LoginPage';
+import SignupPage from './components/auth/SignupPage';
+import VerifyEmailPage from './components/auth/VerifyEmailPage';
+import ForgotPasswordPage from './components/auth/ForgotPasswordPage';
+import ResetPasswordPage from './components/auth/ResetPasswordPage';
+import UnauthorizedPage from './components/auth/UnauthorizedPage';
+import PlatformAdminPage from './components/admin/PlatformAdminPage';
 
 // ── SENPAY Reference UI Components ──
 import ActiveCommandCenter from './components/command/ActiveCommandCenter';
@@ -180,6 +186,56 @@ function AppContent() {
     );
   }
 
+  // ── Render Public Authentication & Recovery Screens Standalone ──
+  if (currentPage === 'signup') {
+    if (isAuthenticated) {
+      setCurrentPage('command_center');
+      return null;
+    }
+    return (
+      <SignupPage
+        onNavigateLogin={() => setCurrentPage('login')}
+        onNavigateLanding={() => setCurrentPage('landing')}
+      />
+    );
+  }
+
+  if (currentPage === 'verify-email' || currentPage.startsWith('verify-email')) {
+    return (
+      <VerifyEmailPage
+        onNavigateLogin={() => setCurrentPage('login')}
+        onNavigateLanding={() => setCurrentPage('landing')}
+      />
+    );
+  }
+
+  if (currentPage === 'forgot-password') {
+    return (
+      <ForgotPasswordPage
+        onNavigateLogin={() => setCurrentPage('login')}
+        onNavigateLanding={() => setCurrentPage('landing')}
+      />
+    );
+  }
+
+  if (currentPage === 'reset-password' || currentPage.startsWith('reset-password')) {
+    return (
+      <ResetPasswordPage
+        onNavigateLogin={() => setCurrentPage('login')}
+        onNavigateLanding={() => setCurrentPage('landing')}
+      />
+    );
+  }
+
+  if (currentPage === 'unauthorized') {
+    return (
+      <UnauthorizedPage
+        onNavigateDashboard={() => setCurrentPage('command_center')}
+        onNavigateLogin={() => setCurrentPage('login')}
+      />
+    );
+  }
+
   // ── Render Login Screen Standalone ──
   if (currentPage === 'login') {
     if (isAuthenticated) {
@@ -190,6 +246,8 @@ function AppContent() {
       <LoginPage
         onLoginSuccess={() => setCurrentPage('command_center')}
         onNavigateLanding={() => setCurrentPage('landing')}
+        onNavigateSignup={() => setCurrentPage('signup')}
+        onNavigateForgotPassword={() => setCurrentPage('forgot-password')}
       />
     );
   }
@@ -200,6 +258,17 @@ function AppContent() {
       <LoginPage
         onLoginSuccess={() => setCurrentPage(currentPage === 'login' ? 'command_center' : currentPage)}
         onNavigateLanding={() => setCurrentPage('landing')}
+        onNavigateSignup={() => setCurrentPage('signup')}
+        onNavigateForgotPassword={() => setCurrentPage('forgot-password')}
+      />
+    );
+  }
+
+  // ── Dedicated Platform Administration Console ──
+  if (currentPage === 'admin' || currentPage === 'platform_admin') {
+    return (
+      <PlatformAdminPage
+        onNavigateConsole={() => setCurrentPage('command_center')}
       />
     );
   }
