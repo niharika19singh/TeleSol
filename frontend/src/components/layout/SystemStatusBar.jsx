@@ -23,7 +23,7 @@ export default function SystemStatusBar({ isConnected = true, onOpenLogs }) {
   }, []);
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 h-7 bg-[#090D13] border-t border-senpay-border/80 px-4 flex items-center justify-between text-[11px] font-mono text-senpay-text-muted z-30 select-none">
+    <footer className="fixed bottom-0 left-0 right-0 h-7 bg-senpay-sidebar border-t border-senpay-border px-4 flex items-center justify-between text-[11px] font-mono text-senpay-text-muted z-30 select-none transition-colors duration-150">
       <div className="flex items-center gap-4 overflow-hidden truncate">
         {/* Ingestion & Telemetry */}
         <div className="flex items-center gap-1.5 flex-shrink-0">

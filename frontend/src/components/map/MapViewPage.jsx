@@ -260,27 +260,27 @@ export default function MapViewPage({ zones = [], isLive = false }) {
 
         {/* Aggregate KPI Badges */}
         <div className="flex items-center gap-2 text-xs font-mono">
-          <div className="px-3 py-1 rounded-lg bg-[#101821] border border-senpay-border text-center">
+          <div className="px-3 py-1 rounded-lg bg-senpay-card border border-senpay-border text-center">
             <div className="text-[9px] text-senpay-text-muted uppercase">Active Sites</div>
-            <div className="text-sm font-bold text-white">{stats.total}</div>
+            <div className="text-sm font-bold text-senpay-text-primary">{stats.total}</div>
           </div>
-          <div className="px-3 py-1 rounded-lg bg-[#101821] border border-senpay-border text-center">
+          <div className="px-3 py-1 rounded-lg bg-senpay-card border border-senpay-border text-center">
             <div className="text-[9px] text-senpay-text-muted uppercase">5G NR Masts</div>
             <div className="text-sm font-bold text-senpay-cyan">{stats.fiveGCount}</div>
           </div>
-          <div className="px-3 py-1 rounded-lg bg-[#101821] border border-senpay-border text-center">
+          <div className="px-3 py-1 rounded-lg bg-senpay-card border border-senpay-border text-center">
             <div className="text-[9px] text-senpay-text-muted uppercase">Avg CRS</div>
-            <div className="text-sm font-bold text-white">{stats.avgCrs} / 100</div>
+            <div className="text-sm font-bold text-senpay-text-primary">{stats.avgCrs} / 100</div>
           </div>
-          <div className="px-3 py-1 rounded-lg bg-[#101821] border border-senpay-border text-center">
+          <div className="px-3 py-1 rounded-lg bg-senpay-card border border-senpay-border text-center">
             <div className="text-[9px] text-senpay-text-muted uppercase">Critical Alerts</div>
-            <div className="text-sm font-bold text-rose-400">{stats.criticalCount}</div>
+            <div className="text-sm font-bold text-rose-500">{stats.criticalCount}</div>
           </div>
         </div>
       </div>
 
       {/* ── Map Operations Toolbar ── */}
-      <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-[#101821] border border-senpay-border text-xs font-mono">
+      <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-senpay-card border border-senpay-border text-xs font-mono">
         {/* Left: Dataset / Region Selector */}
         <div className="flex items-center gap-1.5 flex-wrap">
           <span className="text-slate-400 font-bold uppercase text-[10px] mr-1">Region:</span>
@@ -445,14 +445,14 @@ export default function MapViewPage({ zones = [], isLive = false }) {
           {selectedZone ? (
             /* ── Deep Site Detail & ML Inference View ── */
             <div className="space-y-3 animate-fade-in text-xs font-mono">
-              <div className="p-3.5 rounded-xl bg-[#101821] border border-senpay-border shadow-xl space-y-3">
+              <div className="p-3.5 rounded-xl bg-senpay-card border border-senpay-border shadow-xl space-y-3">
                 {/* Site Header */}
                 <div className="flex items-start justify-between pb-2 border-b border-senpay-border/60">
                   <div>
                     <span className="text-[10px] font-bold text-senpay-cyan uppercase tracking-wider">
                       {selectedZone.technology || '5G NR'} • CELL {selectedZone.cell_id || selectedZone.id}
                     </span>
-                    <h4 className="text-sm font-bold text-white leading-snug">
+                    <h4 className="text-sm font-bold text-senpay-text-primary leading-snug">
                       {selectedZone.name || selectedZone.site_id || selectedZone.id}
                     </h4>
                   </div>
@@ -612,7 +612,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
               {/* Action Buttons */}
               <button
                 onClick={() => setSelectedZone(null)}
-                className="w-full py-2 px-3 text-xs font-mono font-medium text-senpay-text-muted hover:text-white bg-[#101821] hover:bg-[#15202c] border border-senpay-border rounded-xl transition flex items-center justify-center gap-1.5"
+                className="w-full py-2 px-3 text-xs font-mono font-medium text-senpay-text-muted hover:text-senpay-text-primary bg-senpay-card hover:bg-senpay-panel border border-senpay-border rounded-xl transition flex items-center justify-center gap-1.5"
               >
                 <span>← Show All Sites</span>
               </button>
@@ -621,7 +621,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
                 onClick={() => {
                   window.location.hash = '#optimizer';
                 }}
-                className="w-full py-2 px-3 text-xs font-mono font-bold text-slate-950 bg-senpay-cyan hover:bg-cyan-300 rounded-xl transition flex items-center justify-center gap-1.5 shadow-lg shadow-senpay-cyan/15"
+                className="w-full py-2 px-3 text-xs font-mono font-bold text-slate-950 bg-senpay-cyan hover:opacity-90 rounded-xl transition flex items-center justify-center gap-1.5 shadow-sm"
               >
                 <span>Mitigate in Intervention Optimizer</span>
                 <ArrowRight size={13} />
@@ -640,7 +640,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
                   <div
                     key={s.id}
                     onClick={() => handleSelectSite(s)}
-                    className="p-2.5 rounded-xl bg-[#101821] border border-senpay-border/60 hover:border-senpay-cyan/60 hover:bg-[#14202c] cursor-pointer transition-all duration-200 group"
+                    className="p-2.5 rounded-xl bg-senpay-card border border-senpay-border/60 hover:border-senpay-cyan/60 hover:bg-senpay-panel cursor-pointer transition-all duration-200 group"
                   >
                     <div className="flex items-center gap-2.5">
                       <div

@@ -1,20 +1,24 @@
-// ═══════════════════════════════════════════════════════
+// ═════════════════════════════════════════════════════════════════
 // SENPAY Global Theme Provider & Token Engine
-// Supports 'obsidian' (Obsidian Dark) and 'high-contrast' (WCAG AAA)
-// ═══════════════════════════════════════════════════════
+// Exactly Two Themes: Light (Porcelain) & Dark (Obsidian)
+// Single Source of Truth for Centralized Design System
+// ═════════════════════════════════════════════════════════════════
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const THEME_STORAGE_KEY = 'senpay_theme';
 
 export const THEMES = {
-  OBSIDIAN: 'obsidian',
-  HIGH_CONTRAST: 'high-contrast',
+  LIGHT: 'light',
+  DARK: 'dark',
 };
 
 const ThemeContext = createContext({
-  theme: THEMES.OBSIDIAN,
+  theme: THEMES.DARK,
   setTheme: () => {},
+  toggleTheme: () => {},
+  isDark: true,
+  isLight: false,
   isHighContrast: false,
 });
 
@@ -23,24 +27,30 @@ export function ThemeProvider({ children }) {
     if (typeof window !== 'undefined') {
       try {
         const saved = localStorage.getItem(THEME_STORAGE_KEY);
-        if (saved && (saved === THEMES.OBSIDIAN || saved === THEMES.HIGH_CONTRAST)) {
+        if (saved === THEMES.LIGHT || saved === THEMES.DARK) {
           return saved;
+        }
+        // Migrate legacy theme keys
+        if (saved === 'high-contrast' || saved === 'obsidian') {
+          return THEMES.DARK;
         }
       } catch {
         // Local storage inaccessible
       }
     }
-    return THEMES.OBSIDIAN;
+    return THEMES.DARK;
   });
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
       const root = document.documentElement;
       root.setAttribute('data-theme', theme);
-      if (theme === THEMES.HIGH_CONTRAST) {
-        root.classList.add('theme-high-contrast');
+      if (theme === THEMES.LIGHT) {
+        root.classList.add('theme-light');
+        root.classList.remove('theme-dark', 'theme-high-contrast');
       } else {
-        root.classList.remove('theme-high-contrast');
+        root.classList.add('theme-dark');
+        root.classList.remove('theme-light', 'theme-high-contrast');
       }
     }
     try {
@@ -49,9 +59,13 @@ export function ThemeProvider({ children }) {
   }, [theme]);
 
   const setTheme = (newTheme) => {
-    if (newTheme === THEMES.OBSIDIAN || newTheme === THEMES.HIGH_CONTRAST) {
+    if (newTheme === THEMES.LIGHT || newTheme === THEMES.DARK) {
       setThemeState(newTheme);
     }
+  };
+
+  const toggleTheme = () => {
+    setThemeState((prev) => (prev === THEMES.LIGHT ? THEMES.DARK : THEMES.LIGHT));
   };
 
   return (
@@ -59,7 +73,10 @@ export function ThemeProvider({ children }) {
       value={{
         theme,
         setTheme,
-        isHighContrast: theme === THEMES.HIGH_CONTRAST,
+        toggleTheme,
+        isDark: theme === THEMES.DARK,
+        isLight: theme === THEMES.LIGHT,
+        isHighContrast: false,
       }}
     >
       {children}

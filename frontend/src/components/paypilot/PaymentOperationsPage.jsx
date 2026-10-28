@@ -79,11 +79,11 @@ export default function PaymentOperationsPage({
         {/* Mode Toggle */}
         <div className="flex items-center gap-2 self-start lg:self-center">
           <span className="text-[11px] font-mono text-senpay-text-secondary">Mode Toggle</span>
-          <div className="flex rounded-lg bg-[#101821] border border-senpay-border p-0.5 text-xs font-mono">
+          <div className="flex rounded-lg bg-senpay-panel border border-senpay-border p-0.5 text-xs font-mono">
             <button
               onClick={() => setMode('demo')}
               className={`px-3 py-1 rounded font-bold transition-all ${
-                mode === 'demo' ? 'bg-senpay-panel text-white' : 'text-senpay-text-muted hover:text-white'
+                mode === 'demo' ? 'bg-senpay-card text-senpay-text-primary shadow-sm' : 'text-senpay-text-muted hover:text-senpay-text-primary'
               }`}
             >
               DEMO
@@ -91,7 +91,7 @@ export default function PaymentOperationsPage({
             <button
               onClick={() => setMode('live')}
               className={`px-3 py-1 rounded font-bold transition-all ${
-                mode === 'live' ? 'bg-senpay-cyan text-[#0B1118]' : 'text-senpay-text-muted hover:text-white'
+                mode === 'live' ? 'bg-senpay-cyan text-white' : 'text-senpay-text-muted hover:text-senpay-text-primary'
               }`}
             >
               LIVE
@@ -449,7 +449,7 @@ export default function PaymentOperationsPage({
                 <button
                   onClick={handleVerifyRelease}
                   disabled={evaluating}
-                  className="w-full py-2.5 px-3 rounded-xl bg-senpay-cyan hover:bg-[#33EAFF] text-[#0B1118] font-mono font-black text-xs uppercase tracking-wider shadow-[0_0_15px_rgba(0,229,255,0.6)] flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                  className="w-full py-2.5 px-3 rounded-xl bg-senpay-cyan hover:opacity-90 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
                 >
                   {evaluating ? (
                     <>

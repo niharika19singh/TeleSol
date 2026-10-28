@@ -2,6 +2,7 @@
 // SENPAY — Operational Network Topology & Digital Twin Canvas
 // Professional Network Operations Center (NOC) Schematic Representation
 // Supports 3 Operational View Modes: Topology | Geographic | Incident Focus
+// Harmonized for Light (Porcelain) and Dark (Obsidian) Themes
 // ═════════════════════════════════════════════════════════════════
 
 import React, { useState } from 'react';
@@ -21,6 +22,7 @@ import {
   Compass,
   CheckCircle2
 } from 'lucide-react';
+import { useTheme } from '../../context/ThemeContext';
 
 export const TOPOLOGY_NODES = [
   {
@@ -201,6 +203,7 @@ export default function NetworkTopologyCanvas({
   onSelectNode,
   showMitigation = true
 }) {
+  const { isLight } = useTheme();
   const [viewMode, setViewMode] = useState('topology'); // 'topology' | 'geographic' | 'incident'
   const [showLabels, setShowLabels] = useState(true);
   const [activeInspector, setActiveInspector] = useState(selectedNodeId || 'SEC-VIP-C1');
@@ -212,21 +215,38 @@ export default function NetworkTopologyCanvas({
     if (onSelectNode) onSelectNode(node.id);
   };
 
+  // Theme-aware tokens for SVG canvas rendering
+  const palette = {
+    canvasBg: isLight ? '#F4F6F8' : '#000000',
+    gridStroke: isLight ? '#D5DDE5' : '#16222F',
+    border: isLight ? '#D5DDE5' : '#26323E',
+    nodeFill: isLight ? '#FFFFFF' : '#0A0D10',
+    nodeStroke: isLight ? '#D5DDE5' : '#26323E',
+    linkNeutral: isLight ? '#D5DDE5' : '#26323E',
+    linkElevated: isLight ? '#946200' : '#E8AD43',
+    linkCritical: isLight ? '#C62836' : '#E45B64',
+    accent: isLight ? '#007F95' : '#20C7D9',
+    success: isLight ? '#16794B' : '#39B980',
+    textPrimary: isLight ? '#17212B' : '#F1F5F9',
+    textMuted: isLight ? '#6B7A89' : '#758396',
+    tagBg: isLight ? '#EDF1F5' : '#10161D',
+  };
+
   return (
-    <div className="relative w-full h-full flex flex-col justify-between bg-[#0B1117] rounded-lg border border-[#293746] overflow-hidden select-none">
+    <div className="relative w-full h-full flex flex-col justify-between bg-senpay-bg rounded-lg border border-senpay-border overflow-hidden select-none transition-colors duration-150">
       {/* ── 1. Compact View Controls & Status Header ── */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-[#293746] bg-[#111A23]/90 text-xs">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-senpay-border bg-senpay-card text-xs">
         {/* Left: View Mode Selector */}
         <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-mono text-[#718297] uppercase mr-1 hidden sm:inline">
+          <span className="text-[10px] font-mono text-senpay-text-muted uppercase mr-1 hidden sm:inline">
             Mode:
           </span>
           <button
             onClick={() => setViewMode('topology')}
             className={`px-2.5 py-1 rounded text-[11px] font-mono transition ${
               viewMode === 'topology'
-                ? 'bg-[#15212C] text-[#35C7D9] border border-[#35C7D9]/40 font-bold'
-                : 'text-[#9AAABA] hover:text-[#E6EDF3] border border-transparent'
+                ? 'bg-senpay-panel text-senpay-cyan border border-senpay-cyan/40 font-bold'
+                : 'text-senpay-text-secondary hover:text-senpay-text-primary border border-transparent'
             }`}
           >
             Topology
@@ -235,8 +255,8 @@ export default function NetworkTopologyCanvas({
             onClick={() => setViewMode('geographic')}
             className={`px-2.5 py-1 rounded text-[11px] font-mono transition ${
               viewMode === 'geographic'
-                ? 'bg-[#15212C] text-[#35C7D9] border border-[#35C7D9]/40 font-bold'
-                : 'text-[#9AAABA] hover:text-[#E6EDF3] border border-transparent'
+                ? 'bg-senpay-panel text-senpay-cyan border border-senpay-cyan/40 font-bold'
+                : 'text-senpay-text-secondary hover:text-senpay-text-primary border border-transparent'
             }`}
           >
             Geographic Map
@@ -245,11 +265,11 @@ export default function NetworkTopologyCanvas({
             onClick={() => setViewMode('incident')}
             className={`px-2.5 py-1 rounded text-[11px] font-mono transition flex items-center gap-1 ${
               viewMode === 'incident'
-                ? 'bg-[#15212C] text-[#E45B64] border border-[#E45B64]/50 font-bold'
-                : 'text-[#9AAABA] hover:text-[#E6EDF3] border border-transparent'
+                ? 'bg-senpay-panel text-senpay-red border border-senpay-red/50 font-bold'
+                : 'text-senpay-text-secondary hover:text-senpay-text-primary border border-transparent'
             }`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#E45B64]" />
+            <span className="w-1.5 h-1.5 rounded-full bg-senpay-red" />
             <span>Incident Focus</span>
           </button>
         </div>
@@ -260,15 +280,15 @@ export default function NetworkTopologyCanvas({
             onClick={() => setShowLabels(!showLabels)}
             className={`text-[10px] font-mono px-2 py-0.5 rounded border transition ${
               showLabels
-                ? 'border-[#35C7D9]/40 text-[#35C7D9] bg-[#35C7D9]/10'
-                : 'border-[#293746] text-[#718297] hover:text-[#9AAABA]'
+                ? 'border-senpay-cyan/40 text-senpay-cyan bg-senpay-panel'
+                : 'border-senpay-border text-senpay-text-muted hover:text-senpay-text-secondary'
             }`}
           >
             Labels {showLabels ? 'ON' : 'OFF'}
           </button>
 
-          <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#39B980] border border-[#39B980]/30 px-2 py-0.5 rounded bg-[#39B980]/10">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#39B980]" />
+          <div className="flex items-center gap-1.5 text-[10px] font-mono text-senpay-green border border-senpay-green/30 px-2 py-0.5 rounded bg-senpay-panel">
+            <span className="w-1.5 h-1.5 rounded-full bg-senpay-green" />
             <span className="hidden md:inline">Sentinel Daemon: Connected</span>
             <span className="md:hidden">Sync</span>
           </div>
@@ -276,28 +296,28 @@ export default function NetworkTopologyCanvas({
       </div>
 
       {/* ── 2. Precise Schematic Canvas ── */}
-      <div className="relative flex-1 w-full min-h-[300px] bg-[#0B1117] overflow-hidden flex items-center justify-center">
-        {/* Subtle Engineering Grid Backdrop */}
+      <div className="relative flex-1 w-full min-h-[300px] bg-senpay-bg overflow-hidden flex items-center justify-center transition-colors duration-150">
+        {/* Engineering Grid Backdrop */}
         <svg
           className="absolute inset-0 w-full h-full pointer-events-none"
           xmlns="http://www.w3.org/2000/svg"
         >
           <defs>
-            <pattern id="techGrid" width="24" height="24" patternUnits="userSpaceOnUse">
-              <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#16222F" strokeWidth="0.8" />
+            <pattern id="techGridTheme" width="24" height="24" patternUnits="userSpaceOnUse">
+              <path d="M 24 0 L 0 0 0 24" fill="none" stroke={palette.gridStroke} strokeWidth="0.8" />
             </pattern>
           </defs>
-          <rect width="100%" height="100%" fill="url(#techGrid)" />
+          <rect width="100%" height="100%" fill="url(#techGridTheme)" />
         </svg>
 
         {/* Geographic Mode Backdrop Lines */}
         {viewMode === 'geographic' && (
-          <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-3 text-[9px] font-mono text-[#718297] opacity-60">
-            <div className="flex justify-between border-b border-[#1E2D3D] pb-1">
+          <div className="absolute inset-0 pointer-events-none flex flex-col justify-between p-3 text-[9px] font-mono text-senpay-text-muted opacity-75">
+            <div className="flex justify-between border-b border-senpay-border pb-1">
               <span>LAT 37.8200° N &bull; LON 122.4600° W</span>
               <span>METROPOLITAN CARRIER FOOTPRINT &bull; SCALE: 1:25,000</span>
             </div>
-            <div className="flex justify-between border-t border-[#1E2D3D] pt-1">
+            <div className="flex justify-between border-t border-senpay-border pt-1">
               <span>DATUM: WGS-84 &bull; PRECISION: &plusmn;2.5M</span>
               <span>TELECOM SITE SECTORS: 7 ACTIVE</span>
             </div>
@@ -313,13 +333,13 @@ export default function NetworkTopologyCanvas({
           <defs>
             {/* Arrowhead Markers */}
             <marker id="arrow-neutral" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto">
-              <path d="M 0 1 L 5 3 L 0 5 z" fill="#293746" />
+              <path d="M 0 1 L 5 3 L 0 5 z" fill={palette.linkNeutral} />
             </marker>
             <marker id="arrow-cyan" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto">
-              <path d="M 0 1 L 5 3 L 0 5 z" fill="#35C7D9" />
+              <path d="M 0 1 L 5 3 L 0 5 z" fill={palette.accent} />
             </marker>
             <marker id="arrow-red" viewBox="0 0 6 6" refX="5" refY="3" markerWidth="4" markerHeight="4" orient="auto">
-              <path d="M 0 1 L 5 3 L 0 5 z" fill="#E45B64" />
+              <path d="M 0 1 L 5 3 L 0 5 z" fill={palette.linkCritical} />
             </marker>
           </defs>
 
@@ -350,7 +370,7 @@ export default function NetworkTopologyCanvas({
                     y1={sy}
                     x2={tx}
                     y2={ty}
-                    stroke={isWestElevated ? '#E8AD43' : '#293746'}
+                    stroke={isWestElevated ? palette.linkElevated : palette.linkNeutral}
                     strokeWidth={isWestElevated ? 2 : 1.5}
                     strokeDasharray={isWestElevated ? '4 3' : 'none'}
                   />
@@ -358,7 +378,7 @@ export default function NetworkTopologyCanvas({
                     <text
                       x={(sx + tx) / 2}
                       y={(sy + ty) / 2 - 4}
-                      fill="#718297"
+                      fill={palette.textMuted}
                       fontSize="7.5"
                       fontFamily="monospace"
                       textAnchor="middle"
@@ -380,7 +400,7 @@ export default function NetworkTopologyCanvas({
                     y1={sy}
                     x2={tx}
                     y2={ty}
-                    stroke="#E45B64"
+                    stroke={palette.linkCritical}
                     strokeWidth="2.5"
                     strokeDasharray="6 3"
                   />
@@ -391,14 +411,14 @@ export default function NetworkTopologyCanvas({
                     width="80"
                     height="16"
                     rx="3"
-                    fill="#15212C"
-                    stroke="#E45B64"
+                    fill={palette.tagBg}
+                    stroke={palette.linkCritical}
                     strokeWidth="1"
                   />
                   <text
                     x={(sx + tx) / 2}
                     y={(sy + ty) / 2 + 2.5}
-                    fill="#E45B64"
+                    fill={palette.linkCritical}
                     fontSize="7.5"
                     fontWeight="bold"
                     fontFamily="monospace"
@@ -419,7 +439,7 @@ export default function NetworkTopologyCanvas({
                     y1={sy}
                     x2={tx}
                     y2={ty}
-                    stroke="#35C7D9"
+                    stroke={palette.accent}
                     strokeWidth="1.8"
                     strokeDasharray="4 3"
                     markerEnd="url(#arrow-cyan)"
@@ -462,7 +482,7 @@ export default function NetworkTopologyCanvas({
                     cy={ny}
                     r="16"
                     fill="none"
-                    stroke="#35C7D9"
+                    stroke={palette.accent}
                     strokeWidth="1.5"
                     strokeDasharray="3 2"
                   />
@@ -477,11 +497,11 @@ export default function NetworkTopologyCanvas({
                       width="20"
                       height="20"
                       rx="3"
-                      fill="#111A23"
-                      stroke={isSelected ? '#35C7D9' : '#293746'}
+                      fill={palette.nodeFill}
+                      stroke={isSelected ? palette.accent : palette.nodeStroke}
                       strokeWidth="1.8"
                     />
-                    <rect x={nx - 4} y={ny - 4} width="8" height="8" rx="1" fill="#39B980" />
+                    <rect x={nx - 4} y={ny - 4} width="8" height="8" rx="1" fill={palette.success} />
                   </g>
                 )}
 
@@ -491,15 +511,15 @@ export default function NetworkTopologyCanvas({
                       cx={nx}
                       cy={ny}
                       r="9"
-                      fill="#111A23"
-                      stroke={isElevated ? '#E8AD43' : isSelected ? '#35C7D9' : '#293746'}
+                      fill={palette.nodeFill}
+                      stroke={isElevated ? palette.linkElevated : isSelected ? palette.accent : palette.nodeStroke}
                       strokeWidth="1.8"
                     />
                     <circle
                       cx={nx}
                       cy={ny}
                       r="3.5"
-                      fill={isElevated ? '#E8AD43' : '#39B980'}
+                      fill={isElevated ? palette.linkElevated : palette.success}
                     />
                   </g>
                 )}
@@ -508,20 +528,20 @@ export default function NetworkTopologyCanvas({
                   <g>
                     <polygon
                       points={`${nx},${ny - 9} ${nx + 8},${ny + 5} ${nx - 8},${ny + 5}`}
-                      fill="#111A23"
-                      stroke={isCritical ? '#E45B64' : isSelected ? '#35C7D9' : '#293746'}
+                      fill={palette.nodeFill}
+                      stroke={isCritical ? palette.linkCritical : isSelected ? palette.accent : palette.nodeStroke}
                       strokeWidth="1.8"
                     />
                     <circle
                       cx={nx}
                       cy={ny + 1}
                       r="2.5"
-                      fill={isCritical ? '#E45B64' : '#39B980'}
+                      fill={isCritical ? palette.linkCritical : palette.success}
                     />
-                    {/* Critical Incident Badge */}
+                    {/* Critical Incident Marker */}
                     {isCritical && (
                       <g>
-                        <circle cx={nx + 9} cy={ny - 9} r="4.5" fill="#E45B64" />
+                        <circle cx={nx + 9} cy={ny - 9} r="4.5" fill={palette.linkCritical} />
                         <text
                           x={nx + 9}
                           y={ny - 7}
@@ -542,11 +562,11 @@ export default function NetworkTopologyCanvas({
                   <g>
                     <polygon
                       points={`${nx},${ny - 10} ${nx + 10},${ny} ${nx},${ny + 10} ${nx - 10},${ny}`}
-                      fill="#15212C"
-                      stroke="#35C7D9"
+                      fill={palette.tagBg}
+                      stroke={palette.accent}
                       strokeWidth="1.8"
                     />
-                    <circle cx={nx} cy={ny} r="2.5" fill="#35C7D9" />
+                    <circle cx={nx} cy={ny} r="2.5" fill={palette.accent} />
                   </g>
                 )}
 
@@ -556,7 +576,7 @@ export default function NetworkTopologyCanvas({
                     <text
                       x={nx}
                       y={ny + 18}
-                      fill={isCritical ? '#E45B64' : isSelected ? '#35C7D9' : '#E6EDF3'}
+                      fill={isCritical ? palette.linkCritical : isSelected ? palette.accent : palette.textPrimary}
                       fontSize="8"
                       fontWeight={isCritical || isSelected ? 'bold' : 'normal'}
                       fontFamily="monospace"
@@ -567,7 +587,7 @@ export default function NetworkTopologyCanvas({
                     <text
                       x={nx}
                       y={ny + 26}
-                      fill="#718297"
+                      fill={palette.textMuted}
                       fontSize="6.5"
                       fontFamily="monospace"
                       textAnchor="middle"
@@ -583,46 +603,46 @@ export default function NetworkTopologyCanvas({
 
         {/* ── 3. Embedded Compact Technical Inspector Tray ── */}
         {selectedNode && (
-          <div className="absolute bottom-2 right-2 max-w-[280px] w-full p-2.5 rounded bg-[#111A23]/95 border border-[#293746] shadow-xl text-xs font-mono backdrop-blur-sm z-20">
-            <div className="flex items-center justify-between pb-1.5 border-b border-[#293746] mb-2">
+          <div className="absolute bottom-2 right-2 max-w-[280px] w-full p-2.5 rounded bg-senpay-card border border-senpay-border shadow-lg text-xs font-mono z-20 transition-colors duration-150">
+            <div className="flex items-center justify-between pb-1.5 border-b border-senpay-border mb-2">
               <div className="flex items-center gap-1.5">
                 <span className={`w-2 h-2 rounded-full ${
-                  selectedNode.status === 'CRITICAL' ? 'bg-[#E45B64]' :
-                  selectedNode.status === 'ELEVATED' ? 'bg-[#E8AD43]' :
-                  selectedNode.status === 'RECOMMENDED' ? 'bg-[#35C7D9]' : 'bg-[#39B980]'
+                  selectedNode.status === 'CRITICAL' ? 'bg-senpay-red' :
+                  selectedNode.status === 'ELEVATED' ? 'bg-senpay-amber' :
+                  selectedNode.status === 'RECOMMENDED' ? 'bg-senpay-cyan' : 'bg-senpay-green'
                 }`} />
-                <span className="font-bold text-[#E6EDF3] text-[11px]">{selectedNode.id}</span>
+                <span className="font-bold text-senpay-text-primary text-[11px]">{selectedNode.id}</span>
               </div>
               <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
-                selectedNode.status === 'CRITICAL' ? 'bg-[#E45B64]/20 text-[#E45B64] border border-[#E45B64]/40' :
-                selectedNode.status === 'ELEVATED' ? 'bg-[#E8AD43]/20 text-[#E8AD43] border border-[#E8AD43]/40' :
-                selectedNode.status === 'RECOMMENDED' ? 'bg-[#35C7D9]/20 text-[#35C7D9] border border-[#35C7D9]/40' :
-                'bg-[#39B980]/20 text-[#39B980] border border-[#39B980]/40'
+                selectedNode.status === 'CRITICAL' ? 'bg-senpay-red/15 text-senpay-red border border-senpay-red/40' :
+                selectedNode.status === 'ELEVATED' ? 'bg-senpay-amber/15 text-senpay-amber border border-senpay-amber/40' :
+                selectedNode.status === 'RECOMMENDED' ? 'bg-senpay-cyan/15 text-senpay-cyan border border-senpay-cyan/40' :
+                'bg-senpay-green/15 text-senpay-green border border-senpay-green/40'
               }`}>
                 {selectedNode.status}
               </span>
             </div>
 
-            <div className="space-y-1 text-[10px] text-[#9AAABA]">
+            <div className="space-y-1 text-[10px] text-senpay-text-secondary">
               <div className="flex justify-between">
-                <span className="text-[#718297]">Role:</span>
-                <span className="text-[#E6EDF3] font-semibold">{selectedNode.name}</span>
+                <span className="text-senpay-text-muted">Role:</span>
+                <span className="text-senpay-text-primary font-semibold">{selectedNode.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#718297]">Congestion Risk:</span>
-                <span className={selectedNode.crs >= 65 ? 'text-[#E45B64] font-bold' : 'text-[#39B980]'}>
+                <span className="text-senpay-text-muted">Congestion Risk:</span>
+                <span className={selectedNode.crs >= 65 ? 'text-senpay-red font-bold' : 'text-senpay-green'}>
                   {selectedNode.crs.toFixed(1)} / 100
                 </span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#718297]">Latency &bull; Loss:</span>
-                <span className="text-[#E6EDF3]">{selectedNode.latency} &bull; {selectedNode.loss}</span>
+                <span className="text-senpay-text-muted">Latency &bull; Loss:</span>
+                <span className="text-senpay-text-primary">{selectedNode.latency} &bull; {selectedNode.loss}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-[#718297]">Coordinates:</span>
-                <span className="text-[#718297]">{selectedNode.lat}, {selectedNode.lon}</span>
+                <span className="text-senpay-text-muted">Coordinates:</span>
+                <span className="text-senpay-text-muted">{selectedNode.lat}, {selectedNode.lon}</span>
               </div>
-              <div className="pt-1 border-t border-[#293746]/60 text-[9px] text-[#718297] leading-tight">
+              <div className="pt-1 border-t border-senpay-border/60 text-[9px] text-senpay-text-muted leading-tight">
                 {selectedNode.provenance}
               </div>
             </div>
@@ -631,27 +651,27 @@ export default function NetworkTopologyCanvas({
       </div>
 
       {/* ── 4. Technical Legend Footer ── */}
-      <div className="flex items-center justify-between px-3 py-1.5 border-t border-[#293746] bg-[#111A23] text-[10px] font-mono text-[#718297]">
+      <div className="flex items-center justify-between px-3 py-1.5 border-t border-senpay-border bg-senpay-card text-[10px] font-mono text-senpay-text-muted">
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-1">
-            <span className="w-2.5 h-2.5 rounded-sm border border-[#293746] bg-[#111A23] inline-block" />
+            <span className="w-2.5 h-2.5 rounded-sm border border-senpay-border bg-senpay-panel inline-block" />
             <span>Gateway</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rounded-full border border-[#293746] bg-[#111A23] inline-block" />
+            <span className="w-2 h-2 rounded-full border border-senpay-border bg-senpay-panel inline-block" />
             <span>Base Station</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="w-0 h-0 border-l-[3.5px] border-l-transparent border-r-[3.5px] border-r-transparent border-b-[6px] border-b-[#E45B64] inline-block" />
+            <span className="w-0 h-0 border-l-[3.5px] border-l-transparent border-r-[3.5px] border-r-transparent border-b-[6px] border-b-senpay-red inline-block" />
             <span>Affected Sector</span>
           </div>
           <div className="flex items-center gap-1">
-            <span className="w-2 h-2 rotate-45 border border-[#35C7D9] bg-[#15212C] inline-block" />
+            <span className="w-2 h-2 rotate-45 border border-senpay-cyan bg-senpay-panel inline-block" />
             <span>Mitigation Slice</span>
           </div>
         </div>
 
-        <div className="hidden sm:flex items-center gap-1 text-[#9AAABA]">
+        <div className="hidden sm:flex items-center gap-1 text-senpay-text-secondary">
           <span>Click any node to inspect telemetry</span>
         </div>
       </div>

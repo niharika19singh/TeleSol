@@ -9,18 +9,49 @@
    Reference Design System & Tokens
    ═══════════════════════════════════════════ */
 
-:root {
-  --senpay-bg: #0B1117;
-  --senpay-sidebar: #0E1620;
-  --senpay-card: #111A23;
-  --senpay-panel: #15212C;
-  --senpay-border: #293746;
-  --senpay-border-light: #364B5F;
-  --senpay-cyan: #35C7D9;
+:root,
+[data-theme="dark"],
+.theme-dark {
+  --senpay-bg: #000000;
+  --senpay-sidebar: #0A0D10;
+  --senpay-card: #0A0D10;
+  --senpay-panel: #10161D;
+  --senpay-elevated: #151D26;
+  --senpay-border: #26323E;
+  --senpay-border-light: #344353;
+  --senpay-text-primary: #F1F5F9;
+  --senpay-text-secondary: #A7B3C2;
+  --senpay-text-muted: #758396;
+  --senpay-cyan: #20C7D9;
+  --senpay-accent: #20C7D9;
   --senpay-amber: #E8AD43;
   --senpay-red: #E45B64;
   --senpay-green: #39B980;
   --senpay-violet: #8B5CF6;
+  --senpay-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+  --senpay-grid-stroke: #16222F;
+}
+
+[data-theme="light"],
+.theme-light {
+  --senpay-bg: #F4F6F8;
+  --senpay-sidebar: #FFFFFF;
+  --senpay-card: #FFFFFF;
+  --senpay-panel: #EDF1F5;
+  --senpay-elevated: #E5EBF0;
+  --senpay-border: #D5DDE5;
+  --senpay-border-light: #B8C6D4;
+  --senpay-text-primary: #17212B;
+  --senpay-text-secondary: #526171;
+  --senpay-text-muted: #6B7A89;
+  --senpay-cyan: #007F95;
+  --senpay-accent: #007F95;
+  --senpay-amber: #946200;
+  --senpay-red: #C62836;
+  --senpay-green: #16794B;
+  --senpay-violet: #6D28D9;
+  --senpay-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --senpay-grid-stroke: #D5DDE5;
 }
 
 * {
@@ -29,32 +60,35 @@
 }
 
 body {
-  background-color: #0B1118;
-  color: #F1F5F9;
+  background-color: var(--senpay-bg);
+  color: var(--senpay-text-primary);
   font-family: 'Inter', system-ui, sans-serif;
   overflow-x: hidden;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 /* ── Custom Scrollbar ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #101821; }
-::-webkit-scrollbar-thumb { background: #1E2D3D; border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: #2A3F55; }
+::-webkit-scrollbar-track { background: var(--senpay-panel); }
+::-webkit-scrollbar-thumb { background: var(--senpay-border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--senpay-border-light); }
 
 /* ── Card & Panel Primitives ── */
 @layer components {
   .senpay-card {
-    background-color: #111A23;
-    border: 1px solid #293746;
+    background-color: var(--senpay-card);
+    border: 1px solid var(--senpay-border);
     border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.35);
+    box-shadow: var(--senpay-card-shadow);
     position: relative;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
   }
 
   .senpay-card-elevated {
-    background-color: #15212C;
-    border: 1px solid #364B5F;
+    background-color: var(--senpay-panel);
+    border: 1px solid var(--senpay-border);
     border-radius: 8px;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
   }
 
   .senpay-glow-cyan {
@@ -448,25 +482,25 @@ input[type="range"]::-moz-range-thumb {
   display: flex;
   align-items: center;
   gap: 3px;
-  background: rgba(11, 17, 24, 0.94);
-  border: 1px solid #1E2D3D;
+  background: var(--senpay-card);
+  border: 1px solid var(--senpay-border);
   border-radius: 4px;
   padding: 1px 4px;
   margin-top: 2px;
   font-family: monospace;
   font-size: 8.5px;
   font-weight: 600;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   white-space: nowrap;
 }
 
 .badge-id {
-  color: #F1F5F9;
+  color: var(--senpay-text-primary);
 }
 
 .badge-tech {
-  background: rgba(0, 229, 255, 0.15);
-  color: #00E5FF;
+  background: var(--senpay-panel);
+  color: var(--senpay-cyan);
   padding: 0 2px;
   border-radius: 2px;
   font-size: 7.5px;
@@ -478,76 +512,73 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* ═══════════════════════════════════════════
-   HIGH CONTRAST THEME (WCAG AAA Optimized)
+   LIGHT THEME (Porcelain) — Surface Overrides
    ═══════════════════════════════════════════ */
-[data-theme="high-contrast"],
-.theme-high-contrast {
-  --senpay-bg: #000000;
-  --senpay-sidebar: #05080C;
-  --senpay-card: #0A0F16;
-  --senpay-panel: #111A24;
-  --senpay-border: #4A607A;
-  --senpay-cyan: #38BDF8;
-  --senpay-amber: #FBBF24;
-  --senpay-red: #F87171;
-  --senpay-green: #4ADE80;
-  --senpay-violet: #C084FC;
-  background-color: #000000 !important;
-  color: #FFFFFF !important;
+[data-theme="light"],
+.theme-light {
+  color-scheme: light;
 }
 
-[data-theme="high-contrast"] body,
-.theme-high-contrast body {
-  background-color: #000000 !important;
-  color: #FFFFFF !important;
+[data-theme="light"] .leaflet-tile,
+.theme-light .leaflet-tile {
+  filter: none !important;
 }
 
-[data-theme="high-contrast"] .senpay-card,
-.theme-high-contrast .senpay-card {
-  background-color: #0A0F16 !important;
-  border-color: #4A607A !important;
-  box-shadow: 0 0 0 1px #4A607A, 0 4px 20px rgba(0, 0, 0, 0.9) !important;
+[data-theme="light"] .leaflet-container,
+.theme-light .leaflet-container {
+  background: #EDF1F5 !important;
 }
 
-[data-theme="high-contrast"] .senpay-card-elevated,
-.theme-high-contrast .senpay-card-elevated {
-  background-color: #111A24 !important;
-  border-color: #5D7A9E !important;
+[data-theme="light"] .leaflet-popup-content-wrapper,
+.theme-light .leaflet-popup-content-wrapper {
+  background: #FFFFFF !important;
+  color: #17212B !important;
+  border: 1px solid #D5DDE5 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
 }
 
-[data-theme="high-contrast"] header,
-.theme-high-contrast header {
-  background-color: #05080C !important;
-  border-color: #4A607A !important;
+[data-theme="light"] .leaflet-popup-tip,
+.theme-light .leaflet-popup-tip {
+  background: #FFFFFF !important;
 }
 
-[data-theme="high-contrast"] aside,
-.theme-high-contrast aside {
-  background-color: #05080C !important;
-  border-color: #4A607A !important;
+[data-theme="light"] .leaflet-popup-close-button,
+.theme-light .leaflet-popup-close-button {
+  color: #526171 !important;
 }
 
-[data-theme="high-contrast"] button:focus-visible,
-.theme-high-contrast button:focus-visible {
-  outline: 2px solid #38BDF8 !important;
+[data-theme="light"] input,
+[data-theme="light"] select,
+[data-theme="light"] textarea,
+.theme-light input,
+.theme-light select,
+.theme-light textarea {
+  background-color: #FFFFFF !important;
+  border-color: #D5DDE5 !important;
+  color: #17212B !important;
+}
+
+[data-theme="light"] input::placeholder,
+.theme-light input::placeholder {
+  color: #6B7A89 !important;
+}
+
+[data-theme="light"] button:focus-visible,
+.theme-light button:focus-visible {
+  outline: 2px solid #007F95 !important;
   outline-offset: 2px !important;
 }
 
-[data-theme="high-contrast"] input,
-[data-theme="high-contrast"] select,
-.theme-high-contrast input,
-.theme-high-contrast select {
-  background-color: #05080C !important;
-  border-color: #4A607A !important;
-  color: #FFFFFF !important;
+/* ═══════════════════════════════════════════
+   DARK THEME (Obsidian) — Surface Overrides
+   ═══════════════════════════════════════════ */
+[data-theme="dark"],
+.theme-dark {
+  color-scheme: dark;
 }
 
-[data-theme="high-contrast"] .text-senpay-text-muted,
-.theme-high-contrast .text-senpay-text-muted {
-  color: #94A3B8 !important;
-}
-
-[data-theme="high-contrast"] .text-senpay-text-secondary,
-.theme-high-contrast .text-senpay-text-secondary {
-  color: #E2E8F0 !important;
+[data-theme="dark"] button:focus-visible,
+.theme-dark button:focus-visible {
+  outline: 2px solid #20C7D9 !important;
+  outline-offset: 2px !important;
 }

@@ -1,23 +1,26 @@
 import React, { useState } from 'react';
 import {
   ArrowRight, ShieldCheck, Zap, Activity, CheckCircle2,
-  ChevronDown, ExternalLink, Play, Lock, AlertTriangle, Layers
+  ChevronDown, ExternalLink, Play, Lock, AlertTriangle, Layers,
+  Sun, Moon
 } from 'lucide-react';
 import SenPayLogo from '../shared/SenPayLogo';
 import HeroOperationsReplay from './HeroOperationsReplay';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function SenPayLandingPage({ onLaunchConsole }) {
   const [demoMode, setDemoMode] = useState(true);
+  const { theme, toggleTheme, isLight } = useTheme();
 
   return (
-    <div className="min-h-screen bg-[#0B1118] text-[#F1F5F9] font-sans relative overflow-x-hidden">
+    <div className="min-h-screen bg-senpay-bg text-senpay-text-primary font-sans relative overflow-x-hidden transition-colors duration-150">
       {/* ── Background Grid & Ambient Lighting ── */}
       <div className="absolute inset-0 senpay-grid-pattern opacity-40 pointer-events-none" />
       <div className="absolute top-0 right-1/4 w-[600px] h-[400px] bg-senpay-cyan/10 rounded-full blur-[140px] pointer-events-none" />
       <div className="absolute top-1/3 left-10 w-[500px] h-[500px] bg-senpay-violet/10 rounded-full blur-[160px] pointer-events-none" />
 
       {/* ── Top Navigation Bar ── */}
-      <header className="sticky top-0 z-50 h-16 bg-[#0B1118]/90 backdrop-blur-md border-b border-senpay-border/60 px-6 lg:px-12 flex items-center justify-between">
+      <header className="sticky top-0 z-50 h-16 bg-senpay-bg/90 backdrop-blur-md border-b border-senpay-border/60 px-6 lg:px-12 flex items-center justify-between">
         {/* Brand */}
         <div className="flex items-center gap-4">
           <SenPayLogo size="default" showSubtitle={true} />
@@ -25,45 +28,62 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
 
         {/* Navigation Links */}
         <nav className="hidden lg:flex items-center gap-6 text-xs font-mono text-senpay-text-secondary">
-          <div className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors">
+          <div className="flex items-center gap-1 hover:text-senpay-text-primary cursor-pointer transition-colors">
             <span>Product</span>
             <ChevronDown size={12} className="opacity-70" />
           </div>
-          <div className="flex items-center gap-1 hover:text-white cursor-pointer transition-colors">
+          <div className="flex items-center gap-1 hover:text-senpay-text-primary cursor-pointer transition-colors">
             <span>Technology</span>
             <ChevronDown size={12} className="opacity-70" />
           </div>
           <button
             onClick={() => onLaunchConsole('digital_twin')}
-            className="hover:text-white transition-colors"
+            className="hover:text-senpay-text-primary transition-colors"
           >
             Network Digital Twin
           </button>
-          <a href="#capabilities" className="hover:text-white transition-colors">
+          <a href="#capabilities" className="hover:text-senpay-text-primary transition-colors">
             Capabilities
           </a>
           <a
             href="https://telesol-sentinel-api.onrender.com/docs"
             target="_blank"
             rel="noopener noreferrer"
-            className="hover:text-white transition-colors"
+            className="hover:text-senpay-text-primary transition-colors"
           >
             Docs
           </a>
         </nav>
 
         {/* Right Action Elements */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2.5">
           {/* App Status Live */}
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0A1A17] border border-senpay-green/40 text-[10px] font-mono text-senpay-green font-bold">
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-senpay-panel border border-senpay-green/40 text-[10px] font-mono text-senpay-green font-bold">
             <span className="w-1.5 h-1.5 rounded-full bg-senpay-green animate-pulse" />
             <span>App Status: Active (LIVE)</span>
           </div>
 
+          {/* Theme Switcher Toggle (Light Porcelain / Dark Obsidian) */}
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 px-2 rounded-lg border border-senpay-border bg-senpay-panel hover:bg-senpay-elevated text-senpay-text-secondary hover:text-senpay-text-primary transition flex items-center gap-1.5 text-xs font-mono"
+            title={`Switch to ${isLight ? 'Obsidian Dark' : 'Porcelain Light'} theme`}
+            aria-label="Toggle theme"
+          >
+            {isLight ? (
+              <Moon size={14} className="text-senpay-cyan" />
+            ) : (
+              <Sun size={14} className="text-senpay-amber" />
+            )}
+            <span className="hidden md:inline text-[10px] font-bold uppercase tracking-wider">
+              {isLight ? 'Dark' : 'Light'}
+            </span>
+          </button>
+
           {/* Demo Mode Toggle */}
           <button
             onClick={() => setDemoMode(!demoMode)}
-            className="px-2.5 py-1 rounded-full bg-senpay-amber text-[#0B1118] text-[10px] font-black font-mono uppercase tracking-wider shadow-[0_0_10px_rgba(255,184,0,0.5)] flex items-center gap-1"
+            className="px-2.5 py-1 rounded-full bg-senpay-amber text-[#0B1118] text-[10px] font-black font-mono uppercase tracking-wider shadow-[0_0_10px_rgba(255,184,0,0.4)] flex items-center gap-1"
           >
             <span>DEMO MODE</span>
           </button>
@@ -71,7 +91,7 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
           {/* Sign In Button */}
           <button
             onClick={() => onLaunchConsole('login')}
-            className="py-1.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-mono font-medium text-xs tracking-wider transition-all"
+            className="py-1.5 px-3 rounded-xl bg-senpay-panel hover:bg-senpay-elevated text-senpay-text-primary border border-senpay-border font-mono font-medium text-xs tracking-wider transition-all"
           >
             Sign In
           </button>
@@ -79,7 +99,7 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
           {/* Launch Console CTA Button */}
           <button
             onClick={() => onLaunchConsole('command_center')}
-            className="py-1.5 px-4 rounded-xl bg-senpay-cyan hover:bg-[#33EAFF] text-[#0B1118] font-mono font-black text-xs tracking-wider uppercase shadow-[0_0_16px_rgba(0,229,255,0.6)] transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+            className={`py-1.5 px-4 rounded-xl bg-senpay-cyan hover:opacity-90 ${isLight ? 'text-white' : 'text-black'} font-mono font-black text-xs tracking-wider uppercase shadow-[0_0_16px_rgba(0,229,255,0.4)] transition-all transform hover:scale-[1.02] active:scale-[0.98]`}
           >
             Launch Console
           </button>
@@ -92,13 +112,13 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
           {/* Left Column: Headline, Copy, CTAs, Partners */}
           <div className="lg:col-span-6 space-y-6">
             {/* Super Header Tagline */}
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#151F2A] border border-senpay-border text-xs font-mono text-senpay-cyan">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-senpay-panel border border-senpay-border text-xs font-mono text-senpay-cyan">
               <span className="w-1.5 h-1.5 rounded-full bg-senpay-cyan animate-pulse" />
               <span>HSK Chain Horizon Hackathon • Agent Payments (HSP) Track</span>
             </div>
 
             {/* Massive Bold Headline */}
-            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black font-display text-white tracking-tight leading-[1.12]">
+            <h1 className="text-3xl sm:text-4xl lg:text-5xl font-black font-display text-senpay-text-primary tracking-tight leading-[1.12]">
               THE{' '}
               <span className="relative inline-block text-senpay-cyan">
                 AUTONOMOUS PROCUREMENT
@@ -130,7 +150,7 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
               {/* Primary CTA */}
               <button
                 onClick={() => onLaunchConsole('command_center')}
-                className="py-3 px-6 rounded-xl bg-senpay-cyan hover:bg-[#33EAFF] text-[#0B1118] font-mono font-black text-sm tracking-wider uppercase shadow-[0_0_24px_rgba(0,229,255,0.6)] transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                className={`py-3 px-6 rounded-xl bg-senpay-cyan hover:opacity-90 ${isLight ? 'text-white' : 'text-black'} font-mono font-black text-sm tracking-wider uppercase shadow-[0_0_24px_rgba(0,229,255,0.4)] transition-all transform hover:scale-[1.02] active:scale-[0.98]`}
               >
                 Get Started Now
               </button>
@@ -138,7 +158,7 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
               {/* Secondary CTA */}
               <button
                 onClick={() => onLaunchConsole('operations')}
-                className="flex items-center gap-2 text-white hover:text-senpay-cyan font-mono text-sm font-semibold transition-colors group"
+                className="flex items-center gap-2 text-senpay-text-primary hover:text-senpay-cyan font-mono text-sm font-semibold transition-colors group"
               >
                 <span>Explore Interactive Demo</span>
                 <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
@@ -152,25 +172,25 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
               </span>
               <div className="flex items-center gap-8 text-senpay-text-secondary">
                 {/* Velo */}
-                <div className="flex items-center gap-2 font-display font-bold text-sm tracking-wide hover:text-white transition-colors">
+                <div className="flex items-center gap-2 font-display font-bold text-sm tracking-wide hover:text-senpay-text-primary transition-colors">
                   <span className="text-senpay-red font-black">V</span>
                   <span>Velo</span>
                 </div>
 
                 {/* Apex */}
-                <div className="flex items-center gap-2 font-display font-bold text-sm tracking-wide hover:text-white transition-colors">
+                <div className="flex items-center gap-2 font-display font-bold text-sm tracking-wide hover:text-senpay-text-primary transition-colors">
                   <span className="text-senpay-cyan font-black">▲</span>
                   <span>Apex</span>
                 </div>
 
                 {/* Alt-Net */}
-                <div className="flex items-center gap-2 font-display font-bold text-sm tracking-wide hover:text-white transition-colors">
+                <div className="flex items-center gap-2 font-display font-bold text-sm tracking-wide hover:text-senpay-text-primary transition-colors">
                   <span className="text-senpay-green font-black">☰</span>
                   <span>Alt-Net</span>
                 </div>
 
                 {/* HSK */}
-                <div className="flex items-center gap-2 font-display font-bold text-sm tracking-wide hover:text-white transition-colors">
+                <div className="flex items-center gap-2 font-display font-bold text-sm tracking-wide hover:text-senpay-text-primary transition-colors">
                   <span className="text-senpay-violet font-black">◆</span>
                   <span>HSK</span>
                 </div>
@@ -200,7 +220,7 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
               <div className="text-[10px] font-mono text-senpay-cyan mb-3">
                 DETECT → ANALYZE → SIMULATE → SELECT → AUTHORIZE → PROCURE → LEARN
               </div>
-              <h3 className="text-xl font-bold font-display text-white mb-2 group-hover:text-senpay-cyan transition-colors">
+              <h3 className="text-xl font-bold font-display text-senpay-text-primary mb-2 group-hover:text-senpay-cyan transition-colors">
                 Sentinel Intelligence
               </h3>
               <p className="text-xs text-senpay-text-secondary leading-relaxed mb-6">
@@ -209,8 +229,8 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
             </div>
 
             {/* Embedded Mini Widget: Wave curve with CRS */}
-            <div className="p-3 rounded-xl bg-[#0E1520] border border-senpay-border flex items-center justify-between">
-              <span className="px-2 py-0.5 rounded bg-senpay-panel text-[10px] font-mono text-senpay-cyan font-bold">
+            <div className="p-3 rounded-xl bg-senpay-panel border border-senpay-border flex items-center justify-between">
+              <span className="px-2 py-0.5 rounded bg-senpay-elevated text-[10px] font-mono text-senpay-cyan font-bold">
                 CRS
               </span>
               <svg className="w-28 h-6" viewBox="0 0 100 20" fill="none">
@@ -233,7 +253,7 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
               <div className="text-[10px] font-mono text-senpay-amber mb-3">
                 DETECT → ANALYZE → SIMULATE → SELECT → AUTHORIZE → PROCURE → LEARN
               </div>
-              <h3 className="text-xl font-bold font-display text-white mb-2 group-hover:text-senpay-amber transition-colors">
+              <h3 className="text-xl font-bold font-display text-senpay-text-primary mb-2 group-hover:text-senpay-amber transition-colors">
                 PayPilot Payments
               </h3>
               <p className="text-xs text-senpay-text-secondary leading-relaxed mb-6">
@@ -242,9 +262,9 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
             </div>
 
             {/* Embedded Mini Widget: Wallet delegation pill */}
-            <div className="p-3 rounded-xl bg-[#0E1520] border border-senpay-border flex items-center justify-between">
+            <div className="p-3 rounded-xl bg-senpay-panel border border-senpay-border flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <div className="px-2 py-0.5 rounded bg-[#10292B] border border-senpay-teal text-[10px] font-mono font-bold text-senpay-teal">
+                <div className="px-2 py-0.5 rounded bg-senpay-elevated border border-senpay-teal text-[10px] font-mono font-bold text-senpay-teal">
                   WEST_REG_AGT
                 </div>
                 <CheckCircle2 size={13} className="text-senpay-green" />
@@ -267,7 +287,7 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
               <div className="text-[10px] font-mono text-senpay-green mb-3">
                 DETECT → ANALYZE → SIMULATE → SELECT → AUTHORIZE → PROCURE → LEARN
               </div>
-              <h3 className="text-xl font-bold font-display text-white mb-2 group-hover:text-senpay-green transition-colors">
+              <h3 className="text-xl font-bold font-display text-senpay-text-primary mb-2 group-hover:text-senpay-green transition-colors">
                 Verified Outcomes
               </h3>
               <p className="text-xs text-senpay-text-secondary leading-relaxed mb-6">
@@ -276,7 +296,7 @@ export default function SenPayLandingPage({ onLaunchConsole }) {
             </div>
 
             {/* Embedded Mini Widget: Outcome Badges */}
-            <div className="p-3 rounded-xl bg-[#0E1520] border border-senpay-border flex items-center justify-between gap-2">
+            <div className="p-3 rounded-xl bg-senpay-panel border border-senpay-border flex items-center justify-between gap-2">
               <div className="flex items-center gap-1 text-[10px] font-mono text-senpay-green font-bold">
                 <CheckCircle2 size={12} />
                 <span>Escrow Released</span>

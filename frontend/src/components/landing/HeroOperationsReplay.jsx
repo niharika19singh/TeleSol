@@ -137,7 +137,7 @@ export const STAGES = [
 ];
 
 export default function HeroOperationsReplay({ onLaunchConsole }) {
-  const { isHighContrast } = useTheme();
+  const { isHighContrast, isLight } = useTheme();
   const [currentStageIndex, setCurrentStageIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
@@ -211,19 +211,19 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
 
   return (
     <div 
-      className="relative w-full max-w-[620px] rounded-2xl bg-[#0D1520] border border-senpay-border shadow-[0_20px_50px_rgba(0,0,0,0.65)] overflow-hidden font-mono select-none"
+      className="relative w-full max-w-[620px] rounded-2xl bg-senpay-card border border-senpay-border shadow-2xl overflow-hidden font-mono select-none text-senpay-text-primary"
       role="region"
       aria-label="Interactive Autonomous Telecom Procurement Decision Replay"
     >
       {/* ── 1. Top Operational Replay Header ── */}
-      <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 bg-[#0A0F16] border-b border-senpay-border/80 text-xs">
+      <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2.5 bg-senpay-panel border-b border-senpay-border text-xs">
         {/* Left: Replay Status Pill */}
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-senpay-cyan/15 border border-senpay-cyan/40 text-[10px] text-senpay-cyan font-bold">
             <span className={`w-1.5 h-1.5 rounded-full bg-senpay-cyan ${isPlaying && !isMotionSuppressed ? 'animate-pulse' : ''}`} />
             <span>OPERATIONAL DECISION REPLAY</span>
           </div>
-          <span className="text-[10px] text-slate-400 hidden sm:inline">
+          <span className="text-[10px] text-senpay-text-muted hidden sm:inline">
             {data.runbookLabel}
           </span>
         </div>
@@ -232,7 +232,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
         <div className="flex items-center gap-1">
           <button
             onClick={() => setCurrentStageIndex((p) => (p - 1 + STAGES.length) % STAGES.length)}
-            className="p-1 rounded bg-[#131D2A] hover:bg-[#1A283A] text-slate-300 hover:text-white transition focus-visible:ring-1 focus-visible:ring-senpay-cyan"
+            className="p-1 rounded bg-senpay-elevated hover:bg-senpay-card border border-senpay-border/60 text-senpay-text-secondary hover:text-senpay-text-primary transition focus-visible:ring-1 focus-visible:ring-senpay-cyan"
             title="Step back to previous stage (Left Arrow)"
             aria-label="Previous Stage"
           >
@@ -240,7 +240,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
           </button>
           <button
             onClick={() => setIsPlaying(!isPlaying)}
-            className="p-1 px-1.5 rounded bg-[#131D2A] hover:bg-[#1A283A] text-slate-300 hover:text-white transition flex items-center gap-1 focus-visible:ring-1 focus-visible:ring-senpay-cyan"
+            className="p-1 px-1.5 rounded bg-senpay-elevated hover:bg-senpay-card border border-senpay-border/60 text-senpay-text-secondary hover:text-senpay-text-primary transition flex items-center gap-1 focus-visible:ring-1 focus-visible:ring-senpay-cyan"
             title={isPlaying ? 'Pause simulation (Space)' : 'Play simulation (Space)'}
             aria-label={isPlaying ? 'Pause' : 'Play'}
           >
@@ -249,7 +249,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
           </button>
           <button
             onClick={() => setCurrentStageIndex((p) => (p + 1) % STAGES.length)}
-            className="p-1 rounded bg-[#131D2A] hover:bg-[#1A283A] text-slate-300 hover:text-white transition focus-visible:ring-1 focus-visible:ring-senpay-cyan"
+            className="p-1 rounded bg-senpay-elevated hover:bg-senpay-card border border-senpay-border/60 text-senpay-text-secondary hover:text-senpay-text-primary transition focus-visible:ring-1 focus-visible:ring-senpay-cyan"
             title="Step forward to next stage (Right Arrow)"
             aria-label="Next Stage"
           >
@@ -260,7 +260,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
               setCurrentStageIndex(0);
               setIsPlaying(true);
             }}
-            className="p-1 rounded bg-[#131D2A] hover:bg-[#1A283A] text-slate-300 hover:text-white transition focus-visible:ring-1 focus-visible:ring-senpay-cyan"
+            className="p-1 rounded bg-senpay-elevated hover:bg-senpay-card border border-senpay-border/60 text-senpay-text-secondary hover:text-senpay-text-primary transition focus-visible:ring-1 focus-visible:ring-senpay-cyan"
             title="Restart sequence from Step 1"
             aria-label="Restart"
           >
@@ -270,7 +270,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
       </div>
 
       {/* ── 2. Sequential Stage Step Indicators ── */}
-      <div className="grid grid-cols-6 border-b border-slate-800 text-[9px] sm:text-[10px] bg-[#080D14]">
+      <div className="grid grid-cols-6 border-b border-senpay-border text-[9px] sm:text-[10px] bg-senpay-panel">
         {STAGES.map((s, idx) => {
           const isActive = idx === currentStageIndex;
           const isPast = idx < currentStageIndex;
@@ -281,12 +281,12 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
                 setCurrentStageIndex(idx);
                 setIsPlaying(false);
               }}
-              className={`py-1.5 px-0.5 text-center transition-all border-b-2 focus-visible:outline-none focus-visible:bg-slate-800 ${
+              className={`py-1.5 px-0.5 text-center transition-all border-b-2 focus-visible:outline-none focus-visible:bg-senpay-elevated ${
                 isActive
-                  ? 'border-senpay-cyan bg-senpay-cyan/15 text-white font-bold'
+                  ? 'border-senpay-cyan bg-senpay-cyan/15 text-senpay-cyan font-bold'
                   : isPast
-                  ? 'border-emerald-500/60 text-slate-300 hover:text-white'
-                  : 'border-transparent text-slate-500 hover:text-slate-400'
+                  ? 'border-emerald-500/60 text-senpay-text-secondary hover:text-senpay-text-primary'
+                  : 'border-transparent text-senpay-text-muted hover:text-senpay-text-secondary'
               }`}
               title={`Jump to ${s.label}: ${s.desc}`}
             >
@@ -297,7 +297,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
       </div>
 
       {/* ── 3. Visual Stage Canvas: Restrained 2D Schematic Network Topology ── */}
-      <div className="relative w-full h-[235px] sm:h-[245px] bg-[#090E16] overflow-hidden">
+      <div className="relative w-full h-[235px] sm:h-[245px] bg-senpay-panel/40 overflow-hidden">
         <svg
           className="w-full h-full absolute inset-0"
           viewBox="0 0 540 300"
@@ -305,12 +305,12 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
         >
           <defs>
             <pattern id="heroGridPattern" width="30" height="30" patternUnits="userSpaceOnUse">
-              <path d="M 30 0 L 0 0 0 30" fill="none" stroke="#121D2C" strokeWidth="0.8" />
-              <circle cx="30" cy="30" r="1" fill="#182738" />
+              <path d="M 30 0 L 0 0 0 30" fill="none" stroke={isLight ? '#CBD5E1' : '#121D2C'} strokeWidth="0.8" />
+              <circle cx="30" cy="30" r="1" fill={isLight ? '#94A3B8' : '#182738'} />
             </pattern>
             <radialGradient id="gwAura" cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor="#00E5FF" stopOpacity="0.2" />
-              <stop offset="100%" stopColor="#00E5FF" stopOpacity="0" />
+              <stop offset="0%" stopColor="#00E5FF" stopOpacity={0.2} />
+              <stop offset="100%" stopColor="#00E5FF" stopOpacity={0} />
             </radialGradient>
           </defs>
 
@@ -326,7 +326,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
             y1={nodes.core.y}
             x2={nodes.gateA.x}
             y2={nodes.gateA.y}
-            stroke="#1D3044"
+            stroke={isLight ? '#CBD5E1' : '#1D3044'}
             strokeWidth="1.6"
             strokeDasharray="4 3"
           />
@@ -335,7 +335,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
             y1={nodes.core.y}
             x2={nodes.gateB.x}
             y2={nodes.gateB.y}
-            stroke="#1D3044"
+            stroke={isLight ? '#CBD5E1' : '#1D3044'}
             strokeWidth="1.6"
             strokeDasharray="4 3"
           />
@@ -344,7 +344,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
             y1={nodes.core.y}
             x2={nodes.gateD.x}
             y2={nodes.gateD.y}
-            stroke="#1D3044"
+            stroke={isLight ? '#CBD5E1' : '#1D3044'}
             strokeWidth="1.6"
             strokeDasharray="4 3"
           />
@@ -370,7 +370,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
                 y1={nodes.gateC.y}
                 x2={nodes.provider.x}
                 y2={nodes.provider.y}
-                stroke="#00E5FF"
+                stroke={isLight ? '#007F95' : '#00E5FF'}
                 strokeWidth="2.2"
                 strokeDasharray="5 3"
                 strokeOpacity="0.85"
@@ -379,7 +379,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
                 x={(nodes.gateC.x + nodes.provider.x) / 2}
                 y={(nodes.gateC.y + nodes.provider.y) / 2 - 8}
                 textAnchor="middle"
-                fill="#00E5FF"
+                fill={isLight ? '#007F95' : '#00E5FF'}
                 fontSize="8"
                 fontWeight="bold"
               >
@@ -390,12 +390,12 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
 
           {/* ── Central Gateway Hub Node ── */}
           <g transform={`translate(${nodes.core.x}, ${nodes.core.y})`}>
-            <circle r="22" fill="#0E1622" stroke="#00E5FF" strokeWidth="2" />
-            <circle r="12" fill="#00E5FF" fillOpacity="0.15" />
-            <text textAnchor="middle" y="3" fill="#00E5FF" fontSize="8.5" fontWeight="bold">
+            <circle r="22" fill={isLight ? '#FFFFFF' : '#0E1622'} stroke={isLight ? '#007F95' : '#00E5FF'} strokeWidth="2" />
+            <circle r="12" fill={isLight ? '#007F95' : '#00E5FF'} fillOpacity="0.15" />
+            <text textAnchor="middle" y="3" fill={isLight ? '#007F95' : '#00E5FF'} fontSize="8.5" fontWeight="bold">
               5G-GW
             </text>
-            <text textAnchor="middle" y="32" fill="#94A3B8" fontSize="8">
+            <text textAnchor="middle" y="32" fill={isLight ? '#526171' : '#94A3B8'} fontSize="8">
               5G Macro Core
             </text>
           </g>
@@ -403,11 +403,11 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
           {/* ── Sector Nodes (Gate A, B, D) ── */}
           {[nodes.gateA, nodes.gateB, nodes.gateD].map((n) => (
             <g key={n.id} transform={`translate(${n.x}, ${n.y})`}>
-              <circle r="14" fill="#0E1622" stroke="#00FF88" strokeWidth="1.5" />
-              <text textAnchor="middle" y="3" fill="#FFFFFF" fontSize="7.5" fontWeight="bold">
+              <circle r="14" fill={isLight ? '#FFFFFF' : '#0E1622'} stroke={isLight ? '#16794B' : '#00FF88'} strokeWidth="1.5" />
+              <text textAnchor="middle" y="3" fill={isLight ? '#17212B' : '#FFFFFF'} fontSize="7.5" fontWeight="bold">
                 {n.id}
               </text>
-              <text textAnchor="middle" y="22" fill="#94A3B8" fontSize="7.5">
+              <text textAnchor="middle" y="22" fill={isLight ? '#526171' : '#94A3B8'} fontSize="7.5">
                 {n.label}
               </text>
             </g>
@@ -429,15 +429,15 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
             )}
             <circle
               r="18"
-              fill="#0E1622"
+              fill={isLight ? '#FFFFFF' : '#0E1622'}
               stroke={vipColor}
               strokeWidth="2"
               className={isIncidentActive ? 'drop-shadow-[0_0_8px_rgba(255,59,92,0.8)]' : ''}
             />
-            <text textAnchor="middle" y="3" fill="#FFFFFF" fontSize="8" fontWeight="bold">
+            <text textAnchor="middle" y="3" fill={isLight ? '#17212B' : '#FFFFFF'} fontSize="8" fontWeight="bold">
               {nodes.gateC.id}
             </text>
-            <text textAnchor="middle" y="27" fill="#FFFFFF" fontSize="8.5" fontWeight="bold">
+            <text textAnchor="middle" y="27" fill={isLight ? '#17212B' : '#FFFFFF'} fontSize="8.5" fontWeight="bold">
               {nodes.gateC.label}
             </text>
             <text
@@ -459,21 +459,21 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
               width="52"
               height="28"
               rx="5"
-              fill="#0E1622"
-              stroke={isProcurementActive || isOutcomeResolved ? '#00E5FF' : '#22364C'}
+              fill={isLight ? '#FFFFFF' : '#0E1622'}
+              stroke={isProcurementActive || isOutcomeResolved ? (isLight ? '#007F95' : '#00E5FF') : (isLight ? '#CBD5E1' : '#22364C')}
               strokeWidth="1.4"
             />
-            <text textAnchor="middle" y="3" fill="#00E5FF" fontSize="7.5" fontWeight="bold">
+            <text textAnchor="middle" y="3" fill={isLight ? '#007F95' : '#00E5FF'} fontSize="7.5" fontWeight="bold">
               APEX-5G
             </text>
-            <text textAnchor="middle" y="24" fill="#94A3B8" fontSize="7.5">
+            <text textAnchor="middle" y="24" fill={isLight ? '#526171' : '#94A3B8'} fontSize="7.5">
               Decentralized Slice
             </text>
           </g>
         </svg>
 
         {/* Floating Context Label in Top Left */}
-        <div className="absolute top-2.5 left-3 flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#0A0F16]/90 border border-slate-800 text-[9px] text-slate-400">
+        <div className="absolute top-2.5 left-3 flex items-center gap-1.5 px-2 py-0.5 rounded bg-senpay-panel/90 border border-senpay-border text-[9px] text-senpay-text-secondary">
           <Radio size={10} className="text-senpay-cyan" />
           <span>Active Target: {data.incident.zoneName}</span>
         </div>
@@ -481,28 +481,28 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
 
       {/* ── 4. Dynamic Operations & Decision Drawer ── */}
       <div 
-        className="p-3.5 bg-[#0C121B] border-t border-senpay-border/80 min-h-[155px] text-xs"
+        className="p-3.5 bg-senpay-panel border-t border-senpay-border min-h-[155px] text-xs"
         aria-live="polite"
       >
         {/* SCENE 1: DETECT */}
         {stageId === 'detect' && (
           <div className="space-y-2 animate-fade-in">
-            <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
-              <span className="text-[10px] text-rose-400 font-bold flex items-center gap-1 uppercase">
+            <div className="flex items-center justify-between pb-1.5 border-b border-senpay-border">
+              <span className="text-[10px] text-senpay-rose font-bold flex items-center gap-1 uppercase">
                 <AlertTriangle size={12} />
                 <span>Incident Detected • Ingress Congestion Spike</span>
               </span>
-              <span className="px-1.5 py-0.5 rounded bg-rose-500/20 text-rose-400 text-[9px] font-bold">
+              <span className="px-1.5 py-0.5 rounded bg-senpay-rose/20 text-senpay-rose text-[9px] font-bold">
                 CRITICAL (CRS {data.incident.initialCrs} &gt; {data.incident.triggerThreshold})
               </span>
             </div>
-            <div className="flex items-center justify-between text-[11px] text-slate-300">
+            <div className="flex items-center justify-between text-[11px] text-senpay-text-secondary">
               <span>Target: {data.incident.zoneName} ({data.incident.zoneId})</span>
-              <span className="text-slate-400 font-mono">Trace ID: #{data.incident.id}</span>
+              <span className="text-senpay-text-muted font-mono">Trace ID: #{data.incident.id}</span>
             </div>
-            <div className="p-2 rounded bg-[#080D14] border border-rose-500/30 text-[10px] text-slate-300 flex items-center justify-between">
+            <div className="p-2 rounded bg-senpay-card border border-senpay-rose/30 text-[10px] text-senpay-text-secondary flex items-center justify-between">
               <span>Data Source: {data.provenance.engineName} (Simulated Scenario)</span>
-              <span className="font-bold text-rose-400">Breach Horizon: {data.incident.timeToBreachMinutes} min</span>
+              <span className="font-bold text-senpay-rose">Breach Horizon: {data.incident.timeToBreachMinutes} min</span>
             </div>
           </div>
         )}
@@ -510,32 +510,32 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
         {/* SCENE 2: ANALYZE */}
         {stageId === 'analyze' && (
           <div className="space-y-2 animate-fade-in">
-            <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
-              <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1 uppercase">
+            <div className="flex items-center justify-between pb-1.5 border-b border-senpay-border">
+              <span className="text-[10px] text-senpay-amber font-bold flex items-center gap-1 uppercase">
                 <Cpu size={12} />
                 <span>Radio Link &amp; Flow Analysis • Buffer Bloat</span>
               </span>
-              <span className="text-[10px] text-slate-400">{data.telemetry.mlModel}</span>
+              <span className="text-[10px] text-senpay-text-muted">{data.telemetry.mlModel}</span>
             </div>
             <div className="grid grid-cols-4 gap-1.5 text-center text-[10px]">
-              <div className="p-1 rounded bg-[#080D14] border border-slate-800">
-                <div className="text-slate-400">RSRP (Radio)</div>
-                <div className="font-bold text-rose-400">{data.telemetry.rsrpDbm} dBm</div>
+              <div className="p-1 rounded bg-senpay-card border border-senpay-border">
+                <div className="text-senpay-text-muted">RSRP (Radio)</div>
+                <div className="font-bold text-senpay-rose">{data.telemetry.rsrpDbm} dBm</div>
               </div>
-              <div className="p-1 rounded bg-[#080D14] border border-slate-800">
-                <div className="text-slate-400">Packet Loss</div>
-                <div className="font-bold text-rose-400">{data.telemetry.packetLossPct}%</div>
+              <div className="p-1 rounded bg-senpay-card border border-senpay-border">
+                <div className="text-senpay-text-muted">Packet Loss</div>
+                <div className="font-bold text-senpay-rose">{data.telemetry.packetLossPct}%</div>
               </div>
-              <div className="p-1 rounded bg-[#080D14] border border-slate-800">
-                <div className="text-slate-400">Queue Latency</div>
-                <div className="font-bold text-amber-400">{data.telemetry.latencyMs} ms</div>
+              <div className="p-1 rounded bg-senpay-card border border-senpay-border">
+                <div className="text-senpay-text-muted">Queue Latency</div>
+                <div className="font-bold text-senpay-amber">{data.telemetry.latencyMs} ms</div>
               </div>
-              <div className="p-1 rounded bg-[#080D14] border border-slate-800">
-                <div className="text-slate-400">Crowd Density</div>
-                <div className="font-bold text-slate-200">{data.telemetry.densityPplM2} ppl/m²</div>
+              <div className="p-1 rounded bg-senpay-card border border-senpay-border">
+                <div className="text-senpay-text-muted">Crowd Density</div>
+                <div className="font-bold text-senpay-text-primary">{data.telemetry.densityPplM2} ppl/m²</div>
               </div>
             </div>
-            <div className="flex justify-between items-center text-[10px] text-slate-400 pt-0.5">
+            <div className="flex justify-between items-center text-[10px] text-senpay-text-muted pt-0.5">
               <span>Provenance: Derived via Digital Twin QoS Models</span>
               <span className="text-senpay-cyan font-semibold">{(data.telemetry.inferenceConfidence * 100).toFixed(0)}% Model Confidence</span>
             </div>
@@ -545,12 +545,12 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
         {/* SCENE 3: COMPARE INTERVENTIONS */}
         {stageId === 'compare' && (
           <div className="space-y-2 animate-fade-in">
-            <div className="flex items-center justify-between pb-1 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-1 border-b border-senpay-border">
               <span className="text-[10px] text-senpay-cyan font-bold flex items-center gap-1 uppercase">
                 <Sparkles size={12} />
                 <span>Intervention Options Evaluated (Multi-Attribute Scoring)</span>
               </span>
-              <span className="text-[10px] text-slate-400">3 Candidates Evaluated</span>
+              <span className="text-[10px] text-senpay-text-muted">3 Candidates Evaluated</span>
             </div>
             <div className="space-y-1 text-[10px]">
               {data.interventions.map((opt) => (
@@ -558,14 +558,14 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
                   key={opt.id}
                   className={`flex items-center justify-between p-1.5 rounded transition ${
                     opt.isSelected
-                      ? 'bg-senpay-cyan/15 border border-senpay-cyan/50 text-white font-bold'
-                      : 'bg-[#080D14] text-slate-400 opacity-60 border border-transparent'
+                      ? 'bg-senpay-cyan/15 border border-senpay-cyan/50 text-senpay-text-primary font-bold'
+                      : 'bg-senpay-card text-senpay-text-muted opacity-60 border border-transparent'
                   }`}
                 >
                   <span className={opt.isSelected ? 'text-senpay-cyan' : ''}>
                     {opt.title}
                   </span>
-                  <span className={opt.isSelected ? 'text-emerald-400 font-mono' : 'font-mono'}>
+                  <span className={opt.isSelected ? 'text-senpay-green font-mono' : 'font-mono'}>
                     Predicted CRS: {opt.predictedCrs} {opt.crsUncertainty ? `(${opt.crsUncertainty})` : ''} • {opt.costHsk} HSK • {opt.slaRisk}
                   </span>
                 </div>
@@ -577,27 +577,27 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
         {/* SCENE 4: AUTHORIZE & DISPATCH */}
         {stageId === 'authorize' && (
           <div className="space-y-2 animate-fade-in">
-            <div className="flex items-center justify-between pb-1 border-b border-slate-800">
-              <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1 uppercase">
+            <div className="flex items-center justify-between pb-1 border-b border-senpay-border">
+              <span className="text-[10px] text-senpay-amber font-bold flex items-center gap-1 uppercase">
                 <Wallet size={12} />
                 <span>Procurement Lifecycle • Mandate Authorization</span>
               </span>
-              <span className="px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-400 text-[9px] font-bold">
+              <span className="px-1.5 py-0.5 rounded bg-senpay-amber/20 text-senpay-amber text-[9px] font-bold">
                 BUDGET RESERVED IN ESCROW
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-1.5 text-[10px] text-slate-300">
+            <div className="grid grid-cols-2 gap-1.5 text-[10px] text-senpay-text-secondary">
               {data.procurement.steps.map((st) => (
-                <div key={st.key} className="p-1 rounded bg-[#080D14] border border-slate-800/80">
+                <div key={st.key} className="p-1 rounded bg-senpay-card border border-senpay-border">
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-400 font-semibold">{st.label}:</span>
-                    <span className="text-emerald-400 font-bold text-[9px]">{st.status}</span>
+                    <span className="text-senpay-text-muted font-semibold">{st.label}:</span>
+                    <span className="text-senpay-green font-bold text-[9px]">{st.status}</span>
                   </div>
-                  <div className="text-[9px] text-slate-300 truncate mt-0.5">{st.detail}</div>
+                  <div className="text-[9px] text-senpay-text-primary truncate mt-0.5">{st.detail}</div>
                 </div>
               ))}
             </div>
-            <div className="text-[9px] text-slate-400 pt-0.5 flex justify-between">
+            <div className="text-[9px] text-senpay-text-muted pt-0.5 flex justify-between">
               <span>Delegation: {data.procurement.delegationId}</span>
               <span>Amount: {data.procurement.authorizedAmountHsk} {data.procurement.asset}</span>
             </div>
@@ -607,28 +607,28 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
         {/* SCENE 5: VERIFY OUTCOME */}
         {stageId === 'verify' && (
           <div className="space-y-2 animate-fade-in">
-            <div className="flex items-center justify-between pb-1.5 border-b border-slate-800">
-              <span className="text-[10px] text-emerald-400 font-bold flex items-center gap-1 uppercase">
+            <div className="flex items-center justify-between pb-1.5 border-b border-senpay-border">
+              <span className="text-[10px] text-senpay-green font-bold flex items-center gap-1 uppercase">
                 <CheckCircle2 size={12} />
                 <span>Counterfactual SLA Outcome Verification</span>
               </span>
-              <span className="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-bold">
+              <span className="px-1.5 py-0.5 rounded bg-senpay-green/20 text-senpay-green text-[9px] font-bold">
                 SLA RESTORED (CRS {data.outcome.observedPostCrs} &lt; {data.outcome.targetThreshold})
               </span>
             </div>
             <div className="grid grid-cols-2 gap-2 text-[10px]">
-              <div className="p-1.5 rounded bg-[#080D14] border border-slate-800">
-                <span className="text-slate-400 block">Counterfactual Baseline (No Action):</span>
-                <span className="font-bold text-rose-400">CRS {data.outcome.counterfactualBaselineCrs} (Critical Congestion)</span>
+              <div className="p-1.5 rounded bg-senpay-card border border-senpay-border">
+                <span className="text-senpay-text-muted block">Counterfactual Baseline (No Action):</span>
+                <span className="font-bold text-senpay-rose">CRS {data.outcome.counterfactualBaselineCrs} (Critical Congestion)</span>
               </div>
-              <div className="p-1.5 rounded bg-[#080D14] border border-emerald-500/40">
-                <span className="text-slate-400 block">Observed Outcome Post-Mitigation:</span>
-                <span className="font-bold text-emerald-400">CRS {data.outcome.observedPostCrs} (-{data.outcome.reductionPct}% Reduction)</span>
+              <div className="p-1.5 rounded bg-senpay-card border border-senpay-green/40">
+                <span className="text-senpay-text-muted block">Observed Outcome Post-Mitigation:</span>
+                <span className="font-bold text-senpay-green">CRS {data.outcome.observedPostCrs} (-{data.outcome.reductionPct}% Reduction)</span>
               </div>
             </div>
-            <div className="text-[9px] text-slate-400 pt-0.5 flex justify-between">
+            <div className="text-[9px] text-senpay-text-muted pt-0.5 flex justify-between">
               <span>Method: {data.outcome.evaluationType}</span>
-              <span className="text-emerald-400 font-bold">Escrow Settlement Condition: SATISFIED</span>
+              <span className="text-senpay-green font-bold">Escrow Settlement Condition: SATISFIED</span>
             </div>
           </div>
         )}
@@ -636,7 +636,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
         {/* SCENE 6: STABLE OPERATIONAL STATE */}
         {stageId === 'stable' && (
           <div className="space-y-2 animate-fade-in">
-            <div className="flex items-center justify-between pb-1 border-b border-slate-800">
+            <div className="flex items-center justify-between pb-1 border-b border-senpay-border">
               <span className="text-[10px] text-senpay-cyan font-bold flex items-center gap-1 uppercase">
                 <FileCheck2 size={12} />
                 <span>Autonomous Procurement Lifecycle Complete</span>
@@ -645,24 +645,24 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
                 SETTLED ON HSK TESTNET
               </span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-[10px] text-slate-300">
-              <div className="p-1.5 rounded bg-[#080D14] border border-slate-800">
-                <span className="text-slate-400 block">Settlement Receipt:</span>
-                <span className="font-bold text-white">{data.settlement.receiptId}</span>
+            <div className="grid grid-cols-2 gap-2 text-[10px] text-senpay-text-secondary">
+              <div className="p-1.5 rounded bg-senpay-card border border-senpay-border">
+                <span className="text-senpay-text-muted block">Settlement Receipt:</span>
+                <span className="font-bold text-senpay-text-primary">{data.settlement.receiptId}</span>
               </div>
-              <div className="p-1.5 rounded bg-[#080D14] border border-slate-800">
-                <span className="text-slate-400 block">Settled Amount:</span>
-                <span className="font-bold text-emerald-400">{data.procurement.authorizedAmountHsk} {data.procurement.asset}</span>
+              <div className="p-1.5 rounded bg-senpay-card border border-senpay-border">
+                <span className="text-senpay-text-muted block">Settled Amount:</span>
+                <span className="font-bold text-senpay-green">{data.procurement.authorizedAmountHsk} {data.procurement.asset}</span>
               </div>
             </div>
-            <div className="text-[9px] text-slate-400 flex items-center justify-between">
+            <div className="text-[9px] text-senpay-text-muted flex items-center justify-between">
               <span className="truncate">Adapter: {data.settlement.adapterType}</span>
-              <span className="text-slate-400">Tx: 0x8f2a...c4e1</span>
+              <span className="text-senpay-text-muted">Tx: 0x8f2a...c4e1</span>
             </div>
             <div className="flex items-center gap-2 pt-1">
               <button
                 onClick={() => onLaunchConsole('command_center')}
-                className="flex-1 py-1.5 px-3 rounded-lg bg-senpay-cyan hover:bg-cyan-300 text-slate-950 font-bold text-[10px] transition text-center focus-visible:ring-1 focus-visible:ring-white"
+                className={`flex-1 py-1.5 px-3 rounded-lg bg-senpay-cyan hover:opacity-90 ${isLight ? 'text-white' : 'text-black'} font-bold text-[10px] transition text-center focus-visible:ring-1 focus-visible:ring-senpay-cyan shadow-sm`}
               >
                 Inspect Live Console →
               </button>
@@ -671,7 +671,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
                   setCurrentStageIndex(0);
                   setIsPlaying(true);
                 }}
-                className="py-1.5 px-3 rounded-lg bg-[#131D2A] hover:bg-[#1A283A] text-slate-300 font-medium text-[10px] transition focus-visible:ring-1 focus-visible:ring-white"
+                className="py-1.5 px-3 rounded-lg bg-senpay-elevated hover:bg-senpay-card text-senpay-text-secondary hover:text-senpay-text-primary border border-senpay-border font-medium text-[10px] transition focus-visible:ring-1 focus-visible:ring-senpay-cyan"
               >
                 Replay Runbook ↺
               </button>
@@ -682,7 +682,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
 
       {/* ── 5. Interactive Bottom Scrubber Track ── */}
       <div 
-        className="h-1.5 bg-[#090D14] w-full flex cursor-pointer"
+        className="h-1.5 bg-senpay-panel w-full flex cursor-pointer border-t border-senpay-border"
         title="Interactive progress track: click any section to scrub"
         onClick={(e) => {
           const rect = e.currentTarget.getBoundingClientRect();
@@ -697,7 +697,7 @@ export default function HeroOperationsReplay({ onLaunchConsole }) {
           <div
             key={s.id}
             className={`flex-1 h-full transition-all duration-300 ${
-              idx <= currentStageIndex ? 'bg-senpay-cyan' : 'bg-slate-800/60'
+              idx <= currentStageIndex ? 'bg-senpay-cyan' : 'bg-senpay-border/60'
             }`}
           />
         ))}

@@ -25,6 +25,7 @@ import {
   Check
 } from 'lucide-react';
 import { getRiskLevel } from '../../data/mockData';
+import { useTheme, THEMES } from '../../context/ThemeContext';
 import 'leaflet/dist/leaflet.css';
 
 // ── Default Keyless Tile Providers ──
@@ -454,6 +455,8 @@ export default function CrowdMap({
     return links;
   }, [validMapZones, activeLayers.links]);
 
+  const { theme } = useTheme();
+
   const activeTileConfig = useMemo(() => {
     const customUrl = import.meta.env.VITE_MAP_TILE_URL;
     const customAttr = import.meta.env.VITE_MAP_ATTRIBUTION;
@@ -465,8 +468,12 @@ export default function CrowdMap({
         maxZoom: 18,
       };
     }
-    return viewMode === 'osm' ? TILE_PROVIDERS.osm : TILE_PROVIDERS.esriDark;
-  }, [viewMode]);
+    const isLightMode = theme === THEMES.LIGHT;
+    if (viewMode === 'osm' || isLightMode) {
+      return TILE_PROVIDERS.osm;
+    }
+    return TILE_PROVIDERS.esriDark;
+  }, [viewMode, theme]);
 
   const handleTileError = useCallback(() => {
     setTileError(true);
@@ -476,7 +483,7 @@ export default function CrowdMap({
 
   return (
     <div
-      className="relative rounded-xl overflow-hidden border border-senpay-border bg-[#0B1118] flex flex-col"
+      className="relative rounded-xl overflow-hidden border border-senpay-border bg-senpay-bg flex flex-col transition-colors duration-150"
       style={{ height }}
     >
       {/* ── Top Header Control Bar ── */}

@@ -63,7 +63,7 @@ export default function SenPaySidebar({
     <aside
       className={`
         fixed top-14 left-0 bottom-7 z-30
-        bg-[#101821] border-r border-senpay-border
+        bg-senpay-sidebar border-r border-senpay-border
         flex flex-col select-none
         transition-all duration-300 ease-in-out
         ${collapsed ? 'w-16' : 'w-56 lg:w-60'}
@@ -112,15 +112,15 @@ export default function SenPaySidebar({
                           w-full flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg
                           text-xs font-medium transition-all duration-150
                           ${isActive
-                            ? 'bg-senpay-card text-white border-l-2 border-senpay-cyan shadow-[inset_0_0_12px_rgba(0,229,255,0.08)]'
-                            : 'text-senpay-text-secondary hover:text-white hover:bg-white/[0.03] border-l-2 border-transparent'
+                            ? 'bg-senpay-card text-senpay-text-primary border-l-2 border-senpay-cyan shadow-sm font-semibold'
+                            : 'text-senpay-text-secondary hover:text-senpay-text-primary hover:bg-senpay-panel/50 border-l-2 border-transparent'
                           }
                           ${collapsed ? 'justify-center px-0' : ''}
                         `}
                       >
                         {/* Active dot or Icon */}
                         {isActive ? (
-                          <span className="w-1.5 h-1.5 rounded-full bg-senpay-cyan shadow-[0_0_6px_rgba(0,229,255,0.9)] flex-shrink-0" />
+                          <span className="w-1.5 h-1.5 rounded-full bg-senpay-cyan flex-shrink-0" />
                         ) : null}
 
                         <Icon

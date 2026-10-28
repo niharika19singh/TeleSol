@@ -16,10 +16,10 @@ export default function GlassCard({ children, className = '', glow = '', pulse =
   return (
     <div
       className={`
-        bg-[#151F2A] border border-senpay-border rounded-xl p-4 shadow-[0_4px_20px_rgba(0,0,0,0.4)]
+        bg-senpay-card border border-senpay-border rounded-xl p-4 shadow-sm transition-colors duration-150
         ${glow ? glowStyles[glow] || '' : ''}
         ${pulse ? 'animate-glow-pulse' : ''}
-        ${onClick ? 'cursor-pointer hover:bg-[#182330] transition-colors' : ''}
+        ${onClick ? 'cursor-pointer hover:bg-senpay-panel transition-colors' : ''}
         ${className}
       `}
       onClick={onClick}

@@ -367,7 +367,7 @@ function AppContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B1118] text-[#F1F5F9] font-sans antialiased">
+    <div className="min-h-screen bg-senpay-bg text-senpay-text-primary font-sans antialiased transition-colors duration-150">
       {/* ── SENPAY TopBar ── */}
       <SenPayTopBar
         currentPage={currentPage}

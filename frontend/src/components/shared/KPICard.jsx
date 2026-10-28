@@ -20,7 +20,7 @@ export default function KPICard({ icon: Icon, label, value, unit = '', trend = '
   const trendColor = trend === 'up' ? 'text-senpay-red' : trend === 'down' ? 'text-senpay-green' : 'text-senpay-text-muted';
 
   return (
-    <div className={`bg-[#151F2A] rounded-xl p-4 ${c.border} border ${c.glow} animate-fade-in-up shadow-[0_4px_20px_rgba(0,0,0,0.4)]`}>
+    <div className={`bg-senpay-card rounded-xl p-4 ${c.border} border animate-fade-in-up shadow-sm transition-colors duration-150`}>
       <div className="flex items-start justify-between mb-3">
         <div className={`p-2 rounded-lg ${c.bg}`}>
           {Icon && <Icon size={18} className={c.text} />}

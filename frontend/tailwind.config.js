@@ -7,24 +7,25 @@ export default {
   theme: {
     extend: {
       colors: {
-        // SENPAY Reference Design Tokens (Restrained Telecom Operations Palette)
+        // SENPAY Reference Design Tokens (Porcelain Light vs. Obsidian Dark)
         senpay: {
-          bg: '#0B1117',
-          sidebar: '#0E1620',
-          card: '#111A23',
-          panel: '#15212C',
-          elevated: '#1A2937',
-          border: '#293746',
-          'border-light': '#364B5F',
-          cyan: '#35C7D9',
-          teal: '#20B2AA',
-          violet: '#8B5CF6',
-          amber: '#E8AD43',
-          red: '#E45B64',
-          green: '#39B980',
-          'text-primary': '#E6EDF3',
-          'text-secondary': '#9AAABA',
-          'text-muted': '#718297',
+          bg: 'var(--senpay-bg)',
+          sidebar: 'var(--senpay-sidebar)',
+          card: 'var(--senpay-card)',
+          panel: 'var(--senpay-panel)',
+          elevated: 'var(--senpay-elevated)',
+          border: 'var(--senpay-border)',
+          'border-light': 'var(--senpay-border-light)',
+          cyan: 'var(--senpay-cyan)',
+          accent: 'var(--senpay-accent)',
+          teal: 'var(--senpay-cyan)',
+          violet: 'var(--senpay-violet)',
+          amber: 'var(--senpay-amber)',
+          red: 'var(--senpay-red)',
+          green: 'var(--senpay-green)',
+          'text-primary': 'var(--senpay-text-primary)',
+          'text-secondary': 'var(--senpay-text-secondary)',
+          'text-muted': 'var(--senpay-text-muted)',
         },
         // Backwards compatibility for existing components
         crowd: {
