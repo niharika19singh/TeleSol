@@ -380,22 +380,20 @@ class SentinelPayPilotBridge:
             sentinel_state = store.get_sentinel_data()
             zones = sentinel_state.get("zones", [])
             matched_zone = next((z for z in zones if z.get("id") in str(agr.get("task_id", ""))), None)
-            if matched_zone:
-                post_crs = float(matched_zone.get("riskScore", pre_crs - target_threshold))
+            if matched_zone and matched_zone.get("riskScore") is not None:
+                post_crs = float(matched_zone.get("riskScore"))
                 post_density = float(matched_zone.get("density", 3.0))
                 post_instability = float(matched_zone.get("flowInstability", 15.0))
+                post_metrics = {
+                    "crs_score": post_crs,
+                    "density": post_density,
+                    "flow_instability": post_instability,
+                    "source": "live_telemetry_feed"
+                }
             else:
-                post_crs = max(15.0, round(pre_crs - target_threshold - 4.5, 1))
-                post_density = 3.2
-                post_instability = 12.0
-
-            post_metrics = {
-                "crs_score": post_crs,
-                "density": post_density,
-                "flow_instability": post_instability,
-                "latency_ms": 28.5,
-                "packet_loss_pct": 1.2
-            }
+                # No post-intervention metrics provided and no active sensor zone detected:
+                # Must be treated as missing evidence rather than synthesizing artificial success.
+                post_metrics = {}
 
         pre_metrics = {
             "crs_score": pre_crs,

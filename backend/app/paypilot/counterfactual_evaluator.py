@@ -54,6 +54,49 @@ class CounterfactualEvaluator:
         now = datetime.now(timezone.utc).isoformat()
         eval_id = f"cfe_{zone_id}_{int(time.time_ns())}_{uuid.uuid4().hex[:6]}"
 
+        # Missing Evidence Guard: Missing or empty post-metrics cannot silently succeed
+        if not post_metrics or ("crs_score" not in post_metrics and "packet_loss_pct" not in post_metrics):
+            logger.warning("[CFE] Outcome verification requested without telemetry evidence for %s", agreement_id)
+            pre_crs = float(pre_metrics.get("crs_score", 65.0))
+            cfe_report = {
+                "evaluation_id": eval_id,
+                "agreement_id": agreement_id,
+                "mandate_id": mandate_id,
+                "zone_id": zone_id,
+                "pre_intervention_crs": pre_crs,
+                "post_intervention_crs": pre_crs,
+                "observed_improvement": 0.0,
+                "expected_improvement": expected_improvement,
+                "counterfactual_projected_crs": pre_crs,
+                "attributable_improvement": 0.0,
+                "target_threshold": target_threshold,
+                "baseline_type": "MISSING_EVIDENCE",
+                "baseline_details": {"error": "Missing post-intervention telemetry evidence"},
+                "outcome_classification": "INCONCLUSIVE",
+                "confidence_score": 0.0,
+                "confidence_level": "UNRELIABLE",
+                "evidence_summary": "Missing post-intervention telemetry evidence. Outcome is inconclusive; settlement cannot be authorized.",
+                "limitations_notes": "No empirical post-intervention metrics were provided.",
+                "evaluated_at": now
+            }
+            with db_session() as conn:
+                cursor = conn.cursor()
+                cursor.execute("""
+                INSERT INTO counterfactual_evaluations (
+                    id, agreement_id, mandate_id, zone_id, intervention_id, pre_metrics, post_metrics,
+                    baseline_type, baseline_metrics, observed_improvement, expected_improvement,
+                    attributable_improvement, outcome_classification, confidence_score,
+                    confidence_level, evidence_summary, limitations_notes, evaluated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+                """, (
+                    eval_id, agreement_id, mandate_id, zone_id, pre_metrics.get("candidate_id"),
+                    json.dumps(pre_metrics), json.dumps(post_metrics or {}),
+                    "MISSING_EVIDENCE", json.dumps({"error": "Missing post-intervention telemetry"}),
+                    0.0, expected_improvement, 0.0, "INCONCLUSIVE", 0.0, "UNRELIABLE",
+                    cfe_report["evidence_summary"], cfe_report["limitations_notes"], now
+                ))
+            return cfe_report
+
         pre_crs = float(pre_metrics.get("crs_score", 65.0))
         post_crs = float(post_metrics.get("crs_score", pre_crs))
         pre_density = float(pre_metrics.get("density", 3.0))

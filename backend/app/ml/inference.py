@@ -14,6 +14,7 @@ import os
 import logging
 from typing import Dict, Any, List, Optional
 import numpy as np
+import pandas as pd
 import joblib
 
 from app.ml.train import MODEL_ARTIFACT_PATH, FEATURE_COLS
@@ -87,7 +88,10 @@ def predict_congestion_risk(telemetry: Dict[str, Any]) -> Dict[str, Any]:
             clf = bundle["classifier"]
             reg = bundle["regressor"]
 
-            raw_features = np.array([[rsrp, rsrq, snr, cqi, rssi, dl_bitrate, ul_bitrate, speed, hour]])
+            raw_features = pd.DataFrame(
+                [[rsrp, rsrq, snr, cqi, rssi, dl_bitrate, ul_bitrate, speed, hour]],
+                columns=FEATURE_COLS
+            )
             scaled_features = scaler.transform(raw_features)
 
             # Predict class & probabilities

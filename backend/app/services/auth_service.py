@@ -68,6 +68,10 @@ LOCKOUT_THRESHOLD = 5
 LOCKOUT_WINDOW_SECONDS = 300  # 5 minutes
 LOCKOUT_DURATION_SECONDS = 300  # 5 minutes lockout
 
+# In-memory registration rate limits: {ip_or_key: [timestamp, ...]}
+_REGISTRATION_RATE_LIMITS: Dict[str, list[float]] = {}
+MAX_REGISTRATIONS_PER_IP_PER_HOUR = 30
+
 
 def normalize_role(role: str) -> str:
     """Normalize role string to standard uppercase role."""
@@ -260,6 +264,22 @@ class AuthService:
         _FAILED_LOGINS.pop(identifier, None)
 
     @staticmethod
+    def _check_registration_rate_limit(ip_address: Optional[str]) -> None:
+        """Enforce rate limits on registration requests per IP to mitigate abuse."""
+        if not ip_address:
+            return
+        now = time.time()
+        history = _REGISTRATION_RATE_LIMITS.get(ip_address, [])
+        history = [t for t in history if now - t < 3600]
+        if len(history) >= MAX_REGISTRATIONS_PER_IP_PER_HOUR:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail="Registration rate limit exceeded for this network. Please try again later."
+            )
+        history.append(now)
+        _REGISTRATION_RATE_LIMITS[ip_address] = history
+
+    @staticmethod
     def register_user(
         email: str,
         password: str,
@@ -277,6 +297,7 @@ class AuthService:
         """
         email = email.strip().lower()
         full_name = full_name.strip()
+        AuthService._check_registration_rate_limit(ip_address)
         
         if not username:
             # Derive username from email prefix or full name

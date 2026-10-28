@@ -1,7 +1,8 @@
 import os
+import uuid
 import asyncio
 import logging
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables (.env) before service initialization
@@ -39,6 +40,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.middleware("http")
+async def security_headers_and_correlation_id_middleware(request: Request, call_next):
+    """
+    Production security headers & request correlation ID tracking.
+    Enforces MIME sniffing protection, clickjacking defense, and modern transport safety.
+    """
+    request_id = request.headers.get("x-request-id") or f"req_{uuid.uuid4().hex[:12]}"
+    response = await call_next(request)
+    response.headers["X-Request-ID"] = request_id
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    response.headers["Referrer-Policy"] = "strict-origin-when-cross-origin"
+    if os.getenv("ENVIRONMENT") == "production":
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 app.include_router(sensors.router)
 app.include_router(dashboard.router)
@@ -105,19 +123,71 @@ async def root():
     }
 
 
+@app.get("/health/live")
+async def liveness_probe():
+    """Liveness probe: returns 200 OK if service process is alive."""
+    return {"status": "alive", "service": "telesol-sentinel-backend"}
+
+
+@app.get("/health/ready")
+async def readiness_probe():
+    """Readiness probe: validates database connectivity and core subsystems."""
+    from app.paypilot.db import db_session
+    from app.ml.inference import load_model
+
+    db_ready = False
+    try:
+        with db_session() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            db_ready = bool(cursor.fetchone())
+    except Exception as e:
+        logger.error("[READINESS] DB check failed: %s", str(e))
+
+    model_ready = load_model() is not None
+
+    all_ready = db_ready
+    return {
+        "status": "ready" if all_ready else "degraded",
+        "database": "connected" if db_ready else "error",
+        "ml_model": "loaded" if model_ready else "fallback_mode",
+    }
+
+
 @app.get("/health")
 @app.get("/api/health")
 async def health_check():
     """Production health check endpoint for Render / monitoring."""
     from app.services.tinyfish_service import tinyfish_service
     from app.services.virtual_sentinel import virtual_sentinel
+    from app.paypilot.hsp_service import hsp_service
+    from app.paypilot.db import db_session
+    from app.ml.inference import load_model
+
+    db_ok = False
+    try:
+        with db_session() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1")
+            db_ok = True
+    except Exception:
+        db_ok = False
+
+    model_bundle = load_model()
+
     return {
-        "status": "healthy",
+        "status": "healthy" if db_ok else "degraded",
         "service": "telesol-sentinel-backend",
         "version": "3.5.0",
         "hardware_free_mode": True,
+        "database": {"status": "online" if db_ok else "offline"},
+        "ml_inference": {
+            "status": "ready" if model_bundle else "offline",
+            "model_version": model_bundle.get("model_version") if model_bundle else None
+        },
         "sentinel_running": virtual_sentinel.is_running,
         "tinyfish_configured": tinyfish_service.is_configured(),
+        "hsp_gateway_mode": hsp_service.get_status()["mode"],
     }
 
 

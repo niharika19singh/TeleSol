@@ -146,7 +146,21 @@ class EmailService:
                 logger.error("[EMAIL] SMTP delivery failed: %s", str(e))
                 # Fall through to dev mode
 
-        # 3. Development / Local Fallback Mode
+        # 3. Environment Check: Only allow development console mode in non-production environments
+        is_production = os.getenv("ENVIRONMENT", "").strip().lower() in ("production", "prod")
+        if is_production:
+            logger.error(
+                "[EMAIL] Production transactional email delivery failed or unconfigured for %s: no live provider confirmed acceptance.",
+                recipient_email
+            )
+            return {
+                "status": "unconfigured_in_production",
+                "provider": "none",
+                "error": "No verified transactional email provider (SMTP or Resend) confirmed acceptance in production environment.",
+                "recipient": recipient_email
+            }
+
+        # 4. Development / Local Fallback Mode
         logger.info(
             "[EMAIL:DEV_MODE] To: %s | Subject: %s\nText:\n%s\n",
             recipient_email, subject, text_content

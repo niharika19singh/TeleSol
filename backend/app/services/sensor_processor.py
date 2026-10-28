@@ -1,5 +1,6 @@
 from typing import Dict, Any
 from datetime import datetime, timezone
+from app.utils.helpers import safe_float
 
 ZONE_AREA_DEFAULT = 20.0  # m^2
 DEVICE_MULTIPLIER_DEFAULT = 2.0  # devices per person
@@ -75,53 +76,28 @@ class SensorProcessor:
             except Exception:
                 pass
 
-        # 2) Crowd density
-        try:
-            zone_area = float(computed.get("zoneArea", ZONE_AREA_DEFAULT))
-        except Exception:
-            zone_area = ZONE_AREA_DEFAULT
-        if zone_area <= 0:
-            zone_area = ZONE_AREA_DEFAULT
+        # 2) Crowd density with robust numeric bounding
+        zone_area = safe_float(computed.get("zoneArea"), default=ZONE_AREA_DEFAULT, min_val=0.1)
         crowd_density = estimated / zone_area
 
         # 3) Device demand D = rho * A * mu * (1 + sigma)
-        try:
-            mu = float(computed.get("deviceMultiplier", DEVICE_MULTIPLIER_DEFAULT))
-        except Exception:
-            mu = DEVICE_MULTIPLIER_DEFAULT
-        try:
-            sigma = float(computed.get("eventBoost", 0.0))
-        except Exception:
-            sigma = 0.0
+        mu = safe_float(computed.get("deviceMultiplier"), default=DEVICE_MULTIPLIER_DEFAULT, min_val=0.1)
+        sigma = safe_float(computed.get("eventBoost"), default=0.0, min_val=0.0)
         device_demand = crowd_density * zone_area * mu * (1.0 + sigma)
 
         # 4) Capacity C (from computed or default)
-        try:
-            capacity = float(computed.get("capacity", CAPACITY_DEFAULT))
-        except Exception:
-            capacity = CAPACITY_DEFAULT
-        if capacity <= 0:
-            capacity = CAPACITY_DEFAULT
-
+        capacity = safe_float(computed.get("capacity"), default=CAPACITY_DEFAULT, min_val=1.0)
         device_demand_ratio = device_demand / capacity
 
-        # 5) Growth rate - try to read from computed otherwise default 0
-        try:
-            growth_rate = float(computed.get("growthRate", 0.0))
-        except Exception:
-            growth_rate = 0.0
-        # Expect growth_rate in 0..1 or 0..100; normalize to 0..100
-        if growth_rate <= 1.5:
-            growth_rate_pct = growth_rate * 100.0
+        # 5) Growth rate - normalized to 0..100
+        raw_growth = safe_float(computed.get("growthRate"), default=0.0, min_val=0.0)
+        if raw_growth <= 1.5:
+            growth_rate_pct = raw_growth * 100.0
         else:
-            growth_rate_pct = min(max(growth_rate, 0.0), 100.0)
+            growth_rate_pct = min(raw_growth, 100.0)
 
         # 6) Network utilization from computed (0..100)
-        try:
-            network_util = float(computed.get("networkUtil", 50.0))
-        except Exception:
-            network_util = 50.0
-        network_util = min(max(network_util, 0.0), 100.0)
+        network_util = safe_float(computed.get("networkUtil"), default=50.0, min_val=0.0, max_val=100.0)
 
         # 7) Temporal factor: higher during peak hours (18-23)
         ts = payload.get("timestamp")

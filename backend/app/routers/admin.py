@@ -423,3 +423,53 @@ async def get_platform_settings(admin_user: Dict[str, Any] = Depends(require_adm
             "model_confidence_threshold_percent": 75.0
         }
     }
+
+
+@router.post("/database/backup")
+async def trigger_database_backup(admin_user: Dict[str, Any] = Depends(require_admin)):
+    """Trigger an atomic, non-blocking online backup of the persistent SQLite database."""
+    from app.paypilot.db_backup import create_backup
+    try:
+        meta = create_backup()
+        SecurityAuditService.record_event(
+            event_type="DATABASE_BACKUP_CREATED",
+            actor_id=admin_user["id"],
+            actor_email=admin_user["email"],
+            action="database_backup",
+            outcome="SUCCESS",
+            details={"sha256": meta["sha256"], "size": meta["file_size_bytes"]}
+        )
+        return {"status": "success", "backup": meta}
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Backup failed: {str(e)}")
+
+
+@router.get("/database/backups")
+async def list_database_backups(admin_user: Dict[str, Any] = Depends(require_admin)):
+    """List available verified database backups."""
+    from app.paypilot.db_backup import BACKUP_DIR, verify_backup
+    if not os.path.exists(BACKUP_DIR):
+        return {"status": "success", "backups": []}
+
+    backups = []
+    for f in sorted(os.listdir(BACKUP_DIR), reverse=True):
+        if f.endswith(".db"):
+            fpath = os.path.join(BACKUP_DIR, f)
+            try:
+                stat = os.stat(fpath)
+                meta_path = f"{fpath}.meta.json"
+                meta_data = {}
+                if os.path.exists(meta_path):
+                    with open(meta_path, "r") as mf:
+                        meta_data = json.load(mf)
+                backups.append({
+                    "filename": f,
+                    "size_bytes": stat.st_size,
+                    "created_at": datetime.fromtimestamp(stat.st_mtime, timezone.utc).isoformat(),
+                    "sha256": meta_data.get("sha256"),
+                    "table_counts": meta_data.get("table_counts", {})
+                })
+            except Exception:
+                pass
+
+    return {"status": "success", "backups": backups}

@@ -31,6 +31,7 @@ instance/
 *.db-shm
 *.db-wal
 backend/data/*.db*
+backend/data/backups/
 !backend/data/.gitkeep
 
 # Node / frontend
