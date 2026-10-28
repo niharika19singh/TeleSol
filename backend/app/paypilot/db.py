@@ -144,6 +144,16 @@ def init_db():
         );
         """)
 
+        # 0d2. Revoked Session Tokens Blacklist (Immediate Invalidation on Logout)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS revoked_tokens (
+            token_hash TEXT PRIMARY KEY,
+            user_id TEXT,
+            revoked_at TEXT NOT NULL,
+            expires_at INTEGER NOT NULL
+        );
+        """)
+
         # 0e. Tamper-Evident Security Events & Audit Trail
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS security_events (

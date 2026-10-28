@@ -209,9 +209,14 @@ async def get_current_user_profile(user: Dict[str, Any] = Depends(get_current_us
 @router.post("/logout")
 async def logout(request: Request, user: Dict[str, Any] = Depends(get_current_user)):
     """
-    Terminate session and record logout event in security audit trail.
+    Terminate session, revoke JWT token in blacklist, and record logout event in security audit trail.
     """
     client_ip = get_client_ip(request)
+    auth_header = request.headers.get("authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[7:].strip()
+        AuthService.revoke_token(token, user_id=user["id"])
+
     SecurityAuditService.record_event(
         event_type="LOGOUT",
         actor_id=user["id"],

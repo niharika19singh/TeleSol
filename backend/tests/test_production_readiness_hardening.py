@@ -232,6 +232,32 @@ class TestProductionReadinessHardening(unittest.TestCase):
         backups = list_res.json()["backups"]
         self.assertGreater(len(backups), 0)
 
+    def test_07_token_revocation_on_logout(self):
+        """Verify that logging out revokes the JWT token, preventing reuse."""
+        # 1. Login to get fresh token
+        login_res = self.client.post("/api/auth/login", json={
+            "username_or_email": "op_readiness@telesol.io",
+            "password": "hash"
+        })
+        # Note: if direct password check fails because password_hash is dummy in test, generate valid token
+        fresh_token = create_access_token(
+            user_id="usr_op_readiness",
+            username="op_readiness",
+            email="op_readiness@telesol.io",
+            role="NOC_OPERATOR"
+        )
+        # Verify valid token works
+        me_res = self.client.get("/api/auth/me", headers={"Authorization": f"Bearer {fresh_token}"})
+        self.assertEqual(me_res.status_code, 200)
+
+        # Logout with token
+        logout_res = self.client.post("/api/auth/logout", headers={"Authorization": f"Bearer {fresh_token}"})
+        self.assertEqual(logout_res.status_code, 200)
+
+        # Attempt to reuse token: must be rejected with HTTP 401
+        revoked_me = self.client.get("/api/auth/me", headers={"Authorization": f"Bearer {fresh_token}"})
+        self.assertEqual(revoked_me.status_code, 401)
+
 
 if __name__ == "__main__":
     unittest.main()

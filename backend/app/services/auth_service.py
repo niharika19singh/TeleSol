@@ -155,6 +155,15 @@ def verify_access_token(token: str) -> Optional[Dict[str, Any]]:
         if payload.get("exp", 0) < int(time.time()):
             logger.warning("[AUTH] Token expired for user %s", payload.get("usr"))
             return None
+
+        # Check token blacklist (revoked on logout)
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        with db_session() as conn:
+            cursor = conn.cursor()
+            cursor.execute("SELECT 1 FROM revoked_tokens WHERE token_hash = ?", (token_hash,))
+            if cursor.fetchone():
+                logger.warning("[AUTH] Revoked token used for user %s", payload.get("usr"))
+                return None
             
         return payload
     except Exception as e:
@@ -262,6 +271,35 @@ class AuthService:
         """Clear failed login record on successful authentication."""
         identifier = identifier.strip().lower()
         _FAILED_LOGINS.pop(identifier, None)
+
+    @staticmethod
+    def revoke_token(token: str, user_id: Optional[str] = None) -> None:
+        """Revoke a token immediately by recording its SHA-256 fingerprint in the blacklist."""
+        clean_token = token.strip()
+        token_hash = hashlib.sha256(clean_token.encode("utf-8")).hexdigest()
+        now_iso = datetime.now(timezone.utc).isoformat()
+        exp = int(time.time()) + TOKEN_EXPIRATION_SECONDS
+        try:
+            parts = clean_token.split(".")
+            if len(parts) == 2:
+                p_padding = 4 - (len(parts[0]) % 4) if len(parts[0]) % 4 != 0 else 0
+                payload = json.loads(base64.urlsafe_b64decode(parts[0] + ("=" * p_padding)).decode("utf-8"))
+                exp = payload.get("exp", exp)
+                user_id = user_id or payload.get("uid")
+        except Exception:
+            pass
+
+        with db_session() as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT OR IGNORE INTO revoked_tokens (token_hash, user_id, revoked_at, expires_at)
+                VALUES (?, ?, ?, ?);
+                """,
+                (token_hash, user_id, now_iso, exp)
+            )
+            conn.commit()
+        logger.info("[AUTH] Token revoked for user %s (hash: %s)", user_id or "unknown", token_hash[:12])
 
     @staticmethod
     def _check_registration_rate_limit(ip_address: Optional[str]) -> None:
