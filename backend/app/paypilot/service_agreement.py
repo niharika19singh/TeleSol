@@ -41,7 +41,8 @@ class ServiceAgreementService:
         target_metric: str = "CRS_REDUCTION",
         baseline_value: float = 0.0,
         target_threshold: float = 20.0,
-        measurement_window_seconds: int = 60
+        measurement_window_seconds: int = 60,
+        workspace_id: str = "ws_telesol_default"
     ) -> Dict[str, Any]:
         """
         Create a canonical service agreement with a cryptographic hash.
@@ -76,8 +77,8 @@ class ServiceAgreementService:
                 expected_deliverables, expected_completion_time, network_id, evidence_required,
                 canonical_terms, agreement_hash, status,
                 target_metric, baseline_value, target_threshold, measurement_window_seconds,
-                evaluation_status, settlement_eligibility, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACCEPTED', ?, ?, ?, ?, 'OUTCOME_PENDING', 'IMMEDIATE_PAID_OUTCOME_UNVERIFIED', ?, ?);
+                evaluation_status, settlement_eligibility, workspace_id, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'ACCEPTED', ?, ?, ?, ?, 'OUTCOME_PENDING', 'IMMEDIATE_PAID_OUTCOME_UNVERIFIED', ?, ?, ?);
             """, (
                 agreement_id,
                 task_id,
@@ -99,6 +100,7 @@ class ServiceAgreementService:
                 float(baseline_value),
                 float(target_threshold),
                 int(measurement_window_seconds),
+                workspace_id or "ws_telesol_default",
                 now,
                 now
             ))
@@ -145,6 +147,7 @@ class ServiceAgreementService:
             "measurement_window_seconds": measurement_window_seconds,
             "evaluation_status": "OUTCOME_PENDING",
             "settlement_eligibility": "IMMEDIATE_PAID_OUTCOME_UNVERIFIED",
+            "workspace_id": workspace_id or "ws_telesol_default",
             "created_at": now
         }
 

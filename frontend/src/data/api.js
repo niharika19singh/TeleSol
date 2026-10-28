@@ -233,7 +233,10 @@ async function apiPost(endpoint, body = {}, token = null) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const err = new Error(data.detail || `HTTP ${res.status}`);
+      const msg = typeof data.detail === 'string'
+        ? data.detail
+        : (Array.isArray(data.detail) ? data.detail.map(d => d.msg || JSON.stringify(d)).join(', ') : (data.detail ? JSON.stringify(data.detail) : `HTTP ${res.status}`));
+      const err = new Error(msg);
       err.status = res.status;
       err.data = data;
       throw err;
@@ -252,7 +255,10 @@ async function apiGetAuth(endpoint, token = null) {
     const res = await fetch(`${API_BASE}${endpoint}`, { headers });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const err = new Error(data.detail || `HTTP ${res.status}`);
+      const msg = typeof data.detail === 'string'
+        ? data.detail
+        : (Array.isArray(data.detail) ? data.detail.map(d => d.msg || JSON.stringify(d)).join(', ') : (data.detail ? JSON.stringify(data.detail) : `HTTP ${res.status}`));
+      const err = new Error(msg);
       err.status = res.status;
       err.data = data;
       throw err;
@@ -275,7 +281,10 @@ async function apiPatch(endpoint, body = {}, token = null) {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const err = new Error(data.detail || `HTTP ${res.status}`);
+      const msg = typeof data.detail === 'string'
+        ? data.detail
+        : (Array.isArray(data.detail) ? data.detail.map(d => d.msg || JSON.stringify(d)).join(', ') : (data.detail ? JSON.stringify(data.detail) : `HTTP ${res.status}`));
+      const err = new Error(msg);
       err.status = res.status;
       err.data = data;
       throw err;

@@ -105,12 +105,11 @@ export function AuthProvider({ children }) {
     const res = await registerUser(userData);
     const userToken = res.token || res.access_token;
     const createdUser = res.user || res;
-    if (userToken && createdUser && (createdUser.email || createdUser.username)) {
+    if (userToken && createdUser && createdUser.email_verified) {
       setToken(userToken);
       setUser(createdUser);
       localStorage.setItem(TOKEN_STORAGE_KEY, userToken);
       localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(createdUser));
-      return { user: createdUser, raw: res };
     }
     return { user: createdUser, raw: res };
   };

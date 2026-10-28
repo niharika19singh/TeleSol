@@ -123,21 +123,23 @@ async def register(payload: RegisterRequest, request: Request):
             auto_verify=payload.auto_verify or (os.getenv("SENPAY_AUTO_VERIFY", "false").lower() == "true"),
             ip_address=client_ip
         )
-        token = create_access_token(
-            user_id=user["id"],
-            username=user["username"],
-            email=user["email"],
-            role=user["role"],
-            workspace_id=user["workspace_id"],
-            org_name=user["organization_name"]
-        )
+        token = None
+        if user.get("email_verified"):
+            token = create_access_token(
+                user_id=user["id"],
+                username=user["username"],
+                email=user["email"],
+                role=user["role"],
+                workspace_id=user["workspace_id"],
+                org_name=user["organization_name"]
+            )
         return {
             "status": "success",
-            "message": "Account successfully registered.",
+            "message": "Account successfully registered. Please verify your email." if not token else "Account successfully registered.",
             "token": token,
             "access_token": token,
-            "token_type": "Bearer",
-            "expires_in": 86400,
+            "token_type": "Bearer" if token else None,
+            "expires_in": 86400 if token else None,
             "user": user,
             **user
         }

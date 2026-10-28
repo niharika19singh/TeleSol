@@ -36,7 +36,8 @@ class DelegationService:
         valid_from: str,
         valid_until: str,
         require_manual_review_for_new_providers: bool = True,
-        require_completion_evidence: bool = True
+        require_completion_evidence: bool = True,
+        workspace_id: str = "ws_telesol_default"
     ) -> Dict[str, Any]:
         """Create and persist a new delegated budget for an agent."""
         now = datetime.now(timezone.utc).isoformat()
@@ -52,8 +53,8 @@ class DelegationService:
                 id, agent_id, delegator_address, service_categories, max_amount_per_tx,
                 max_cumulative_spend, current_spent, reserved_amount, allowed_recipients,
                 allowed_assets, allowed_networks, valid_from, valid_until,
-                require_manual_review_for_new_providers, require_completion_evidence, status, created_at, updated_at
-            ) VALUES (?, ?, ?, ?, ?, ?, 0.0, 0.0, ?, ?, ?, ?, ?, ?, ?, 'ENABLED', ?, ?);
+                require_manual_review_for_new_providers, require_completion_evidence, status, workspace_id, created_at, updated_at
+            ) VALUES (?, ?, ?, ?, ?, ?, 0.0, 0.0, ?, ?, ?, ?, ?, ?, ?, 'ENABLED', ?, ?, ?);
             """, (
                 del_id,
                 agent_id,
@@ -68,6 +69,7 @@ class DelegationService:
                 valid_until,
                 1 if require_manual_review_for_new_providers else 0,
                 1 if require_completion_evidence else 0,
+                workspace_id or "ws_telesol_default",
                 now,
                 now
             ))

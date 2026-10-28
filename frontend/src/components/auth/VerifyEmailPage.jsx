@@ -54,7 +54,8 @@ export default function VerifyEmailPage({ onNavigateLogin, onNavigateLanding }) 
       await verifyEmail(tok.trim());
       setVerified(true);
     } catch (err) {
-      setError(err.message || 'Verification token is invalid, expired, or already used.');
+      const msg = typeof err === 'string' ? err : (err?.message || err?.detail || 'Verification token is invalid, expired, or already used.');
+      setError(typeof msg === 'string' ? msg : JSON.stringify(msg));
     } finally {
       setVerifying(false);
     }

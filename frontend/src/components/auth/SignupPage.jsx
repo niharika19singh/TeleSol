@@ -61,8 +61,9 @@ export default function SignupPage({ onNavigateLogin, onNavigateLanding }) {
         password: password,
       });
 
-      if (res.raw?._dev_verification_token) {
-        setDevToken(res.raw._dev_verification_token);
+      const tok = res.raw?._dev_verification_token || res.user?._dev_verification_token || res._dev_verification_token;
+      if (tok) {
+        setDevToken(tok);
       }
       setVerificationPending(true);
     } catch (err) {

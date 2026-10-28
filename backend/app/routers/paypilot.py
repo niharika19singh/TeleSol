@@ -43,27 +43,33 @@ from app.paypilot.intervention_optimizer import intervention_optimizer
 from app.paypilot.counterfactual_evaluator import counterfactual_evaluator
 from app.paypilot.recovery_engine import recovery_engine
 from app.services.tinyfish_service import tinyfish_service
-from app.services.auth_service import verify_access_token, normalize_role
+from app.services.auth_service import verify_access_token, normalize_role, ROLE_PLATFORM_ADMIN
 
 logger = logging.getLogger("telesol.paypilot.router")
 router = APIRouter(prefix="/api/paypilot", tags=["TeleSol PayPilot"])
 
 
-def check_financial_authorization_permission(authorization: Optional[str] = None) -> Optional[Dict[str, Any]]:
-    """Verify that the caller has financial authorization authority if authenticated."""
+def get_caller_claims(authorization: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """Extract and verify token claims from Authorization header without throwing if omitted."""
     if not authorization:
         return None
     parts = authorization.split()
     if len(parts) == 2 and parts[0].lower() == "bearer":
-        claims = verify_access_token(parts[1])
-        if claims:
-            role = normalize_role(claims.get("rol", ""))
-            if role in ["ANALYST", "SERVICE_PROVIDER"]:
-                raise HTTPException(
-                    status_code=403,
-                    detail=f"Role '{role}' is not authorized to execute or authorize financial payments. Requires PLATFORM_ADMIN, WORKSPACE_OWNER, NOC_OPERATOR, or FINANCE."
-                )
-            return claims
+        return verify_access_token(parts[1])
+    return None
+
+
+def check_financial_authorization_permission(authorization: Optional[str] = None) -> Optional[Dict[str, Any]]:
+    """Verify that the caller has financial authorization authority if authenticated."""
+    claims = get_caller_claims(authorization)
+    if claims:
+        role = normalize_role(claims.get("rol", ""))
+        if role in ["ANALYST", "SERVICE_PROVIDER"]:
+            raise HTTPException(
+                status_code=403,
+                detail=f"Role '{role}' is not authorized to execute or authorize financial payments. Requires PLATFORM_ADMIN, WORKSPACE_OWNER, NOC_OPERATOR, or FINANCE."
+            )
+        return claims
     return None
 
 
@@ -114,6 +120,7 @@ class ServiceAgreementCreate(BaseModel):
     baseline_value: Optional[float] = Field(default=65.0)
     target_threshold: Optional[float] = Field(default=20.0)
     measurement_window_seconds: Optional[int] = Field(default=60)
+    workspace_id: Optional[str] = None
 
 
 class DelegationCreateRequest(BaseModel):
@@ -129,6 +136,7 @@ class DelegationCreateRequest(BaseModel):
     valid_until: str = Field(...)
     require_manual_review_for_new_providers: bool = True
     require_completion_evidence: bool = True
+    workspace_id: Optional[str] = None
 
 
 class PaymentRequestCreate(BaseModel):
@@ -145,6 +153,7 @@ class PaymentRequestCreate(BaseModel):
     policy_id: Optional[str] = "policy_telecom_standard"
     agreement_id: Optional[str] = None
     delegation_id: Optional[str] = None
+    workspace_id: Optional[str] = None
     is_demo: bool = True
 
 
@@ -617,21 +626,45 @@ async def discover_services(query: Optional[str] = Query(None)):
 
 @router.get("/agreements")
 @router.get("/service-agreements")
-async def list_agreements(task_id: Optional[str] = Query(None)):
-    """List service agreements."""
+async def list_agreements(
+    task_id: Optional[str] = Query(None),
+    workspace_id: Optional[str] = Query(None),
+    authorization: Optional[str] = Header(None)
+):
+    """List service agreements with multi-tenant workspace isolation."""
+    claims = get_caller_claims(authorization)
+    target_ws = None
+    if claims:
+        user_role = normalize_role(claims.get("rol", ""))
+        user_ws = claims.get("ws_id", "ws_telesol_default")
+        if user_role == ROLE_PLATFORM_ADMIN:
+            target_ws = workspace_id
+        else:
+            target_ws = user_ws
+    elif workspace_id:
+        target_ws = workspace_id
+
     with db_session() as conn:
         cursor = conn.cursor()
+        query = "SELECT * FROM service_agreements WHERE 1=1"
+        params = []
         if task_id:
-            cursor.execute("SELECT * FROM service_agreements WHERE task_id = ? ORDER BY created_at DESC;", (task_id,))
-        else:
-            cursor.execute("SELECT * FROM service_agreements ORDER BY created_at DESC;")
+            query += " AND task_id = ?"
+            params.append(task_id)
+        if target_ws:
+            query += " AND (workspace_id = ? OR workspace_id IS NULL)"
+            params.append(target_ws)
+        query += " ORDER BY created_at DESC;"
+        cursor.execute(query, tuple(params))
         rows = [dict(r) for r in cursor.fetchall()]
     return {"agreements": rows}
 
 
 @router.post("/agreements")
-async def create_agreement(payload: ServiceAgreementCreate):
-    """Create a structured canonical service agreement with agreement_hash."""
+async def create_agreement(payload: ServiceAgreementCreate, authorization: Optional[str] = Header(None)):
+    """Create a structured canonical service agreement with agreement_hash and workspace binding."""
+    claims = get_caller_claims(authorization)
+    target_ws = (claims.get("ws_id") if claims else None) or payload.workspace_id or "ws_telesol_default"
     agr = service_agreement_service.create_agreement(
         task_id=payload.task_id,
         requesting_agent_id=payload.requesting_agent_id,
@@ -649,17 +682,30 @@ async def create_agreement(payload: ServiceAgreementCreate):
         target_metric=payload.target_metric or "CRS_REDUCTION",
         baseline_value=payload.baseline_value if payload.baseline_value is not None else 65.0,
         target_threshold=payload.target_threshold if payload.target_threshold is not None else 20.0,
-        measurement_window_seconds=payload.measurement_window_seconds or 60
+        measurement_window_seconds=payload.measurement_window_seconds or 60,
+        workspace_id=target_ws
     )
     return {"status": "success", "agreement": agr}
 
 
 @router.get("/agreements/{agreement_id}")
-async def get_agreement(agreement_id: str):
-    """Retrieve agreement details and verify hash integrity."""
+async def get_agreement(agreement_id: str, authorization: Optional[str] = Header(None)):
+    """Retrieve agreement details and verify hash integrity with workspace boundary enforcement."""
     agr = service_agreement_service.get_agreement(agreement_id)
     if not agr:
         raise HTTPException(status_code=404, detail=f"Agreement '{agreement_id}' not found.")
+
+    claims = get_caller_claims(authorization)
+    if claims:
+        user_role = normalize_role(claims.get("rol", ""))
+        user_ws = claims.get("ws_id", "ws_telesol_default")
+        agr_ws = agr.get("workspace_id") or "ws_telesol_default"
+        if user_role != ROLE_PLATFORM_ADMIN and agr_ws != user_ws:
+            raise HTTPException(
+                status_code=403,
+                detail="Cross-workspace access violation: You cannot access service agreements belonging to another workspace."
+            )
+
     return {"agreement": agr}
 
 
@@ -695,7 +741,22 @@ async def verify_agreement_outcome(
     Directly verify structured outcome contract against actual telemetry:
     Categorizes outcome into VERIFIED_SUCCESS, VERIFIED_FAILURE, INCONCLUSIVE, or DISPUTED.
     Updates service agreement status, settlement eligibility, and produces bounded recovery if degraded.
+    Enforces multi-tenant workspace isolation.
     """
+    claims = get_caller_claims(authorization)
+    agr = service_agreement_service.get_agreement(agreement_id)
+    if not agr:
+        raise HTTPException(status_code=404, detail=f"Service agreement '{agreement_id}' not found.")
+
+    if claims:
+        user_role = normalize_role(claims.get("rol", ""))
+        user_ws = claims.get("ws_id", "ws_telesol_default")
+        agr_ws = agr.get("workspace_id") or "ws_telesol_default"
+        if user_role != ROLE_PLATFORM_ADMIN and agr_ws != user_ws:
+            raise HTTPException(
+                status_code=403,
+                detail="Cross-workspace access violation: You cannot verify agreements belonging to another workspace."
+            )
     payload = payload or {}
     post_metrics = payload.get("post_metrics")
     control_zone_id = payload.get("control_zone_id")
@@ -742,14 +803,36 @@ async def verify_agreement_outcome(
 # ─────────────────────────────────────────────────────────────
 
 @router.get("/delegations")
-async def list_delegations(agent_id: Optional[str] = Query(None)):
-    """List delegated budgets and permission boundaries."""
-    return {"delegations": delegation_service.list_delegations(agent_id=agent_id)}
+async def list_delegations(
+    agent_id: Optional[str] = Query(None),
+    workspace_id: Optional[str] = Query(None),
+    authorization: Optional[str] = Header(None)
+):
+    """List delegated budgets and permission boundaries with workspace isolation."""
+    claims = get_caller_claims(authorization)
+    target_ws = None
+    if claims:
+        user_role = normalize_role(claims.get("rol", ""))
+        user_ws = claims.get("ws_id", "ws_telesol_default")
+        if user_role == ROLE_PLATFORM_ADMIN:
+            target_ws = workspace_id
+        else:
+            target_ws = user_ws
+    elif workspace_id:
+        target_ws = workspace_id
+
+    delegations = delegation_service.list_delegations(agent_id=agent_id)
+    if target_ws:
+        delegations = [d for d in delegations if (d.get("workspace_id") == target_ws or not d.get("workspace_id"))]
+    return {"delegations": delegations}
 
 
 @router.post("/delegations")
-async def create_delegation(payload: DelegationCreateRequest):
-    """Create a new delegation for an agent."""
+async def create_delegation(payload: DelegationCreateRequest, authorization: Optional[str] = Header(None)):
+    """Create a new delegation for an agent with financial authorization and workspace check."""
+    check_financial_authorization_permission(authorization)
+    claims = get_caller_claims(authorization)
+    target_ws = (claims.get("ws_id") if claims else None) or payload.workspace_id or "ws_telesol_default"
     now = datetime.now(timezone.utc).isoformat()
     del_obj = delegation_service.create_delegation(
         agent_id=payload.agent_id,
@@ -763,17 +846,28 @@ async def create_delegation(payload: DelegationCreateRequest):
         valid_from=payload.valid_from or now,
         valid_until=payload.valid_until,
         require_manual_review_for_new_providers=payload.require_manual_review_for_new_providers,
-        require_completion_evidence=payload.require_completion_evidence
+        require_completion_evidence=payload.require_completion_evidence,
+        workspace_id=target_ws
     )
     return {"status": "success", "delegation": del_obj}
 
 
 @router.get("/delegations/{delegation_id}")
-async def get_delegation(delegation_id: str):
-    """Inspect delegation, including remaining budget and spent/reserved split."""
+async def get_delegation(delegation_id: str, authorization: Optional[str] = Header(None)):
+    """Inspect delegation, including remaining budget and spent/reserved split with workspace isolation guard."""
     d = delegation_service.get_delegation(delegation_id)
     if not d:
         raise HTTPException(status_code=404, detail=f"Delegation '{delegation_id}' not found.")
+    claims = get_caller_claims(authorization)
+    if claims:
+        user_role = normalize_role(claims.get("rol", ""))
+        user_ws = claims.get("ws_id", "ws_telesol_default")
+        del_ws = d.get("workspace_id") or "ws_telesol_default"
+        if user_role != ROLE_PLATFORM_ADMIN and del_ws != user_ws:
+            raise HTTPException(
+                status_code=403,
+                detail="Cross-workspace access violation: You cannot access delegations belonging to another workspace."
+            )
     return {"delegation": d}
 
 
@@ -834,16 +928,37 @@ async def simulate_payment_safety(payload: SimulatePaymentRequest):
 # ─────────────────────────────────────────────────────────────
 
 @router.get("/payment-requests")
-async def list_payment_requests():
-    """List payment requests with joined mandate and receipt info."""
+async def list_payment_requests(
+    workspace_id: Optional[str] = Query(None),
+    authorization: Optional[str] = Header(None)
+):
+    """List payment requests with joined mandate and receipt info and workspace isolation."""
+    claims = get_caller_claims(authorization)
+    target_ws = None
+    if claims:
+        user_role = normalize_role(claims.get("rol", ""))
+        user_ws = claims.get("ws_id", "ws_telesol_default")
+        if user_role == ROLE_PLATFORM_ADMIN:
+            target_ws = workspace_id
+        else:
+            target_ws = user_ws
+    elif workspace_id:
+        target_ws = workspace_id
+
     with db_session() as conn:
         cursor = conn.cursor()
-        cursor.execute("""
+        query = """
         SELECT r.*, m.mandate_id, m.authorization_status, m.execution_status, m.verification_status, m.tx_hash
         FROM payment_requests r
         LEFT JOIN mandates m ON m.request_id = r.id
-        ORDER BY r.created_at DESC;
-        """)
+        WHERE 1=1
+        """
+        params = []
+        if target_ws:
+            query += " AND (r.workspace_id = ? OR r.workspace_id IS NULL)"
+            params.append(target_ws)
+        query += " ORDER BY r.created_at DESC;"
+        cursor.execute(query, tuple(params))
         rows = [dict(r) for r in cursor.fetchall()]
     return {"requests": rows}
 
@@ -853,9 +968,10 @@ async def create_payment_request(payload: PaymentRequestCreate, authorization: O
     """
     Create a structured payment request.
     Verifies agreement binding, reserves delegation budget if present,
-    and runs deterministic policy evaluation.
+    and runs deterministic policy evaluation with workspace isolation.
     """
-    check_financial_authorization_permission(authorization)
+    claims = check_financial_authorization_permission(authorization)
+    target_ws = (claims.get("ws_id") if claims else None) or payload.workspace_id or "ws_telesol_default"
     req_id = f"req_{int(time.time_ns())}_{uuid.uuid4().hex[:6]}"
     mandate_id = f"man_{int(time.time_ns())}_{uuid.uuid4().hex[:6]}"
     now = datetime.now(timezone.utc)
@@ -915,8 +1031,8 @@ async def create_payment_request(payload: PaymentRequestCreate, authorization: O
         INSERT INTO payment_requests (
             id, title, buyer_agent_id, provider_id, recipient_address, asset, amount,
             network_id, purpose, reference_metadata, expiry_timestamp, policy_id,
-            agreement_id, agreement_hash, delegation_id, status, is_demo, created_at, updated_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SUBMITTED', ?, ?, ?);
+            agreement_id, agreement_hash, delegation_id, status, is_demo, workspace_id, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'SUBMITTED', ?, ?, ?, ?);
         """, (
             req_id,
             payload.title,
@@ -934,6 +1050,7 @@ async def create_payment_request(payload: PaymentRequestCreate, authorization: O
             agr_hash,
             payload.delegation_id,
             1 if payload.is_demo else 0,
+            target_ws,
             now_str,
             now_str
         ))
@@ -943,8 +1060,8 @@ async def create_payment_request(payload: PaymentRequestCreate, authorization: O
             id, mandate_id, request_id, payer_id, payee_id, recipient_address,
             amount, asset, network_id, purpose, spending_limit, expiry_timestamp,
             agreement_id, agreement_hash, delegation_id,
-            authorization_status, execution_status, verification_status, is_demo, created_at
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_POLICY', 'PENDING', 'UNVERIFIED', ?, ?);
+            authorization_status, execution_status, verification_status, is_demo, workspace_id, created_at
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING_POLICY', 'PENDING', 'UNVERIFIED', ?, ?, ?);
         """, (
             mandate_id,
             mandate_id,
@@ -962,6 +1079,7 @@ async def create_payment_request(payload: PaymentRequestCreate, authorization: O
             agr_hash,
             payload.delegation_id,
             1 if payload.is_demo else 0,
+            target_ws,
             now_str
         ))
 
@@ -999,11 +1117,36 @@ async def create_payment_request(payload: PaymentRequestCreate, authorization: O
 
 
 @router.get("/mandates")
-async def list_mandates():
-    """List payment mandates and their cryptographic verification states."""
+async def list_mandates(
+    status: Optional[str] = Query(None),
+    workspace_id: Optional[str] = Query(None),
+    authorization: Optional[str] = Header(None)
+):
+    """List payment mandates and their cryptographic verification states with workspace isolation."""
+    claims = get_caller_claims(authorization)
+    target_ws = None
+    if claims:
+        user_role = normalize_role(claims.get("rol", ""))
+        user_ws = claims.get("ws_id", "ws_telesol_default")
+        if user_role == ROLE_PLATFORM_ADMIN:
+            target_ws = workspace_id
+        else:
+            target_ws = user_ws
+    elif workspace_id:
+        target_ws = workspace_id
+
     with db_session() as conn:
         cursor = conn.cursor()
-        cursor.execute("SELECT * FROM mandates ORDER BY created_at DESC;")
+        query = "SELECT * FROM mandates WHERE 1=1"
+        params = []
+        if status:
+            query += " AND execution_status = ?"
+            params.append(status)
+        if target_ws:
+            query += " AND (workspace_id = ? OR workspace_id IS NULL)"
+            params.append(target_ws)
+        query += " ORDER BY created_at DESC;"
+        cursor.execute(query, tuple(params))
         rows = [dict(r) for r in cursor.fetchall()]
     return {"mandates": rows}
 
@@ -1023,6 +1166,7 @@ async def execute_payment(payload: ExecutePaymentRequest, authorization: Optiona
     5. Issues Settlement Receipt, settles delegation budget, and creates Evidence Bundle.
     """
     check_financial_authorization_permission(authorization)
+    claims = get_caller_claims(authorization)
     now = datetime.now(timezone.utc).isoformat()
     with db_session() as conn:
         cursor = conn.cursor()
@@ -1032,6 +1176,16 @@ async def execute_payment(payload: ExecutePaymentRequest, authorization: Optiona
             raise HTTPException(status_code=404, detail=f"Mandate '{payload.mandate_id}' not found.")
 
         mandate = dict(mandate_row)
+
+        if claims:
+            user_role = normalize_role(claims.get("rol", ""))
+            user_ws = claims.get("ws_id", "ws_telesol_default")
+            mandate_ws = mandate.get("workspace_id") or "ws_telesol_default"
+            if user_role != ROLE_PLATFORM_ADMIN and mandate_ws != user_ws:
+                raise HTTPException(
+                    status_code=403,
+                    detail="Cross-workspace execution violation: You cannot execute mandates belonging to another workspace."
+                )
 
         if mandate["authorization_status"] == "REJECTED":
             raise HTTPException(status_code=400, detail="Cannot execute: Mandate was rejected by policy engine.")
