@@ -757,6 +757,32 @@ async def verify_agreement_outcome(
                 status_code=403,
                 detail="Cross-workspace access violation: You cannot verify agreements belonging to another workspace."
             )
+
+    # Idempotency & Safety: Terminal verification outcomes cannot be silently overwritten or duplicated
+    if agr.get("outcome_status") == "VERIFIED_SUCCESS" or agr.get("evaluation_status") == "OUTCOME_VERIFIED":
+        return {
+            "status": "success",
+            "agreement_id": agreement_id,
+            "outcome": "VERIFIED_SUCCESS",
+            "evaluation_status": agr.get("evaluation_status", "OUTCOME_VERIFIED"),
+            "settlement_eligibility": agr.get("settlement_eligibility", "PERFORMANCE_SATISFIED"),
+            "agreement": agr,
+            "idempotent": True,
+            "message": "Service agreement has already been verified as SUCCESSFUL. Duplicate payout prevented."
+        }
+
+    if agr.get("outcome_status") == "VERIFIED_FAILURE" or agr.get("evaluation_status") == "OUTCOME_FAILED":
+        return {
+            "status": "success",
+            "agreement_id": agreement_id,
+            "outcome": "VERIFIED_FAILURE",
+            "evaluation_status": "OUTCOME_FAILED",
+            "settlement_eligibility": agr.get("settlement_eligibility", "PERFORMANCE_BREACH_REFUND_SIMULATED"),
+            "agreement": agr,
+            "idempotent": True,
+            "message": "Service agreement has already failed verification. Silent transition to success is prohibited."
+        }
+
     payload = payload or {}
     post_metrics = payload.get("post_metrics")
     control_zone_id = payload.get("control_zone_id")

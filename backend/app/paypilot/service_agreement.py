@@ -70,6 +70,10 @@ class ServiceAgreementService:
 
         with db_session() as conn:
             cursor = conn.cursor()
+            cursor.execute("SELECT id FROM providers WHERE id = ?;", (str(provider_id).strip(),))
+            if not cursor.fetchone():
+                raise ValueError(f"Provider '{provider_id}' is not registered in the active provider catalog.")
+
             cursor.execute("""
             INSERT INTO service_agreements (
                 id, task_id, requesting_agent_id, provider_id, provider_address,

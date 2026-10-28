@@ -20,7 +20,7 @@ import time
 import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, Callable
 
 logger = logging.getLogger("telesol.email")
 
@@ -36,7 +36,63 @@ class EmailRateLimitExceeded(Exception):
 
 
 class EmailService:
-    """Dispatches transactional emails with rate-limiting and provider abstraction."""
+    """Dispatches transactional emails with rate-limiting, provider abstraction, and credential safety."""
+
+    _mock_delivery_handler: Optional[Callable] = None
+
+    @classmethod
+    def set_mock_handler(cls, handler: Optional[Callable]) -> None:
+        """Inject a mock handler for automated tests to verify email behavior without real credentials."""
+        cls._mock_delivery_handler = handler
+
+    @staticmethod
+    def _mask_email(email: str) -> str:
+        """Sanitize email address for logs: 'operator@telesol.io' -> 'ope***@telesol.io'."""
+        try:
+            parts = email.strip().split("@")
+            if len(parts) == 2:
+                name, domain = parts
+                masked = name[:3] + "***" if len(name) >= 3 else name[0] + "***"
+                return f"{masked}@{domain}"
+        except Exception:
+            pass
+        return "***@***"
+
+    @staticmethod
+    def validate_configuration() -> Dict[str, Any]:
+        """Validate transactional email configuration without leaking secret keys or passwords."""
+        is_production = os.getenv("ENVIRONMENT", "").strip().lower() in ("production", "prod")
+        resend_key = os.getenv("RESEND_API_KEY")
+        smtp_host = os.getenv("SMTP_HOST")
+        smtp_user = os.getenv("SMTP_USER")
+        smtp_pass = os.getenv("SMTP_PASSWORD")
+
+        has_resend = bool(resend_key and len(resend_key.strip()) > 8)
+        has_smtp = bool(smtp_host and smtp_user and smtp_pass)
+
+        if has_resend:
+            active_provider = "resend"
+        elif has_smtp:
+            active_provider = "smtp"
+        elif not is_production:
+            active_provider = "development_console"
+        else:
+            active_provider = "unconfigured"
+
+        is_valid = bool(has_resend or has_smtp or (not is_production))
+
+        return {
+            "is_valid": is_valid,
+            "active_provider": active_provider,
+            "is_production": is_production,
+            "has_resend": has_resend,
+            "has_smtp": has_smtp,
+            "from_address": os.getenv("SMTP_FROM") or os.getenv("RESEND_FROM", "SENPAY Security <security@telesol.io>"),
+            "rate_limiting": {
+                "cooldown_seconds": COOLDOWN_SECONDS,
+                "max_hourly_emails": MAX_HOURLY_EMAILS
+            }
+        }
 
     @staticmethod
     def _check_rate_limit(recipient_email: str) -> None:
@@ -74,9 +130,14 @@ class EmailService:
     ) -> Dict[str, Any]:
         """
         Send an email via configured provider (SMTP, Resend, or Dev/Console mode).
+        Never logs authentication tokens, raw passwords, or full sensitive email content.
         """
         recipient_email = recipient_email.strip().lower()
         EmailService._check_rate_limit(recipient_email)
+
+        # 0. Mock Handler for automated tests
+        if EmailService._mock_delivery_handler is not None:
+            return EmailService._mock_delivery_handler(recipient_email, subject, text_content, html_content)
 
         smtp_host = os.getenv("SMTP_HOST")
         smtp_port = int(os.getenv("SMTP_PORT", "587"))
@@ -113,10 +174,15 @@ class EmailService:
                 )
                 with urllib.request.urlopen(req, timeout=10) as resp:
                     resp_data = json.loads(resp.read().decode("utf-8"))
-                    logger.info("[EMAIL] Sent via Resend to %s: ID %s", recipient_email, resp_data.get("id"))
-                    return {"status": "sent", "provider": "resend", "id": resp_data.get("id")}
+                    logger.info(
+                        "[EMAIL] Message accepted by Resend for %s | Subject: %s | ID: %s",
+                        EmailService._mask_email(recipient_email), subject, resp_data.get("id")
+                    )
+                    return {"status": "provider_accepted", "provider": "resend", "id": resp_data.get("id")}
             except Exception as e:
-                logger.error("[EMAIL] Resend delivery failed: %s", str(e))
+                # Sanitize error message to avoid disclosing URLs or query parameters
+                sanitized_error = str(e).split("?")[0]
+                logger.error("[EMAIL] Resend delivery rejected for %s: %s", EmailService._mask_email(recipient_email), sanitized_error)
                 # Fall through to SMTP or dev mode
 
         # 2. Try SMTP if configured
@@ -140,18 +206,19 @@ class EmailService:
                     server.login(smtp_user, smtp_password)
                     server.sendmail(smtp_from, recipient_email, msg.as_string())
 
-                logger.info("[EMAIL] Sent via SMTP to %s", recipient_email)
-                return {"status": "sent", "provider": "smtp"}
+                logger.info("[EMAIL] Message accepted by SMTP relay for %s | Subject: %s", EmailService._mask_email(recipient_email), subject)
+                return {"status": "relay_accepted", "provider": "smtp"}
             except Exception as e:
-                logger.error("[EMAIL] SMTP delivery failed: %s", str(e))
+                sanitized_error = str(e).split("?")[0]
+                logger.error("[EMAIL] SMTP delivery failed for %s: %s", EmailService._mask_email(recipient_email), sanitized_error)
                 # Fall through to dev mode
 
-        # 3. Environment Check: Only allow development console mode in non-production environments
+        # 3. Environment Check: Fail-closed in production
         is_production = os.getenv("ENVIRONMENT", "").strip().lower() in ("production", "prod")
         if is_production:
             logger.error(
-                "[EMAIL] Production transactional email delivery failed or unconfigured for %s: no live provider confirmed acceptance.",
-                recipient_email
+                "[EMAIL] Production transactional email unconfigured for %s: no live provider confirmed acceptance.",
+                EmailService._mask_email(recipient_email)
             )
             return {
                 "status": "unconfigured_in_production",
@@ -160,13 +227,13 @@ class EmailService:
                 "recipient": recipient_email
             }
 
-        # 4. Development / Local Fallback Mode
+        # 4. Development / Local Fallback Mode (Token never logged to logs/console)
         logger.info(
-            "[EMAIL:DEV_MODE] To: %s | Subject: %s\nText:\n%s\n",
-            recipient_email, subject, text_content
+            "[EMAIL:DEV_MODE] Dispatched to %s | Subject: %s | Mode: development_console",
+            EmailService._mask_email(recipient_email), subject
         )
         return {
-            "status": "delivered_dev_console",
+            "status": "dev_mode_dispatched",
             "provider": "development_console",
             "recipient": recipient_email,
             "subject": subject

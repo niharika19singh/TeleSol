@@ -19,6 +19,7 @@ Distinguishes:
 import json
 import time
 import uuid
+import math
 import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
@@ -54,10 +55,32 @@ class CounterfactualEvaluator:
         now = datetime.now(timezone.utc).isoformat()
         eval_id = f"cfe_{zone_id}_{int(time.time_ns())}_{uuid.uuid4().hex[:6]}"
 
-        # Missing Evidence Guard: Missing or empty post-metrics cannot silently succeed
-        if not post_metrics or ("crs_score" not in post_metrics and "packet_loss_pct" not in post_metrics):
-            logger.warning("[CFE] Outcome verification requested without telemetry evidence for %s", agreement_id)
+        # Missing or Invalid Evidence Guard: Missing, non-numeric, or incomplete evidence cannot silently succeed
+        has_valid_evidence = False
+        parsed_post_crs = None
+        if post_metrics and isinstance(post_metrics, dict):
+            raw_crs = post_metrics.get("crs_score")
+            if raw_crs is not None:
+                try:
+                    f = float(raw_crs)
+                    if not (math.isnan(f) or math.isinf(f)):
+                        parsed_post_crs = f
+                        has_valid_evidence = True
+                except (ValueError, TypeError):
+                    has_valid_evidence = False
+
+            if not has_valid_evidence and "packet_loss_pct" in post_metrics:
+                try:
+                    f = float(post_metrics["packet_loss_pct"])
+                    if not (math.isnan(f) or math.isinf(f)):
+                        has_valid_evidence = True
+                except (ValueError, TypeError):
+                    has_valid_evidence = False
+
+        if not has_valid_evidence:
+            logger.warning("[CFE] Outcome verification requested without valid telemetry evidence for %s", agreement_id)
             pre_crs = float(pre_metrics.get("crs_score", 65.0))
+            baseline_type = "MISSING_EVIDENCE" if not post_metrics else "INVALID_EVIDENCE"
             cfe_report = {
                 "evaluation_id": eval_id,
                 "agreement_id": agreement_id,
@@ -70,13 +93,13 @@ class CounterfactualEvaluator:
                 "counterfactual_projected_crs": pre_crs,
                 "attributable_improvement": 0.0,
                 "target_threshold": target_threshold,
-                "baseline_type": "MISSING_EVIDENCE",
-                "baseline_details": {"error": "Missing post-intervention telemetry evidence"},
+                "baseline_type": baseline_type,
+                "baseline_details": {"error": "Missing post-intervention telemetry evidence" if not post_metrics else "Invalid post-intervention telemetry evidence"},
                 "outcome_classification": "INCONCLUSIVE",
                 "confidence_score": 0.0,
                 "confidence_level": "UNRELIABLE",
-                "evidence_summary": "Missing post-intervention telemetry evidence. Outcome is inconclusive; settlement cannot be authorized.",
-                "limitations_notes": "No empirical post-intervention metrics were provided.",
+                "evidence_summary": "Missing post-intervention telemetry evidence. Outcome is inconclusive; settlement cannot be authorized." if not post_metrics else "Invalid post-intervention telemetry evidence. Outcome is inconclusive; settlement cannot be authorized.",
+                "limitations_notes": "No empirical post-intervention metrics were provided." if not post_metrics else "Telemetry evidence was non-numeric or failed validation.",
                 "evaluated_at": now
             }
             with db_session() as conn:
@@ -91,14 +114,14 @@ class CounterfactualEvaluator:
                 """, (
                     eval_id, agreement_id, mandate_id, zone_id, pre_metrics.get("candidate_id"),
                     json.dumps(pre_metrics), json.dumps(post_metrics or {}),
-                    "MISSING_EVIDENCE", json.dumps({"error": "Missing post-intervention telemetry"}),
+                    baseline_type, json.dumps({"error": cfe_report["baseline_details"]["error"]}),
                     0.0, expected_improvement, 0.0, "INCONCLUSIVE", 0.0, "UNRELIABLE",
                     cfe_report["evidence_summary"], cfe_report["limitations_notes"], now
                 ))
             return cfe_report
 
         pre_crs = float(pre_metrics.get("crs_score", 65.0))
-        post_crs = float(post_metrics.get("crs_score", pre_crs))
+        post_crs = parsed_post_crs if parsed_post_crs is not None else float(post_metrics.get("crs_score", pre_crs))
         pre_density = float(pre_metrics.get("density", 3.0))
         post_density = float(post_metrics.get("density", pre_density))
 

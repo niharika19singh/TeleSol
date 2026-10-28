@@ -35,15 +35,68 @@ from app.paypilot.canonical import canonical_json, hash_canonical_json
 logger = logging.getLogger("telesol.paypilot.db")
 
 DB_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../data"))
-DB_PATH = os.getenv("PAYPILOT_DB_PATH", os.getenv("DATABASE_PATH", os.path.join(DB_DIR, "paypilot.db")))
+
+
+def get_db_path() -> str:
+    """Resolve active database path dynamically from environment configuration."""
+    return os.getenv("PAYPILOT_DB_PATH", os.getenv("DATABASE_PATH", os.path.join(DB_DIR, "paypilot.db")))
+
+
+DB_PATH = get_db_path()
 
 _db_lock = threading.RLock()
 
 
-def get_db_connection() -> sqlite3.Connection:
+def validate_db_target(target_path: Optional[str] = None) -> Dict[str, Any]:
+    """
+    Validate that the database path is accessible, writable, and not silently recreated
+    when persistent storage is strictly required.
+
+    Enforces:
+    - Target directory exists or is creatable.
+    - Directory has write permissions.
+    - If REQUIRE_EXISTING_DB or STRICT_PERSISTENCE is set, halts startup if file is missing.
+    """
+    path = target_path or get_db_path()
+    parent_dir = os.path.dirname(os.path.abspath(path))
+    require_existing = os.getenv("REQUIRE_EXISTING_DB", "").lower() in ("true", "1", "yes") or \
+                       os.getenv("STRICT_PERSISTENCE", "").lower() in ("true", "1", "yes")
+
+    if not os.path.exists(parent_dir):
+        if require_existing:
+            raise FileNotFoundError(
+                f"[DB] Required persistent directory '{parent_dir}' does not exist. "
+                f"Halting startup to prevent unmounted or ephemeral database creation."
+            )
+        try:
+            os.makedirs(parent_dir, exist_ok=True)
+        except Exception as e:
+            raise PermissionError(f"[DB] Cannot create database directory '{parent_dir}': {str(e)}")
+
+    if not os.access(parent_dir, os.W_OK):
+        raise PermissionError(f"[DB] Target database directory '{parent_dir}' is not writable.")
+
+    file_exists = os.path.isfile(path)
+    if require_existing and not file_exists:
+        raise FileNotFoundError(
+            f"[DB] Persistent database required at '{path}', but file does not exist. "
+            f"Halting startup to prevent accidental empty database creation."
+        )
+
+    return {
+        "path": path,
+        "parent_dir": parent_dir,
+        "exists": file_exists,
+        "writable": os.access(parent_dir, os.W_OK),
+        "strict_persistence": require_existing
+    }
+
+
+def get_db_connection(target_path: Optional[str] = None) -> sqlite3.Connection:
     """Create and configure a thread-safe connection to the SQLite database."""
-    os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-    conn = sqlite3.connect(DB_PATH, timeout=30.0, check_same_thread=False)
+    path = target_path or get_db_path()
+    validate_db_target(path)
+    conn = sqlite3.connect(path, timeout=30.0, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode = WAL;")
     conn.execute("PRAGMA busy_timeout = 30000;")

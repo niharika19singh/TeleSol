@@ -18,6 +18,7 @@ import pandas as pd
 import joblib
 
 from app.ml.train import MODEL_ARTIFACT_PATH, FEATURE_COLS
+from app.utils.helpers import safe_float
 
 logger = logging.getLogger("telesol.ml.inference")
 
@@ -52,16 +53,16 @@ def predict_congestion_risk(telemetry: Dict[str, Any]) -> Dict[str, Any]:
     """
     bundle = load_model()
 
-    # Extract or default telemetry features
-    rsrp = float(telemetry.get("rsrp", telemetry.get("RSRP", -95.0)))
-    rsrq = float(telemetry.get("rsrq", telemetry.get("RSRQ", -12.5)))
-    snr = float(telemetry.get("snr", telemetry.get("SNR", 5.0)))
-    cqi = float(telemetry.get("cqi", telemetry.get("CQI", 11.0)))
-    rssi = float(telemetry.get("rssi", telemetry.get("RSSI", -90.0)))
-    dl_bitrate = float(telemetry.get("dl_bitrate", telemetry.get("DL_bitrate", 25000.0)))
-    ul_bitrate = float(telemetry.get("ul_bitrate", telemetry.get("UL_bitrate", 120.0)))
-    speed = float(telemetry.get("speed", telemetry.get("Speed", 0.0)))
-    hour = int(telemetry.get("hour", 14))
+    # Extract or default telemetry features safely with bounds validation
+    rsrp = safe_float(telemetry.get("rsrp", telemetry.get("RSRP")), default=-95.0, min_val=-140.0, max_val=-40.0)
+    rsrq = safe_float(telemetry.get("rsrq", telemetry.get("RSRQ")), default=-12.5, min_val=-25.0, max_val=-3.0)
+    snr = safe_float(telemetry.get("snr", telemetry.get("SNR")), default=5.0, min_val=-25.0, max_val=40.0)
+    cqi = safe_float(telemetry.get("cqi", telemetry.get("CQI")), default=11.0, min_val=1.0, max_val=15.0)
+    rssi = safe_float(telemetry.get("rssi", telemetry.get("RSSI")), default=-90.0, min_val=-120.0, max_val=-20.0)
+    dl_bitrate = safe_float(telemetry.get("dl_bitrate", telemetry.get("DL_bitrate")), default=25000.0, min_val=0.0)
+    ul_bitrate = safe_float(telemetry.get("ul_bitrate", telemetry.get("UL_bitrate")), default=120.0, min_val=0.0)
+    speed = safe_float(telemetry.get("speed", telemetry.get("Speed")), default=0.0, min_val=0.0, max_val=350.0)
+    hour = int(safe_float(telemetry.get("hour"), default=14.0, min_val=0.0, max_val=23.0))
 
     # Identify contributing risk factors
     risk_factors = []
@@ -110,7 +111,8 @@ def predict_congestion_risk(telemetry: Dict[str, Any]) -> Dict[str, Any]:
             return {
                 "status": "success",
                 "model_version": bundle.get("model_version", "SENPAY-5G-CRS-v1.0"),
-                "model_type": "Trained RandomForest + GradientBoosting",
+                "model_type": "Trained RandomForest + GradientBoosting (Statistical Heuristic Proxy)",
+                "methodology_attribution": "Fast statistical approximation of composite telecom degradation; not an unconditioned guarantee of future network state.",
                 "predicted_crs": predicted_crs,
                 "congestion_severity": predicted_class_name,
                 "class_probabilities": {

@@ -23,6 +23,7 @@ from app.paypilot.db import db_session
 from app.paypilot.intervention_optimizer import intervention_optimizer
 from app.paypilot.delegation_service import delegation_service
 from app.paypilot.audit import record_audit_event
+from app.utils.helpers import safe_float
 
 logger = logging.getLogger("telesol.paypilot.recovery_engine")
 
@@ -92,10 +93,10 @@ class SafeRecoveryEngine:
 
         pre_metrics = json.loads(evaluation.get("pre_metrics") or "{}")
         post_metrics = json.loads(evaluation.get("post_metrics") or "{}")
-        pre_crs = float(pre_metrics.get("crs_score", 65.0))
-        post_crs = float(post_metrics.get("crs_score", 65.0))
-        pre_density = float(pre_metrics.get("density", 3.0))
-        post_density = float(post_metrics.get("density", 3.0))
+        pre_crs = safe_float(pre_metrics.get("crs_score"), default=65.0)
+        post_crs = safe_float(post_metrics.get("crs_score"), default=65.0)
+        pre_density = safe_float(pre_metrics.get("density"), default=3.0)
+        post_density = safe_float(post_metrics.get("density"), default=3.0)
 
         # 2. Diagnose Plausible Failure Cause
         if classification == "INCONCLUSIVE":

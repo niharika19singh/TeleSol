@@ -2,7 +2,8 @@ import os
 import uuid
 import asyncio
 import logging
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, status
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 
 # Load environment variables (.env) before service initialization
@@ -13,7 +14,8 @@ except Exception:
     pass
 
 from app.routers import sensors, dashboard, paypilot, auth, ml, digital_twin, admin
-from app.paypilot.db import init_db, seed_initial_data
+from app.paypilot.db import init_db, seed_initial_data, validate_db_target
+from app.services.email_service import EmailService
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("telesol")
@@ -70,13 +72,32 @@ app.include_router(admin.router)
 @app.on_event("startup")
 async def startup_event():
     """Launch DB schema initialization, CoAP server and Virtual Sentinel."""
-    # ── TeleSol PayPilot Persistent DB & Seed ──
+    # ── Database Validation & Initialization ──
     try:
+        db_target_info = validate_db_target()
+        logger.info(
+            "[STARTUP] Persistent DB path verified: %s (exists=%s, strict_persistence=%s)",
+            db_target_info["path"], db_target_info["exists"], db_target_info["strict_persistence"]
+        )
         init_db()
         seed_initial_data(force=False)
         logger.info("[STARTUP] TeleSol PayPilot SQLite DB initialized")
     except Exception as e:
         logger.error("[STARTUP] PayPilot DB initialization error: %s", str(e))
+        if os.getenv("REQUIRE_EXISTING_DB", "").lower() in ("true", "1", "yes") or \
+           os.getenv("STRICT_PERSISTENCE", "").lower() in ("true", "1", "yes"):
+            raise
+
+    # ── Transactional Email Configuration Check ──
+    try:
+        email_status = EmailService.validate_configuration()
+        logger.info(
+            "[STARTUP] Email Service active_provider=%s, is_production=%s, from=%s",
+            email_status["active_provider"], email_status["is_production"], email_status["from_address"]
+        )
+    except Exception as e:
+        logger.warning("[STARTUP] Email configuration inspection failed: %s", str(e))
+
     # ── CoAP ──
     try:
         from app.services.coap_service import coap_service
@@ -147,11 +168,15 @@ async def readiness_probe():
     model_ready = load_model() is not None
 
     all_ready = db_ready
-    return {
-        "status": "ready" if all_ready else "degraded",
-        "database": "connected" if db_ready else "error",
-        "ml_model": "loaded" if model_ready else "fallback_mode",
-    }
+    status_code = status.HTTP_200_OK if all_ready else status.HTTP_503_SERVICE_UNAVAILABLE
+    return JSONResponse(
+        status_code=status_code,
+        content={
+            "status": "ready" if all_ready else "degraded",
+            "database": "connected" if db_ready else "error",
+            "ml_model": "loaded" if model_ready else "fallback_mode",
+        }
+    )
 
 
 @app.get("/health")
