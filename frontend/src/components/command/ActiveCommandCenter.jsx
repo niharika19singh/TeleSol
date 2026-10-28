@@ -1,20 +1,185 @@
+// ═════════════════════════════════════════════════════════════════
+// SENPAY — Active Network Operations Command Center (NOC)
+// Professional Telecom Network Operations & Autonomous Procurement Interface
+// Grounded in Network Topology, Financial Settlement, and Scientific Instrumentation
+// ═════════════════════════════════════════════════════════════════
+
 import React, { useState, useEffect } from 'react';
 import {
-  AlertTriangle, MoreVertical, CheckCircle2, Circle, Radio,
-  Sparkles, Shield, ArrowRight, Zap, RefreshCw, Layers, Check,
-  Cpu, Database, Activity, X, Sliders, BarChart3, ChevronRight
+  AlertTriangle,
+  MoreVertical,
+  CheckCircle2,
+  Circle,
+  Radio,
+  Shield,
+  ArrowRight,
+  Zap,
+  RefreshCw,
+  Layers,
+  Check,
+  Cpu,
+  Database,
+  Activity,
+  X,
+  Sliders,
+  BarChart3,
+  ChevronRight,
+  Clock,
+  TrendingUp,
+  Server,
+  FileCheck2,
+  Lock,
+  ArrowUpRight
 } from 'lucide-react';
-import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from 'recharts';
+import {
+  ResponsiveContainer,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ReferenceLine
+} from 'recharts';
+import NetworkTopologyCanvas from './NetworkTopologyCanvas';
 import { fetchModelInfo, fetchDatasetCatalog, runModelInference } from '../../data/api';
+
+// ── Realistic CRS Sparkline Trend with Threshold Annotation ──
+const CRS_TREND_DATA = [
+  { time: '18:30', crs: 42, threshold: 65 },
+  { time: '18:35', crs: 48, threshold: 65 },
+  { time: '18:40', crs: 56, threshold: 65 },
+  { time: '18:45', crs: 64, threshold: 65 },
+  { time: '18:50', crs: 74, threshold: 65 },
+  { time: '18:55', crs: 78, threshold: 65 },
+];
+
+// ── Real 8-Stage Operational Workflow Definition ──
+const WORKFLOW_STAGES = [
+  {
+    id: 'detect',
+    label: 'DETECT',
+    status: 'COMPLETED',
+    timestamp: '18:41:10 UTC',
+    summary: 'Virtual Sentinel probe detected CRS surge (78.0) exceeding 65.0 SLA threshold.',
+    actor: 'Sentinel Daemon (UCC 5G Feed)'
+  },
+  {
+    id: 'analyze',
+    label: 'ANALYZE',
+    status: 'COMPLETED',
+    timestamp: '18:41:15 UTC',
+    summary: 'Packet loss (14.2%) and RTT latency (142ms) localized to Gate C VIP corridor.',
+    actor: 'ML Inference (RF-GB Model)'
+  },
+  {
+    id: 'simulate',
+    label: 'SIMULATE',
+    status: 'COMPLETED',
+    timestamp: '18:41:22 UTC',
+    summary: 'Digital twin projected unmitigated CRS reaching 88.0 within 12 minutes.',
+    actor: 'Digital Twin Engine'
+  },
+  {
+    id: 'select',
+    label: 'SELECT',
+    status: 'COMPLETED',
+    timestamp: '18:41:28 UTC',
+    summary: 'Optimizer ranked 4 candidates; SkyLink Dynamic 5G Slicing selected (-50.8 CRS).',
+    actor: 'Intervention Optimizer'
+  },
+  {
+    id: 'authorize',
+    label: 'AUTHORIZE',
+    status: 'ACTIVE',
+    timestamp: 'Pending Operator Signature',
+    summary: 'Escrow mandate reserved (12.50 HSK). Awaiting authorized wallet execution.',
+    actor: 'Delegation del_sentinel_001'
+  },
+  {
+    id: 'procure',
+    label: 'PROCURE',
+    status: 'PENDING',
+    timestamp: 'Queued',
+    summary: 'HSP Gateway v2.3.0 will dispatch 5G dynamic slice provisioning on network 133.',
+    actor: 'HSP Payment Adapter'
+  },
+  {
+    id: 'verify',
+    label: 'VERIFY',
+    status: 'PENDING',
+    timestamp: 'Queued',
+    summary: 'Post-mitigation telemetry will measure CRS < 35.0 to validate SLA fulfillment.',
+    actor: 'Counterfactual Evaluator'
+  },
+  {
+    id: 'settle',
+    label: 'SETTLE',
+    status: 'PENDING',
+    timestamp: 'Queued',
+    summary: 'Cryptographic settlement receipt issued upon verified outcome proof.',
+    actor: 'HashKey Testnet 133'
+  }
+];
+
+// ── Multi-Vendor Intervention Comparison Dataset ──
+const PROVIDER_COMPARISON_DATA = [
+  {
+    id: 'prov_skylink_5g',
+    name: 'SkyLink Dynamic 5G Slicing',
+    category: 'TELECOM_BANDWIDTH',
+    availability: '99.9% Active',
+    impact: '-50.8 CRS (-73%)',
+    throughput: '+20 Gbps',
+    cost: '12.50 HSK',
+    decision: 'RECOMMENDED',
+    decisionBadge: 'bg-[#35C7D9]/15 text-[#35C7D9] border-[#35C7D9]/40',
+    isRecommended: true
+  },
+  {
+    id: 'prov_edge_compute',
+    name: 'Edge Compute Mesh Container',
+    category: 'EDGE_COMPUTE',
+    availability: '99.5% Active',
+    impact: '-39.4 CRS (-50%)',
+    throughput: '+8 Gbps',
+    cost: '18.00 HSK',
+    decision: 'ELIGIBLE',
+    decisionBadge: 'bg-[#293746]/40 text-[#9AAABA] border-[#293746]',
+    isRecommended: false
+  },
+  {
+    id: 'prov_mmwave_radar',
+    name: 'Spatial mmWave Radar Stream',
+    category: 'SENSOR_DATA',
+    availability: '98.9% Active',
+    impact: '-24.8 CRS (-32%)',
+    throughput: '+2 Gbps',
+    cost: '8.00 HSK',
+    decision: 'STANDBY',
+    decisionBadge: 'bg-[#293746]/40 text-[#718297] border-[#293746]',
+    isRecommended: false
+  },
+  {
+    id: 'prov_transit_ai',
+    name: 'Transit Feeder Dispersal AI',
+    category: 'ROUTING_AI',
+    availability: '97.8% Active',
+    impact: '-37.2 CRS (-48%)',
+    throughput: 'N/A (Routing)',
+    cost: '22.00 HSK',
+    decision: 'STANDBY',
+    decisionBadge: 'bg-[#293746]/40 text-[#718297] border-[#293746]',
+    isRecommended: false
+  }
+];
 
 export default function ActiveCommandCenter({
   onNavigate,
   onSelectMandateForSigning,
   wallet,
 }) {
-  const [nodeDataEnabled, setNodeDataEnabled] = useState(true);
-  const [manualZoom, setManualZoom] = useState(false);
-  const [activeTab, setActiveTab] = useState('all');
+  const [selectedTopologyNode, setSelectedTopologyNode] = useState('SEC-VIP-C1');
+  const [selectedWorkflowStage, setSelectedWorkflowStage] = useState('authorize');
 
   // ML Intelligence & Provenance state
   const [mlModalOpen, setMlModalOpen] = useState(false);
@@ -63,16 +228,6 @@ export default function ActiveCommandCenter({
     }
   };
 
-  // CRS Sparkline data
-  const crsTrendData = [
-    { time: '18:30', crs: 42 },
-    { time: '18:35', crs: 48 },
-    { time: '18:40', crs: 56 },
-    { time: '18:45', crs: 64 },
-    { time: '18:50', crs: 74 },
-    { time: '18:55', crs: 78 },
-  ];
-
   const handleAuthorizeFunds = () => {
     if (onSelectMandateForSigning) {
       onSelectMandateForSigning({
@@ -82,27 +237,37 @@ export default function ActiveCommandCenter({
         asset: 'HSK',
         network_id: 133,
         recipient_address: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
-        purpose: 'West Region Congestion Spike Mitigation (SkyLink 5G Slice)',
+        purpose: 'Gate C VIP Corridor Congestion Mitigation (SkyLink 5G Slice)',
       });
     } else {
       onNavigate('operations');
     }
   };
 
+  const activeStageObj = WORKFLOW_STAGES.find((s) => s.id === selectedWorkflowStage) || WORKFLOW_STAGES[4];
+
   return (
-    <div className="space-y-4 max-w-[1600px] mx-auto pb-8">
-      {/* ── Top Incident Banner ── */}
-      <div className="rounded-xl bg-[#1B1914] border border-[#FFB800]/50 p-3.5 flex items-center justify-between shadow-[0_0_20px_rgba(255,184,0,0.12)]">
+    <div className="space-y-4 max-w-[1600px] mx-auto pb-8 text-[#E6EDF3]">
+      {/* ── 1. Concise Operational Incident Banner ── */}
+      <div className="rounded-lg bg-[#111A23] border border-[#E8AD43]/50 p-3 flex items-center justify-between shadow-md">
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-lg bg-senpay-amber/20 border border-senpay-amber/40 flex items-center justify-center text-senpay-amber flex-shrink-0">
-            <AlertTriangle size={17} />
+          <div className="w-6 h-6 rounded bg-[#E8AD43]/15 border border-[#E8AD43]/40 flex items-center justify-center text-[#E8AD43] flex-shrink-0">
+            <AlertTriangle size={15} />
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-mono text-sm font-black text-senpay-amber tracking-wide">
-              INCIDENT #INC-2026-8812:
+          <div className="flex items-center gap-2 flex-wrap text-xs">
+            <span className="font-mono font-bold text-[#E8AD43] tracking-wider uppercase">
+              INCIDENT #INC-2026-8812
             </span>
-            <span className="text-sm font-semibold text-white">
-              West Region Congestion Spike
+            <span className="text-[#718297]">&bull;</span>
+            <span className="font-semibold text-[#E6EDF3]">
+              Gate C — VIP Corridor Congestion Spike
+            </span>
+            <span className="text-[#718297]">&bull;</span>
+            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-[#E45B64]/15 border border-[#E45B64]/40 text-[#E45B64] font-bold">
+              CRITICAL (CRS 78.0)
+            </span>
+            <span className="text-[11px] font-mono text-[#9AAABA] hidden sm:inline">
+              Loss: 14.2% &bull; RTT: 142ms
             </span>
           </div>
         </div>
@@ -110,693 +275,549 @@ export default function ActiveCommandCenter({
         <div className="flex items-center gap-2">
           <button
             onClick={() => setMlModalOpen(true)}
-            className="hidden sm:flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/80 text-emerald-300 border border-emerald-500/40 text-xs font-mono font-bold transition-all shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+            className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#15212C] hover:bg-[#1A2937] text-[#39B980] border border-[#39B980]/40 text-[11px] font-mono font-bold transition"
             title="Inspect trained ML model metrics and run live inference"
           >
-            <Cpu size={13} className="text-emerald-400" />
+            <Cpu size={12} />
             <span>ML Model: 98.7% Acc (UCC 5G)</span>
           </button>
           <button
             onClick={() => onNavigate('incident_monitor')}
-            className="px-2.5 py-1 rounded-lg bg-[#27231A] hover:bg-[#342D1E] text-senpay-amber border border-senpay-amber/30 text-xs font-mono font-bold transition-all"
+            className="px-2.5 py-1 rounded bg-[#15212C] hover:bg-[#1A2937] text-[#E8AD43] border border-[#E8AD43]/30 text-xs font-mono font-bold transition"
           >
-            Inspect Details
+            Inspect Telemetry
           </button>
         </div>
       </div>
 
-      {/* ── Main Grid ── */}
+      {/* ── 2. Primary Operations Row: Network Digital Twin (7 Cols) & Workflow/CRS (5 Cols) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* ── Network Digital Twin (Left 7 Cols) ── */}
-        <div className="lg:col-span-7 senpay-card p-4 flex flex-col justify-between overflow-hidden relative min-h-[420px]">
-          {/* Header & Controls */}
-          <div className="flex items-center justify-between pb-3 border-b border-senpay-border/60 z-10">
+        <div className="lg:col-span-7 senpay-card p-3.5 flex flex-col justify-between overflow-hidden relative min-h-[440px]">
+          {/* Header */}
+          <div className="flex items-center justify-between pb-2.5 border-b border-[#293746]">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-mono font-bold text-white tracking-wider uppercase">
-                NETWORK DIGITAL TWIN
+              <Activity size={14} className="text-[#35C7D9]" />
+              <span className="text-xs font-mono font-bold text-[#E6EDF3] tracking-wider uppercase">
+                NETWORK DIGITAL TWIN &bull; TOPOLOGY
               </span>
             </div>
-
-            <div className="flex items-center gap-3 text-xs">
-              <div className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-[#101821] border border-senpay-border text-[11px] font-mono text-senpay-text-muted">
-                <span>Manual Zoom</span>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-mono text-senpay-text-secondary">Node Data</span>
-                <button
-                  onClick={() => setNodeDataEnabled(!nodeDataEnabled)}
-                  className={`w-8 h-4 rounded-full transition-colors relative ${
-                    nodeDataEnabled ? 'bg-senpay-cyan' : 'bg-senpay-panel'
-                  }`}
-                >
-                  <span
-                    className={`absolute top-0.5 w-3 h-3 rounded-full bg-white transition-transform ${
-                      nodeDataEnabled ? 'right-0.5' : 'left-0.5'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-mono text-senpay-text-secondary">Toggle</span>
-                <span className="w-7 h-3.5 rounded-full bg-[#101821] border border-senpay-border inline-block relative">
-                  <span className="w-2.5 h-2.5 rounded-full bg-senpay-text-muted absolute top-0.5 left-0.5" />
-                </span>
-              </div>
-
-              <MoreVertical size={14} className="text-senpay-text-muted cursor-pointer" />
+            <div className="text-[11px] font-mono text-[#718297]">
+              Transport Model: UCC 5G Commercial Trace
             </div>
           </div>
 
-          {/* Interactive Geographic Network Map Canvas */}
-          <div className="relative flex-1 w-full my-2 min-h-[310px] bg-[#0E1520] rounded-xl border border-senpay-border/40 overflow-hidden flex items-center justify-center">
-            {/* Subtle California / West Coast Background Silhouette */}
-            <svg
-              className="absolute inset-0 w-full h-full opacity-35 pointer-events-none"
-              viewBox="0 0 600 360"
-              preserveAspectRatio="xMidYMid meet"
-            >
-              <defs>
-                <linearGradient id="calCoast" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#1B2B3D" />
-                  <stop offset="100%" stopColor="#0B131C" />
-                </linearGradient>
-                <linearGradient id="hotspotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#FF3B5C" stopOpacity="0.8" />
-                  <stop offset="50%" stopColor="#FFB800" stopOpacity="0.5" />
-                  <stop offset="100%" stopColor="#00E5FF" stopOpacity="0" />
-                </linearGradient>
-                <radialGradient id="pulseCenter">
-                  <stop offset="0%" stopColor="#FF3B5C" stopOpacity="0.9" />
-                  <stop offset="60%" stopColor="#FF8C00" stopOpacity="0.4" />
-                  <stop offset="100%" stopColor="#FF3B5C" stopOpacity="0" />
-                </radialGradient>
-              </defs>
-
-              {/* Landmass Contour */}
-              <path
-                d="M 120,20 Q 180,60 210,120 Q 230,160 270,220 Q 320,270 420,330 L 460,350 L 60,350 L 60,20 Z"
-                fill="url(#calCoast)"
-                stroke="#1E3247"
-                strokeWidth="1.2"
-              />
-
-              {/* Grid Lat/Long Lines */}
-              <line x1="0" y1="90" x2="600" y2="90" stroke="#162536" strokeDasharray="4 4" strokeWidth="0.8" />
-              <line x1="0" y1="180" x2="600" y2="180" stroke="#162536" strokeDasharray="4 4" strokeWidth="0.8" />
-              <line x1="0" y1="270" x2="600" y2="270" stroke="#162536" strokeDasharray="4 4" strokeWidth="0.8" />
-              <line x1="200" y1="0" x2="200" y2="360" stroke="#162536" strokeDasharray="4 4" strokeWidth="0.8" />
-              <line x1="380" y1="0" x2="380" y2="360" stroke="#162536" strokeDasharray="4 4" strokeWidth="0.8" />
-
-              {/* Geographic Labels */}
-              <text x="210" y="85" fill="#4B627D" fontSize="10" fontFamily="sans-serif">California</text>
-              <text x="440" y="270" fill="#4B627D" fontSize="9" fontFamily="sans-serif">Los Keinge</text>
-
-              {/* Primary Network Links */}
-              {/* Cyan Stream from Bay Area to Central Corridor */}
-              <path
-                d="M 215,125 Q 235,160 280,185"
-                fill="none"
-                stroke="#00E5FF"
-                strokeWidth="3.2"
-                strokeLinecap="round"
-                className="drop-shadow-[0_0_8px_rgba(0,229,255,0.8)]"
-              />
-              <path
-                d="M 215,125 Q 200,165 210,210"
-                fill="none"
-                stroke="#00E5FF"
-                strokeWidth="2.5"
-                strokeDasharray="4 4"
-                className="animate-flow-dash"
-              />
-
-              {/* Congested Flow Trail (Yellow & Red Gradient) */}
-              <path
-                d="M 215,125 Q 260,150 280,185 Q 310,230 320,290"
-                fill="none"
-                stroke="#FFB800"
-                strokeWidth="3.5"
-                strokeLinecap="round"
-                className="drop-shadow-[0_0_10px_rgba(255,184,0,0.8)]"
-              />
-
-              {/* Secondary Lower Cyan Link */}
-              <path
-                d="M 210,210 Q 235,260 320,290"
-                fill="none"
-                stroke="#00E5FF"
-                strokeWidth="2.2"
-                strokeLinecap="round"
-              />
-
-              {/* Hotspot Concentric Rings */}
-              <circle cx="280" cy="185" r="42" fill="none" stroke="#FF3B5C" strokeWidth="1.2" opacity="0.3" className="hotspot-ring-3" />
-              <circle cx="280" cy="185" r="28" fill="none" stroke="#FF8C00" strokeWidth="1.5" opacity="0.5" className="hotspot-ring-2" />
-              <circle cx="280" cy="185" r="16" fill="url(#pulseCenter)" className="hotspot-ring-1" />
-              <circle cx="280" cy="185" r="6" fill="#FF3B5C" className="drop-shadow-[0_0_8px_#FF3B5C]" />
-
-              {/* Signal Propagation Waves */}
-              <path d="M 334,286 A 8,8 0 0,1 334,296" fill="none" stroke="#A855F7" strokeWidth="1.5" />
-              <path d="M 338,283 A 13,13 0 0,1 338,299" fill="none" stroke="#A855F7" strokeWidth="1.5" opacity="0.7" />
-              <path d="M 342,280 A 18,18 0 0,1 342,302" fill="none" stroke="#A855F7" strokeWidth="1.5" opacity="0.4" />
-            </svg>
-
-            {/* Network Nodes with Tags */}
-            {/* SFO-01 Tag */}
-            <div className="absolute top-[110px] left-[175px] z-20 flex items-center">
-              <div className="px-2 py-0.5 rounded-full bg-[#271E0B] border border-senpay-amber text-[10px] font-mono font-bold text-senpay-amber shadow-[0_0_10px_rgba(255,184,0,0.5)]">
-                SFO-01
-              </div>
-            </div>
-
-            {/* OAK-03 Tag */}
-            <div className="absolute top-[115px] left-[255px] z-20 flex items-center">
-              <div className="px-2 py-0.5 rounded-full bg-[#0C2433] border border-senpay-cyan text-[10px] font-mono font-bold text-senpay-cyan shadow-[0_0_10px_rgba(0,229,255,0.5)]">
-                OAK-03
-              </div>
-            </div>
-
-            {/* Active Nodes Points */}
-            <div className="absolute top-[125px] left-[215px] -translate-x-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-senpay-cyan ring-4 ring-senpay-cyan/30" />
-            <div className="absolute top-[210px] left-[210px] -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-senpay-cyan" />
-            <div className="absolute top-[290px] left-[320px] -translate-x-1/2 -translate-y-1/2 w-3 h-3 rounded-full bg-senpay-amber" />
-
-            {/* Zoom Controls overlay */}
-            <div className="absolute top-3 left-3 flex flex-col rounded bg-[#101821]/90 border border-senpay-border overflow-hidden text-senpay-text-secondary text-xs font-mono">
-              <button className="px-2 py-1 hover:text-white hover:bg-senpay-panel">+</button>
-              <div className="h-[1px] bg-senpay-border" />
-              <button className="px-2 py-1 hover:text-white hover:bg-senpay-panel">−</button>
-            </div>
-
-            {/* Bottom Controls */}
-            <div className="absolute bottom-3 left-3 z-10 flex items-center gap-2">
-              <span className="text-[10px] font-mono text-senpay-text-muted">Manual Zoom</span>
-              <button
-                onClick={() => setManualZoom(!manualZoom)}
-                className={`w-7 h-3.5 rounded-full transition-colors relative ${
-                  manualZoom ? 'bg-senpay-cyan' : 'bg-[#101821] border border-senpay-border'
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 w-2.5 h-2.5 rounded-full bg-white transition-transform ${
-                    manualZoom ? 'right-0.5' : 'left-0.5'
-                  }`}
-                />
-              </button>
-            </div>
-
-            {/* Bottom Right Telemetry Active */}
-            <div className="absolute bottom-3 right-3 z-10 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[#0A1A17] border border-senpay-green/50 text-[11px] font-mono font-bold text-senpay-green shadow-[0_0_12px_rgba(0,255,136,0.25)]">
-              <span className="w-2 h-2 rounded-full bg-senpay-green animate-pulse" />
-              <span>((•)) Telemetry Active</span>
-            </div>
+          {/* Embedded Precise Schematic Canvas */}
+          <div className="flex-1 w-full my-2 min-h-[350px]">
+            <NetworkTopologyCanvas
+              selectedNodeId={selectedTopologyNode}
+              onSelectNode={(nodeId) => setSelectedTopologyNode(nodeId)}
+              showMitigation={true}
+            />
           </div>
         </div>
 
-        {/* ── Right Top: Playful Timeline & CRS Score (Right 5 Cols) ── */}
+        {/* ── Right Column: Operational Workflow & Congestion Risk Score (5 Cols) ── */}
         <div className="lg:col-span-5 flex flex-col gap-4">
-          {/* ── Playful / Workflow Timeline ── */}
-          <div className="senpay-card p-4">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-mono font-bold text-white tracking-wider uppercase">
-                PLAYFUL TIMELINE
+          {/* ── OPERATIONAL WORKFLOW (Renamed from Playful Timeline) ── */}
+          <div className="senpay-card p-3.5">
+            <div className="flex items-center justify-between pb-2 border-b border-[#293746] mb-3">
+              <div className="flex items-center gap-2">
+                <Shield size={14} className="text-[#E8AD43]" />
+                <span className="text-xs font-mono font-bold text-[#E6EDF3] tracking-wider uppercase">
+                  OPERATIONAL WORKFLOW
+                </span>
+              </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#E8AD43]/15 text-[#E8AD43] border border-[#E8AD43]/30 font-bold">
+                STAGE 5: AUTHORIZE
               </span>
             </div>
 
-            {/* Steps text */}
-            <div className="text-[10px] font-mono text-senpay-text-muted flex items-center gap-1 flex-wrap mb-4">
-              <span className="text-senpay-green">DETECT</span>
-              <span>→</span>
-              <span className="text-senpay-cyan">ANALYZE</span>
-              <span>→</span>
-              <span className="text-senpay-violet">SIMULATE</span>
-              <span>→</span>
-              <span className="text-senpay-text-secondary">SELECT</span>
-              <span>→</span>
-              <span className="text-senpay-amber font-bold">AUTHORIZE</span>
-              <span>→</span>
-              <span>PROCURE</span>
-              <span>→</span>
-              <span>LERIFY</span>
-            </div>
+            {/* Structured Horizontal Step Sequence */}
+            <div className="relative pt-1 pb-2">
+              {/* Connecting Background Line */}
+              <div className="absolute top-4 left-3 right-3 h-0.5 bg-[#293746]" />
 
-            {/* Curved Sine Wave Graphic with Glowing Checkpoints */}
-            <div className="relative h-20 w-full flex items-center justify-center">
-              <svg className="w-full h-full" viewBox="0 0 340 70" fill="none">
-                <defs>
-                  <linearGradient id="waveGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#00E5FF" />
-                    <stop offset="35%" stopColor="#00FF88" />
-                    <stop offset="70%" stopColor="#A855F7" />
-                    <stop offset="100%" stopColor="#FFB800" />
-                  </linearGradient>
-                </defs>
+              {/* Step Circles */}
+              <div className="relative flex justify-between items-center text-center">
+                {WORKFLOW_STAGES.map((s, idx) => {
+                  const isCompleted = s.status === 'COMPLETED';
+                  const isActive = s.status === 'ACTIVE';
+                  const isSelected = selectedWorkflowStage === s.id;
 
-                {/* Ambient glow wave */}
-                <path
-                  d="M 10,48 Q 45,15 80,36 T 150,42 T 220,18 T 290,44 L 330,30"
-                  fill="none"
-                  stroke="url(#waveGrad)"
-                  strokeWidth="3.2"
-                  strokeLinecap="round"
-                  className="drop-shadow-[0_0_10px_rgba(0,229,255,0.7)]"
-                />
-
-                {/* Node 1: DETECT */}
-                <circle cx="80" cy="36" r="6" fill="#00FF88" />
-                <path d="M 77,36 L 79,38 L 83,34" stroke="#0B1118" strokeWidth="1.5" strokeLinecap="round" />
-
-                {/* Node 2: ANALYZE */}
-                <circle cx="150" cy="42" r="6" fill="#00E5FF" />
-                <path d="M 147,42 L 149,44 L 153,40" stroke="#0B1118" strokeWidth="1.5" strokeLinecap="round" />
-
-                {/* Node 3: SIMULATE */}
-                <circle cx="220" cy="18" r="7" fill="#FFB800" className="drop-shadow-[0_0_8px_#FFB800]" />
-                <path d="M 217,18 L 219,20 L 223,16" stroke="#0B1118" strokeWidth="1.5" strokeLinecap="round" />
-
-                {/* Node 4: AUTHORIZING FUNDS active check */}
-                <circle cx="290" cy="44" r="8" fill="#FFB800" className="drop-shadow-[0_0_12px_#FFB800]" />
-                <path d="M 286,44 L 289,47 L 294,41" stroke="#0B1118" strokeWidth="2" strokeLinecap="round" />
-              </svg>
-
-              {/* Floating AUTHORIZING FUNDS badge */}
-              <div className="absolute bottom-0 right-4 px-2.5 py-0.5 rounded-full bg-[#271E0B] border border-senpay-amber text-[10px] font-mono font-bold text-senpay-amber shadow-[0_0_10px_rgba(255,184,0,0.5)]">
-                AUTHORIZING FUNDS
+                  return (
+                    <button
+                      key={s.id}
+                      onClick={() => setSelectedWorkflowStage(s.id)}
+                      className="group flex flex-col items-center focus:outline-none"
+                      title={`${s.label}: ${s.status}`}
+                    >
+                      <div
+                        className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-mono font-bold transition-all z-10 ${
+                          isCompleted
+                            ? 'bg-[#111A23] border border-[#39B980] text-[#39B980]'
+                            : isActive
+                            ? 'bg-[#E8AD43] text-[#0B1117] ring-4 ring-[#E8AD43]/20 font-black'
+                            : 'bg-[#111A23] border border-[#293746] text-[#718297]'
+                        } ${isSelected ? 'ring-2 ring-[#35C7D9]' : ''}`}
+                      >
+                        {isCompleted ? <Check size={11} strokeWidth={3} /> : idx + 1}
+                      </div>
+                      <span
+                        className={`text-[8.5px] font-mono mt-1.5 transition-colors ${
+                          isActive
+                            ? 'text-[#E8AD43] font-bold'
+                            : isCompleted
+                            ? 'text-[#39B980]'
+                            : 'text-[#718297]'
+                        }`}
+                      >
+                        {s.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
+
+            {/* Interactive Selected Stage Technical Summary */}
+            {activeStageObj && (
+              <div className="mt-3 p-2.5 rounded bg-[#0B1117] border border-[#293746] text-xs font-mono">
+                <div className="flex items-center justify-between pb-1 mb-1 border-b border-[#293746]/60">
+                  <span className="font-bold text-[#E6EDF3] text-[11px]">
+                    STAGE: {activeStageObj.label} &bull; {activeStageObj.status}
+                  </span>
+                  <span className="text-[10px] text-[#718297] flex items-center gap-1">
+                    <Clock size={10} />
+                    <span>{activeStageObj.timestamp}</span>
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#9AAABA] leading-relaxed">
+                  {activeStageObj.summary}
+                </p>
+                <div className="pt-1 text-[10px] text-[#718297]">
+                  Actor / Engine: <span className="text-[#35C7D9]">{activeStageObj.actor}</span>
+                </div>
+              </div>
+            )}
           </div>
 
-          {/* ── Congestion Risk Score (CRS) ── */}
-          <div className="senpay-card p-4 relative overflow-hidden flex flex-col justify-between">
-            <div className="flex items-center justify-between pb-2">
-              <span className="text-xs font-mono font-bold text-white tracking-wider uppercase">
-                Congestion Risk Score (CRS)
-              </span>
-              <MoreVertical size={14} className="text-senpay-text-muted" />
-            </div>
-
-            <div className="grid grid-cols-2 items-center gap-3 my-2">
-              {/* Big Score with Tech Circuit background */}
-              <div className="p-3 rounded-xl bg-[#111A24] border border-senpay-border relative overflow-hidden flex items-baseline gap-1">
-                <span className="text-4xl lg:text-5xl font-black font-display text-white tracking-tight">
-                  78
-                </span>
-                <span className="text-xl font-bold font-mono text-senpay-cyan">
-                  /100
+          {/* ── Congestion Risk Score (CRS Operational Analytics Panel) ── */}
+          <div className="senpay-card p-3.5 flex flex-col justify-between">
+            <div className="flex items-center justify-between pb-2 border-b border-[#293746]">
+              <div className="flex items-center gap-2">
+                <TrendingUp size={14} className="text-[#E8AD43]" />
+                <span className="text-xs font-mono font-bold text-[#E6EDF3] tracking-wider uppercase">
+                  CONGESTION RISK SCORE (CRS)
                 </span>
               </div>
+              <span className="text-[10px] font-mono text-[#718297]">
+                Live &bull; Updated 12s ago
+              </span>
+            </div>
 
-              {/* Golden Sparkline Trend */}
-              <div className="h-16 w-full">
+            {/* Numerical Score & Severity */}
+            <div className="grid grid-cols-2 items-center gap-3 my-2.5">
+              <div className="p-2.5 rounded bg-[#0B1117] border border-[#293746]">
+                <div className="flex items-baseline gap-1.5">
+                  <span className="text-4xl font-bold font-mono text-[#E6EDF3] tracking-tight">
+                    78.0
+                  </span>
+                  <span className="text-sm font-mono text-[#718297]">/ 100</span>
+                </div>
+                <div className="mt-1 flex items-center gap-1.5">
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#E45B64]/15 border border-[#E45B64]/40 text-[#E45B64]">
+                    CRITICAL
+                  </span>
+                  <span className="text-[10px] font-mono text-[#E8AD43] font-semibold">
+                    +14.0 pts / 15m
+                  </span>
+                </div>
+              </div>
+
+              {/* Restrained Historical Line Chart with Threshold */}
+              <div className="h-20 w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={crsTrendData}>
+                  <AreaChart data={CRS_TREND_DATA} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
                     <defs>
-                      <linearGradient id="crsGold" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#FFB800" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="#FFB800" stopOpacity={0.0} />
+                      <linearGradient id="crsLineFill" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#E8AD43" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="#E8AD43" stopOpacity={0.0} />
                       </linearGradient>
                     </defs>
+                    <XAxis
+                      dataKey="time"
+                      tick={{ fill: '#718297', fontSize: 9, fontFamily: 'monospace' }}
+                      axisLine={{ stroke: '#293746' }}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      domain={[0, 100]}
+                      ticks={[0, 50, 100]}
+                      tick={{ fill: '#718297', fontSize: 9, fontFamily: 'monospace' }}
+                      axisLine={{ stroke: '#293746' }}
+                      tickLine={false}
+                    />
+                    <Tooltip
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          return (
+                            <div className="bg-[#111A23] border border-[#293746] p-1.5 rounded text-[10px] font-mono text-[#E6EDF3]">
+                              <div>Time: {payload[0].payload.time}</div>
+                              <div className="text-[#E8AD43] font-bold">CRS: {payload[0].value}</div>
+                              <div className="text-[#E45B64]">SLA Target: &lt; 35.0</div>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <ReferenceLine y={65} stroke="#E45B64" strokeDasharray="3 3" />
                     <Area
                       type="monotone"
                       dataKey="crs"
-                      stroke="#FFB800"
-                      strokeWidth={2.4}
+                      stroke="#E8AD43"
+                      strokeWidth={1.8}
                       fillOpacity={1}
-                      fill="url(#crsGold)"
+                      fill="url(#crsLineFill)"
+                      dot={{ r: 2, fill: '#E8AD43' }}
                     />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
 
-            {/* Bottom Alert Count & ML Source Link */}
-            <div className="flex items-center justify-between gap-2 pt-1 flex-wrap">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#271418] border border-senpay-red/40 text-xs font-mono text-senpay-red font-bold">
-                <AlertTriangle size={13} />
-                <span>Active Alerts: 2</span>
-              </div>
+            {/* Threshold & Source Annotation */}
+            <div className="flex items-center justify-between pt-2 border-t border-[#293746]/60 text-[10px] font-mono text-[#718297]">
+              <span>SLA Target: &lt; 35.0 CRS (Critical &gt; 65.0)</span>
               <button
                 onClick={() => setMlModalOpen(true)}
-                className="text-[11px] font-mono text-emerald-400 hover:text-emerald-300 underline underline-offset-2 flex items-center gap-1"
+                className="text-[#39B980] hover:underline flex items-center gap-1"
               >
                 <span>ML Model Specs</span>
-                <ChevronRight size={11} />
+                <ChevronRight size={10} />
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ── Bottom Row (3 Cards: Specs, Comparison, Budget) ── */}
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-12 gap-4">
-        {/* ── 1. Active Incident Specs (Col 1-3) ── */}
-        <div className="lg:col-span-4 senpay-card p-4 flex flex-col justify-between">
+      {/* ── 3. Bottom Operations Grid: Incident Summary (4 Cols), Providers (5 Cols), Budget (3 Cols) ── */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
+        {/* ── 1. Active Incident Summary (Col 1-4) ── */}
+        <div className="lg:col-span-4 senpay-card p-3.5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-2">
-              <span className="text-xs font-mono font-bold text-white tracking-wider uppercase">
-                Active Incident Specs
+            <div className="flex items-center justify-between pb-2 border-b border-[#293746] mb-3">
+              <span className="text-xs font-mono font-bold text-[#E6EDF3] tracking-wider uppercase">
+                ACTIVE INCIDENT SPECIFICATIONS
               </span>
-              <MoreVertical size={14} className="text-senpay-text-muted" />
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#E45B64]/15 text-[#E45B64] border border-[#E45B64]/30 font-bold">
+                INC-2026-8812
+              </span>
             </div>
 
-            <p className="text-xs text-senpay-text-secondary leading-relaxed mb-3">
-              Detail card — with rich tech annotations — wolier-nutsive, anoltekes, and anronations.
-            </p>
-
-            <div className="mb-4">
-              <span className="px-2.5 py-1 rounded-full bg-[#271E0B] border border-senpay-amber text-[10px] font-mono font-bold text-senpay-amber shadow-[0_0_10px_rgba(255,184,0,0.3)]">
-                PENDING AUTHORIZATION
-              </span>
+            {/* Structured Definition List */}
+            <div className="space-y-2 text-xs font-mono">
+              <div className="flex justify-between py-1 border-b border-[#293746]/40">
+                <span className="text-[#718297]">Severity Level:</span>
+                <span className="text-[#E45B64] font-bold">CRITICAL (P1 SLA Risk)</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#293746]/40">
+                <span className="text-[#718297]">Current Status:</span>
+                <span className="text-[#E8AD43] font-bold">AWAITING AUTHORIZATION</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#293746]/40">
+                <span className="text-[#718297]">Affected Sector:</span>
+                <span className="text-[#E6EDF3]">Gate C — VIP Corridor</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#293746]/40">
+                <span className="text-[#718297]">Network Path:</span>
+                <span className="text-[#9AAABA]">GW-CORE-01 &rarr; BS-WEST &rarr; SEC-C1</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#293746]/40">
+                <span className="text-[#718297]">Detection Time:</span>
+                <span className="text-[#E6EDF3]">18:41:10 UTC (14m elapsed)</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#293746]/40">
+                <span className="text-[#718297]">Active Telemetry:</span>
+                <span className="text-[#E8AD43]">Loss: 14.2% &bull; RTT: 142ms</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-[#718297]">Recommended Action:</span>
+                <span className="text-[#35C7D9] font-bold">SkyLink 5G Slice (12.50 HSK)</span>
+              </div>
             </div>
           </div>
 
-          {/* Actionable Sub-tasks */}
-          <div className="space-y-2 pt-3 border-t border-senpay-border/60">
-            <span className="text-[11px] font-mono font-bold text-senpay-text-primary block">
-              Actionable sub-tasks
-            </span>
-
-            <div className="space-y-1.5 text-xs font-mono">
-              <div className="flex items-center justify-between text-senpay-green">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={13} />
-                  <span>Actionable sub-tasks</span>
-                </div>
-                <span className="text-[10px] text-senpay-text-muted">»</span>
-              </div>
-
-              <div className="flex items-center justify-between text-senpay-cyan">
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 size={13} />
-                  <span>Actionable contronal</span>
-                </div>
-                <span className="text-[10px] text-senpay-text-muted">»</span>
-              </div>
-
-              <div className="flex items-center justify-between text-senpay-text-muted">
-                <div className="flex items-center gap-2">
-                  <Circle size={13} />
-                  <span>Actionable detail</span>
-                </div>
-                <span className="text-[10px] text-senpay-text-muted">»</span>
-              </div>
-            </div>
+          {/* Action Buttons */}
+          <div className="pt-3 border-t border-[#293746] flex gap-2">
+            <button
+              onClick={handleAuthorizeFunds}
+              className="flex-1 py-2 px-3 rounded bg-[#35C7D9] hover:bg-[#2EB8CA] text-[#0B1117] font-mono font-bold text-xs tracking-wider uppercase transition text-center"
+            >
+              Authorize 12.50 HSK
+            </button>
+            <button
+              onClick={() => onNavigate('incident_monitor')}
+              className="py-2 px-3 rounded bg-[#15212C] hover:bg-[#1A2937] text-[#9AAABA] hover:text-[#E6EDF3] border border-[#293746] font-mono text-xs transition"
+            >
+              View Feed
+            </button>
           </div>
         </div>
 
-        {/* ── 2. Interactive Comparison Table (Col 4-8) ── */}
-        <div className="lg:col-span-5 senpay-card p-4 flex flex-col justify-between">
+        {/* ── 2. Professional Provider Comparison Table (Col 5-9) ── */}
+        <div className="lg:col-span-5 senpay-card p-3.5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-3">
-              <span className="text-xs font-mono font-bold text-white tracking-wider uppercase">
-                Interactive Comparison
+            <div className="flex items-center justify-between pb-2 border-b border-[#293746] mb-2.5">
+              <span className="text-xs font-mono font-bold text-[#E6EDF3] tracking-wider uppercase">
+                INTERVENTION PROVIDER COMPARISON
+              </span>
+              <span className="text-[10px] font-mono text-[#718297]">
+                Ranked by Multi-Criteria Impact &amp; Cost
               </span>
             </div>
 
-            {/* Table */}
+            {/* Decision Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-left text-xs font-mono">
                 <thead>
-                  <tr className="text-[10px] text-senpay-text-muted uppercase border-b border-senpay-border/60">
-                    <th className="pb-2 font-normal">Provider</th>
-                    <th className="pb-2 font-normal">Status</th>
-                    <th className="pb-2 font-normal">Impact</th>
-                    <th className="pb-2 font-normal">Est. Cost</th>
-                    <th className="pb-2 font-normal text-right">Speed</th>
+                  <tr className="text-[10px] text-[#718297] uppercase border-b border-[#293746]">
+                    <th className="pb-1.5 font-normal">Provider &bull; Service</th>
+                    <th className="pb-1.5 font-normal">Availability</th>
+                    <th className="pb-1.5 font-normal">Impact</th>
+                    <th className="pb-1.5 font-normal">Est. Cost</th>
+                    <th className="pb-1.5 font-normal text-right">Decision</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-senpay-border/40">
-                  {/* Row 1: Ait-Net / SkyLink */}
-                  <tr className="group hover:bg-senpay-panel/40 transition-colors">
-                    <td className="py-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded bg-senpay-cyan/20 border border-senpay-cyan/40 text-senpay-cyan flex items-center justify-center font-bold text-[10px]">
-                          A
+                <tbody className="divide-y divide-[#293746]/40">
+                  {PROVIDER_COMPARISON_DATA.map((prov) => (
+                    <tr
+                      key={prov.id}
+                      className={`transition-colors ${
+                        prov.isRecommended ? 'bg-[#15212C]/60 border-l-2 border-l-[#35C7D9]' : 'hover:bg-[#15212C]/30'
+                      }`}
+                    >
+                      <td className="py-2.5 pl-1.5">
+                        <div className="font-bold text-[#E6EDF3]">{prov.name}</div>
+                        <div className="text-[9.5px] text-[#718297]">{prov.category}</div>
+                      </td>
+                      <td className="py-2.5 text-[#9AAABA]">
+                        {prov.availability}
+                      </td>
+                      <td className="py-2.5">
+                        <span className={`font-bold ${prov.isRecommended ? 'text-[#39B980]' : 'text-[#9AAABA]'}`}>
+                          {prov.impact}
                         </span>
-                        <div>
-                          <div className="font-bold text-white">Ait-Net Solutions</div>
-                          <div className="text-[10px] text-senpay-text-muted">Ait-Net Solutions</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-2.5">
-                      <span className="px-2 py-0.5 rounded-full bg-[#0A1A17] border border-senpay-green text-[9px] font-bold text-senpay-green">
-                        OPTIMIZED CHOICE
-                      </span>
-                    </td>
-                    <td className="py-2.5 text-white font-bold">50.8%</td>
-                    <td className="py-2.5 text-senpay-text-primary">$.95</td>
-                    <td className="py-2.5 text-right">
-                      <span className="px-1.5 py-0.5 rounded bg-[#0A1A17] border border-senpay-cyan text-[10px] font-bold text-senpay-cyan">
-                        92.0
-                      </span>
-                    </td>
-                  </tr>
-
-                  {/* Row 2: Apex Carrier */}
-                  <tr className="group hover:bg-senpay-panel/40 transition-colors">
-                    <td className="py-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded bg-senpay-violet/20 border border-senpay-violet/40 text-senpay-violet flex items-center justify-center font-bold text-[10px]">
-                          A
+                      </td>
+                      <td className="py-2.5 text-[#E6EDF3] font-mono font-semibold">
+                        {prov.cost}
+                      </td>
+                      <td className="py-2.5 text-right pr-1.5">
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${prov.decisionBadge}`}>
+                          {prov.decision}
                         </span>
-                        <div>
-                          <div className="font-bold text-white">Apex Carrier</div>
-                          <div className="text-[10px] text-senpay-text-muted">Apex Carrier</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-2.5">
-                      <span className="px-2 py-0.5 rounded-full bg-[#241026] border border-senpay-violet text-[9px] font-bold text-senpay-violet">
-                        OPTIMIZED CHOICE
-                      </span>
-                    </td>
-                    <td className="py-2.5 text-white font-bold">36.9%</td>
-                    <td className="py-2.5 text-senpay-text-primary">$.55</td>
-                    <td className="py-2.5 text-right">
-                      <span className="px-1.5 py-0.5 rounded bg-[#271E0B] border border-senpay-amber text-[10px] font-bold text-senpay-amber">
-                        83.0
-                      </span>
-                    </td>
-                  </tr>
-
-                  {/* Row 3: Velo-Fiber */}
-                  <tr className="group hover:bg-senpay-panel/40 transition-colors">
-                    <td className="py-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded bg-[#FF3B5C]/20 border border-[#FF3B5C]/40 text-[#FF3B5C] flex items-center justify-center font-bold text-[10px]">
-                          V
-                        </span>
-                        <div>
-                          <div className="font-bold text-white">Velo-Fiber</div>
-                          <div className="text-[10px] text-senpay-text-muted">Velo-Fiber Badey</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="py-2.5">
-                      <span className="px-2 py-0.5 rounded-full bg-[#0C1D2E] border border-senpay-cyan text-[9px] font-bold text-senpay-cyan">
-                        OPTIMIZED CHOICE
-                      </span>
-                    </td>
-                    <td className="py-2.5 text-white font-bold">40.0%</td>
-                    <td className="py-2.5 text-senpay-text-primary">$.75</td>
-                    <td className="py-2.5 text-right">
-                      <span className="px-1.5 py-0.5 rounded bg-[#0A1A17] border border-senpay-green text-[10px] font-bold text-senpay-green">
-                        73.0
-                      </span>
-                    </td>
-                  </tr>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
           </div>
+
+          <div className="pt-2 border-t border-[#293746] text-[10px] font-mono text-[#718297] flex justify-between items-center">
+            <span>Optimization Engine: Cost vs. SLA Tradeoff Matrix</span>
+            <span className="text-[#35C7D9]">1 Candidate Recommended</span>
+          </div>
         </div>
 
-        {/* ── 3. Budget Tracker & Authorize CTA (Col 9-12) ── */}
-        <div className="lg:col-span-3 senpay-card p-4 flex flex-col justify-between">
+        {/* ── 3. Budget & Financial Allocation Tracker (Col 10-12) ── */}
+        <div className="lg:col-span-3 senpay-card p-3.5 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between pb-1">
-              <span className="text-xs font-mono font-bold text-white tracking-wider uppercase">
-                Budget Tracker
+            <div className="flex items-center justify-between pb-2 border-b border-[#293746] mb-3">
+              <span className="text-xs font-mono font-bold text-[#E6EDF3] tracking-wider uppercase">
+                BUDGET ALLOCATION
               </span>
-              <MoreVertical size={14} className="text-senpay-text-muted" />
+              <span className="text-[10px] font-mono text-[#718297]">
+                del_sentinel_001
+              </span>
             </div>
 
-            <div className="flex items-center justify-between text-[11px] font-mono text-senpay-text-muted mb-3">
-              <span>Agent Delegations</span>
-              <span className="text-white font-bold">$25,000 max</span>
+            {/* Financial Numerical Metrics */}
+            <div className="space-y-2 text-xs font-mono mb-3">
+              <div className="flex justify-between py-1 border-b border-[#293746]/40">
+                <span className="text-[#718297]">Total Delegated:</span>
+                <span className="text-[#E6EDF3] font-bold">100.00 HSK</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#293746]/40">
+                <span className="text-[#718297]">Reserved / Escrow:</span>
+                <span className="text-[#E8AD43] font-bold">12.50 HSK</span>
+              </div>
+              <div className="flex justify-between py-1 border-b border-[#293746]/40">
+                <span className="text-[#718297]">Available Balance:</span>
+                <span className="text-[#39B980] font-bold">87.50 HSK</span>
+              </div>
+              <div className="flex justify-between py-1">
+                <span className="text-[#718297]">Settled to Date:</span>
+                <span className="text-[#9AAABA]">0.00 HSK</span>
+              </div>
             </div>
 
-            <div className="text-[10px] font-mono text-senpay-text-muted text-right mb-2">
-              Reserved / Remaining
+            {/* Disciplined Horizontal Allocation Stacked Bar */}
+            <div className="space-y-1.5 pt-1">
+              <div className="flex justify-between text-[10px] font-mono text-[#718297]">
+                <span>12.5% Reserved (12.50 HSK)</span>
+                <span>87.5% Available (87.50 HSK)</span>
+              </div>
+              <div className="h-2.5 w-full rounded bg-[#0B1117] border border-[#293746] overflow-hidden flex">
+                <div
+                  className="h-full bg-[#E8AD43]"
+                  style={{ width: '12.5%' }}
+                  title="Reserved for SkyLink 5G Slice: 12.50 HSK"
+                />
+                <div
+                  className="h-full bg-[#15212C]"
+                  style={{ width: '87.5%' }}
+                  title="Available Unallocated Budget: 87.50 HSK"
+                />
+              </div>
             </div>
 
-            {/* Vertical Multi-bar Chart with Agent Icons */}
-            <div className="flex items-end justify-between gap-3 h-28 px-2 pb-2 border-b border-senpay-border/60">
-              {/* Bar 1 (Orange/Pink) */}
-              <div className="flex flex-col items-center gap-1.5 flex-1">
-                <div className="w-full h-24 rounded-t bg-gradient-to-t from-[#FF3B5C] to-[#FFB800] shadow-[0_0_8px_rgba(255,184,0,0.4)]" />
-                <div className="w-5 h-5 rounded-full bg-[#271E0B] border border-senpay-amber text-[9px] font-mono flex items-center justify-center text-senpay-amber">
-                  👤
-                </div>
-              </div>
-
-              {/* Bar 2 (Cyan) */}
-              <div className="flex flex-col items-center gap-1.5 flex-1">
-                <div className="w-full h-18 rounded-t bg-gradient-to-t from-[#00B4D8] to-[#00E5FF] shadow-[0_0_8px_rgba(0,229,255,0.4)]" />
-                <div className="w-5 h-5 rounded-full bg-[#0C2433] border border-senpay-cyan text-[9px] font-mono flex items-center justify-center text-senpay-cyan">
-                  📄
-                </div>
-              </div>
-
-              {/* Bar 3 (Violet) */}
-              <div className="flex flex-col items-center gap-1.5 flex-1">
-                <div className="w-full h-16 rounded-t bg-gradient-to-t from-[#6D28D9] to-[#A855F7] shadow-[0_0_8px_rgba(168,85,247,0.4)]" />
-                <div className="w-5 h-5 rounded-full bg-[#241026] border border-senpay-violet text-[9px] font-mono flex items-center justify-center text-senpay-violet">
-                  🤖
-                </div>
-              </div>
-
-              {/* Bar 4 (Green) */}
-              <div className="flex flex-col items-center gap-1.5 flex-1">
-                <div className="w-full h-14 rounded-t bg-gradient-to-t from-[#059669] to-[#00FF88] shadow-[0_0_8px_rgba(0,255,136,0.4)]" />
-                <div className="w-5 h-5 rounded-full bg-[#0A1A17] border border-senpay-green text-[9px] font-mono flex items-center justify-center text-senpay-green">
-                  🌐
-                </div>
-              </div>
+            {/* Policy Bound Check */}
+            <div className="mt-3 p-2 rounded bg-[#0B1117] border border-[#293746] text-[10px] font-mono text-[#718297]">
+              <div>Policy: <span className="text-[#E6EDF3]">pol_telecom_standard_01</span></div>
+              <div className="text-[#39B980] mt-0.5">&bull; PASSED: Amount within 25.0 HSK/tx limit</div>
             </div>
           </div>
 
-          {/* Luminous Cyan CTA Button */}
-          <div className="pt-4">
+          {/* Review Authorization Action */}
+          <div className="pt-3 border-t border-[#293746]">
             <button
               onClick={handleAuthorizeFunds}
-              className="w-full py-2.5 px-4 rounded-xl bg-senpay-cyan hover:bg-[#33EAFF] text-[#0B1118] font-mono font-black text-xs tracking-wider uppercase flex items-center justify-center gap-2 shadow-[0_0_20px_rgba(0,229,255,0.7)] transition-all transform active:scale-[0.98]"
+              className="w-full py-2 px-3 rounded bg-[#35C7D9] hover:bg-[#2EB8CA] text-[#0B1117] font-mono font-bold text-xs tracking-wider uppercase transition flex items-center justify-center gap-1.5"
             >
-              <span>AUTHORIZE FUNDS</span>
-              <span className="text-sm font-black">»</span>
+              <span>Review Authorization</span>
+              <ArrowRight size={13} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── ML Intelligence & Dataset Provenance Modal ── */}
+      {/* ── ML Intelligence & Dataset Provenance Modal (Preserved & Styled) ── */}
       {mlModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
-          <div className="relative w-full max-w-4xl bg-slate-900 border border-slate-700/80 rounded-2xl shadow-2xl overflow-hidden my-8 text-slate-100">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="relative w-full max-w-4xl bg-[#111A23] border border-[#293746] rounded-lg shadow-2xl overflow-hidden my-8 text-[#E6EDF3]">
             {/* Header */}
-            <div className="flex items-center justify-between p-5 border-b border-slate-800 bg-slate-950/60">
+            <div className="flex items-center justify-between p-4 border-b border-[#293746] bg-[#0B1117]">
               <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-                  <Cpu className="w-5 h-5" />
+                <div className="w-8 h-8 rounded bg-[#39B980]/15 border border-[#39B980]/30 flex items-center justify-center text-[#39B980]">
+                  <Cpu className="w-4 h-4" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-base flex items-center gap-2">
+                  <h3 className="font-bold text-[#E6EDF3] text-sm flex items-center gap-2">
                     SENPAY ML Architecture &amp; Data Provenance
-                    <span className="text-[10px] font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded">
+                    <span className="text-[10px] font-mono bg-[#39B980]/15 text-[#39B980] border border-[#39B980]/30 px-2 py-0.5 rounded">
                       ACTIVE MODEL
                     </span>
                   </h3>
-                  <p className="text-xs text-slate-400 font-mono">
+                  <p className="text-[11px] text-[#718297] font-mono">
                     Model: SENPAY-5G-CRS-v1.0-RF-GB &bull; 96,028 Real Commercial 5G Traces
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setMlModalOpen(false)}
-                className="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 flex items-center justify-center text-slate-400 hover:text-white transition"
+                className="w-7 h-7 rounded bg-[#15212C] hover:bg-[#1A2937] flex items-center justify-center text-[#718297] hover:text-[#E6EDF3] transition"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Content Body */}
-            <div className="p-6 space-y-6 max-h-[75vh] overflow-y-auto">
+            <div className="p-5 space-y-5 max-h-[75vh] overflow-y-auto font-mono">
               {/* Top Metrics Cards */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800">
-                  <span className="text-[10px] font-mono text-slate-400 block uppercase">3-Class Accuracy</span>
-                  <span className="text-2xl font-black text-emerald-400 font-mono">98.7%</span>
-                  <span className="text-[10px] text-slate-500 block">F1 Macro: 97.6%</span>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                <div className="p-3 bg-[#0B1117] rounded border border-[#293746]">
+                  <span className="text-[10px] text-[#718297] block uppercase">3-Class Accuracy</span>
+                  <span className="text-xl font-bold text-[#39B980]">98.7%</span>
+                  <span className="text-[10px] text-[#718297] block">F1 Macro: 97.6%</span>
                 </div>
-                <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800">
-                  <span className="text-[10px] font-mono text-slate-400 block uppercase">Continuous CRS MAE</span>
-                  <span className="text-2xl font-black text-cyan-400 font-mono">0.27</span>
-                  <span className="text-[10px] text-slate-500 block">R² Score: 0.999</span>
+                <div className="p-3 bg-[#0B1117] rounded border border-[#293746]">
+                  <span className="text-[10px] text-[#718297] block uppercase">Continuous CRS MAE</span>
+                  <span className="text-xl font-bold text-[#35C7D9]">0.27</span>
+                  <span className="text-[10px] text-[#718297] block">R&sup2; Score: 0.999</span>
                 </div>
-                <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800">
-                  <span className="text-[10px] font-mono text-slate-400 block uppercase">Dataset Size</span>
-                  <span className="text-2xl font-black text-white font-mono">96,028</span>
-                  <span className="text-[10px] text-slate-500 block">Accepted Clean Rows</span>
+                <div className="p-3 bg-[#0B1117] rounded border border-[#293746]">
+                  <span className="text-[10px] text-[#718297] block uppercase">Dataset Size</span>
+                  <span className="text-xl font-bold text-[#E6EDF3]">96,028</span>
+                  <span className="text-[10px] text-[#718297] block">Accepted Clean Rows</span>
                 </div>
-                <div className="p-3 bg-slate-950/70 rounded-xl border border-slate-800">
-                  <span className="text-[10px] font-mono text-slate-400 block uppercase">Top Risk Factor</span>
-                  <span className="text-xl font-black text-amber-400 font-mono">RSRQ</span>
-                  <span className="text-[10px] text-slate-500 block">35.7% Importance</span>
+                <div className="p-3 bg-[#0B1117] rounded border border-[#293746]">
+                  <span className="text-[10px] text-[#718297] block uppercase">Top Risk Factor</span>
+                  <span className="text-xl font-bold text-[#E8AD43]">RSRQ</span>
+                  <span className="text-[10px] text-[#718297] block">35.7% Importance</span>
                 </div>
               </div>
 
               {/* Grid: Provenance & Live Simulator */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 {/* Column 1: Provenance & Architecture */}
                 <div className="space-y-4">
-                  <div className="p-4 bg-slate-950/50 rounded-xl border border-slate-800 space-y-2">
-                    <h4 className="text-xs font-bold font-mono text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <Database className="w-3.5 h-3.5 text-cyan-400" />
+                  <div className="p-3.5 bg-[#0B1117] rounded border border-[#293746] space-y-2">
+                    <h4 className="text-xs font-bold text-[#9AAABA] uppercase tracking-wider flex items-center gap-1.5">
+                      <Database className="w-3.5 h-3.5 text-[#35C7D9]" />
                       Public Dataset Provenance
                     </h4>
-                    <p className="text-xs text-slate-400 leading-relaxed">
+                    <p className="text-xs text-[#9AAABA] leading-relaxed">
                       Trained on client-side cellular KPIs collected from a major commercial 5G production network via G-NetTrack Pro.
                     </p>
-                    <div className="space-y-1 text-xs font-mono pt-1 text-slate-300">
-                      <div><span className="text-slate-500">Source:</span> University College Cork (UCC) MISL</div>
-                      <div><span className="text-slate-500">License:</span> GNU GPL-3.0 (Commercial Trace Benchmark)</div>
-                      <div><span className="text-slate-500">Normal / Congested / Critical:</span> 29K / 61.6K / 5.4K</div>
+                    <div className="space-y-1 text-xs pt-1 text-[#E6EDF3]">
+                      <div><span className="text-[#718297]">Source:</span> University College Cork (UCC) MISL</div>
+                      <div><span className="text-[#718297]">License:</span> GNU GPL-3.0 (Commercial Trace Benchmark)</div>
+                      <div><span className="text-[#718297]">Normal / Congested / Critical:</span> 29K / 61.6K / 5.4K</div>
                     </div>
                   </div>
 
-                  <div className="p-4 bg-slate-950/50 rounded-xl border border-slate-800 space-y-2">
-                    <h4 className="text-xs font-bold font-mono text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-                      <BarChart3 className="w-3.5 h-3.5 text-amber-400" />
+                  <div className="p-3.5 bg-[#0B1117] rounded border border-[#293746] space-y-2">
+                    <h4 className="text-xs font-bold text-[#9AAABA] uppercase tracking-wider flex items-center gap-1.5">
+                      <BarChart3 className="w-3.5 h-3.5 text-[#E8AD43]" />
                       Feature Importance Breakdown
                     </h4>
                     <div className="space-y-2 pt-1">
                       <div>
-                        <div className="flex justify-between text-[11px] font-mono mb-0.5">
-                          <span>RSRQ (Signal Quality)</span>
-                          <span className="text-amber-400">35.7%</span>
+                        <div className="flex justify-between text-[11px] mb-0.5">
+                          <span className="text-[#9AAABA]">RSRQ (Signal Quality)</span>
+                          <span className="text-[#E8AD43]">35.7%</span>
                         </div>
-                        <div className="w-full bg-slate-800 rounded-full h-1.5">
-                          <div className="bg-amber-400 h-1.5 rounded-full" style={{ width: '35.7%' }} />
-                        </div>
-                      </div>
-                      <div>
-                        <div className="flex justify-between text-[11px] font-mono mb-0.5">
-                          <span>SNR (Signal-to-Noise Ratio)</span>
-                          <span className="text-cyan-400">32.6%</span>
-                        </div>
-                        <div className="w-full bg-slate-800 rounded-full h-1.5">
-                          <div className="bg-cyan-400 h-1.5 rounded-full" style={{ width: '32.6%' }} />
+                        <div className="w-full bg-[#15212C] rounded-full h-1.5">
+                          <div className="bg-[#E8AD43] h-1.5 rounded-full" style={{ width: '35.7%' }} />
                         </div>
                       </div>
                       <div>
-                        <div className="flex justify-between text-[11px] font-mono mb-0.5">
-                          <span>DL Bitrate (Throughput)</span>
-                          <span className="text-emerald-400">9.4%</span>
+                        <div className="flex justify-between text-[11px] mb-0.5">
+                          <span className="text-[#9AAABA]">SNR (Signal-to-Noise Ratio)</span>
+                          <span className="text-[#35C7D9]">32.6%</span>
                         </div>
-                        <div className="w-full bg-slate-800 rounded-full h-1.5">
-                          <div className="bg-emerald-400 h-1.5 rounded-full" style={{ width: '9.4%' }} />
+                        <div className="w-full bg-[#15212C] rounded-full h-1.5">
+                          <div className="bg-[#35C7D9] h-1.5 rounded-full" style={{ width: '32.6%' }} />
                         </div>
                       </div>
                       <div>
-                        <div className="flex justify-between text-[11px] font-mono mb-0.5">
-                          <span>RSRP (Signal Power)</span>
-                          <span className="text-slate-400">8.1%</span>
+                        <div className="flex justify-between text-[11px] mb-0.5">
+                          <span className="text-[#9AAABA]">DL Bitrate (Throughput)</span>
+                          <span className="text-[#39B980]">9.4%</span>
                         </div>
-                        <div className="w-full bg-slate-800 rounded-full h-1.5">
-                          <div className="bg-slate-500 h-1.5 rounded-full" style={{ width: '8.1%' }} />
+                        <div className="w-full bg-[#15212C] rounded-full h-1.5">
+                          <div className="bg-[#39B980] h-1.5 rounded-full" style={{ width: '9.4%' }} />
+                        </div>
+                      </div>
+                      <div>
+                        <div className="flex justify-between text-[11px] mb-0.5">
+                          <span className="text-[#9AAABA]">RSRP (Signal Power)</span>
+                          <span className="text-[#718297]">8.1%</span>
+                        </div>
+                        <div className="w-full bg-[#15212C] rounded-full h-1.5">
+                          <div className="bg-[#718297] h-1.5 rounded-full" style={{ width: '8.1%' }} />
                         </div>
                       </div>
                     </div>
@@ -804,57 +825,57 @@ export default function ActiveCommandCenter({
                 </div>
 
                 {/* Column 2: Interactive Live Inference Simulator */}
-                <div className="p-4 bg-slate-950/70 rounded-xl border border-slate-800 space-y-4">
+                <div className="p-3.5 bg-[#0B1117] rounded border border-[#293746] space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-bold font-mono text-white uppercase tracking-wider flex items-center gap-1.5">
-                      <Sliders className="w-3.5 h-3.5 text-emerald-400" />
-                      Live Telemetry Inference Tester
+                    <h4 className="text-xs font-bold text-[#E6EDF3] uppercase tracking-wider flex items-center gap-1.5">
+                      <Sliders className="w-3.5 h-3.5 text-[#39B980]" />
+                      Live Telemetry Inference
                     </h4>
-                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
-                      API: POST /api/ml/predict
+                    <span className="text-[10px] text-[#39B980] bg-[#39B980]/15 px-2 py-0.5 rounded border border-[#39B980]/30">
+                      POST /api/ml/predict
                     </span>
                   </div>
 
-                  <form onSubmit={handleRunInference} className="space-y-3">
+                  <form onSubmit={handleRunInference} className="space-y-2.5">
                     <div className="grid grid-cols-2 gap-2 text-xs">
                       <div>
-                        <label className="block text-slate-400 font-mono text-[11px] mb-1">RSRP (dBm)</label>
+                        <label className="block text-[#718297] text-[10px] mb-1">RSRP (dBm)</label>
                         <input
                           type="number"
                           step="0.5"
                           value={testRsrp}
                           onChange={(e) => setTestRsrp(e.target.value)}
-                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs font-mono text-white"
+                          className="w-full px-2 py-1 bg-[#15212C] border border-[#293746] rounded text-xs text-[#E6EDF3]"
                         />
                       </div>
                       <div>
-                        <label className="block text-slate-400 font-mono text-[11px] mb-1">RSRQ (dB)</label>
+                        <label className="block text-[#718297] text-[10px] mb-1">RSRQ (dB)</label>
                         <input
                           type="number"
                           step="0.5"
                           value={testRsrq}
                           onChange={(e) => setTestRsrq(e.target.value)}
-                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs font-mono text-white"
+                          className="w-full px-2 py-1 bg-[#15212C] border border-[#293746] rounded text-xs text-[#E6EDF3]"
                         />
                       </div>
                       <div>
-                        <label className="block text-slate-400 font-mono text-[11px] mb-1">SNR (dB)</label>
+                        <label className="block text-[#718297] text-[10px] mb-1">SNR (dB)</label>
                         <input
                           type="number"
                           step="0.5"
                           value={testSnr}
                           onChange={(e) => setTestSnr(e.target.value)}
-                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs font-mono text-white"
+                          className="w-full px-2 py-1 bg-[#15212C] border border-[#293746] rounded text-xs text-[#E6EDF3]"
                         />
                       </div>
                       <div>
-                        <label className="block text-slate-400 font-mono text-[11px] mb-1">DL Bitrate (kbps)</label>
+                        <label className="block text-[#718297] text-[10px] mb-1">DL Bitrate (kbps)</label>
                         <input
                           type="number"
                           step="500"
                           value={testDlBitrate}
                           onChange={(e) => setTestDlBitrate(e.target.value)}
-                          className="w-full px-2.5 py-1.5 bg-slate-900 border border-slate-700 rounded text-xs font-mono text-white"
+                          className="w-full px-2 py-1 bg-[#15212C] border border-[#293746] rounded text-xs text-[#E6EDF3]"
                         />
                       </div>
                     </div>
@@ -862,14 +883,14 @@ export default function ActiveCommandCenter({
                     <button
                       type="submit"
                       disabled={predLoading}
-                      className="w-full py-2 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold font-mono text-xs rounded-lg transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+                      className="w-full py-1.5 bg-[#39B980] hover:bg-[#32A572] text-[#0B1117] font-bold text-xs rounded transition flex items-center justify-center gap-1.5 disabled:opacity-50"
                     >
                       {predLoading ? (
-                        <div className="w-4 h-4 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
+                        <div className="w-3.5 h-3.5 border-2 border-[#0B1117] border-t-transparent rounded-full animate-spin" />
                       ) : (
                         <>
                           <Zap className="w-3.5 h-3.5" />
-                          <span>Run ML Model Inference</span>
+                          <span>Run Inference</span>
                         </>
                       )}
                     </button>
@@ -877,36 +898,26 @@ export default function ActiveCommandCenter({
 
                   {/* Prediction Output */}
                   {predResult && (
-                    <div className="p-3 bg-slate-900/90 rounded-lg border border-slate-700 space-y-2 text-xs font-mono animate-fadeIn">
+                    <div className="p-2.5 bg-[#15212C] rounded border border-[#293746] space-y-1.5 text-xs">
                       <div className="flex items-center justify-between">
-                        <span className="text-slate-400">Predicted CRS:</span>
-                        <span className={`text-base font-bold ${
-                          predResult.predicted_crs >= 75 ? 'text-rose-400' :
-                          predResult.predicted_crs >= 50 ? 'text-amber-400' : 'text-emerald-400'
+                        <span className="text-[#718297]">Predicted CRS:</span>
+                        <span className={`text-sm font-bold ${
+                          predResult.predicted_crs >= 75 ? 'text-[#E45B64]' :
+                          predResult.predicted_crs >= 50 ? 'text-[#E8AD43]' : 'text-[#39B980]'
                         }`}>
                           {predResult.predicted_crs} / 100
                         </span>
                       </div>
                       <div className="flex items-center justify-between">
-                        <span className="text-slate-400">Severity Class:</span>
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 text-white">
+                        <span className="text-[#718297]">Severity Class:</span>
+                        <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#0B1117] text-[#E6EDF3]">
                           {predResult.congestion_severity}
                         </span>
                       </div>
                       <div className="flex items-center justify-between text-[11px]">
-                        <span className="text-slate-400">Confidence:</span>
-                        <span className="text-cyan-400">{(predResult.confidence_score * 100).toFixed(1)}%</span>
+                        <span className="text-[#718297]">Confidence:</span>
+                        <span className="text-[#35C7D9]">{(predResult.confidence_score * 100).toFixed(1)}%</span>
                       </div>
-                      {predResult.contributing_risk_factors?.length > 0 && (
-                        <div className="pt-1.5 border-t border-slate-800">
-                          <span className="text-[10px] text-slate-400 block mb-1">Risk Factors Detected:</span>
-                          <ul className="list-disc list-inside text-[11px] text-amber-300/90 space-y-0.5">
-                            {predResult.contributing_risk_factors.map((f, i) => (
-                              <li key={i}>{f}</li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
                     </div>
                   )}
                 </div>
@@ -914,11 +925,11 @@ export default function ActiveCommandCenter({
             </div>
 
             {/* Modal Footer */}
-            <div className="p-4 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between text-xs font-mono text-slate-400">
-              <span>Reproducible pipeline: <code className="text-slate-300">python3 -m app.ml.train</code></span>
+            <div className="p-3 border-t border-[#293746] bg-[#0B1117] flex items-center justify-between text-xs font-mono text-[#718297]">
+              <span>Pipeline: <code className="text-[#9AAABA]">python3 -m app.ml.train</code></span>
               <button
                 onClick={() => setMlModalOpen(false)}
-                className="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-white rounded-lg transition"
+                className="px-3 py-1 bg-[#15212C] hover:bg-[#1A2937] text-[#E6EDF3] rounded border border-[#293746] transition"
               >
                 Close
               </button>

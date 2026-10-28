@@ -7,24 +7,24 @@ export default {
   theme: {
     extend: {
       colors: {
-        // SENPAY Reference Design Tokens
+        // SENPAY Reference Design Tokens (Restrained Telecom Operations Palette)
         senpay: {
-          bg: '#0B1118',
-          sidebar: '#101821',
-          card: '#151F2A',
-          panel: '#1B2733',
-          elevated: '#202E3D',
-          border: '#1E2D3D',
-          'border-light': '#2A3F55',
-          cyan: '#00E5FF',
-          teal: '#00B4D8',
-          violet: '#A855F7',
-          amber: '#FFB800',
-          red: '#FF3B5C',
-          green: '#00FF88',
-          'text-primary': '#F1F5F9',
-          'text-secondary': '#94A3B8',
-          'text-muted': '#64748B',
+          bg: '#0B1117',
+          sidebar: '#0E1620',
+          card: '#111A23',
+          panel: '#15212C',
+          elevated: '#1A2937',
+          border: '#293746',
+          'border-light': '#364B5F',
+          cyan: '#35C7D9',
+          teal: '#20B2AA',
+          violet: '#8B5CF6',
+          amber: '#E8AD43',
+          red: '#E45B64',
+          green: '#39B980',
+          'text-primary': '#E6EDF3',
+          'text-secondary': '#9AAABA',
+          'text-muted': '#718297',
         },
         // Backwards compatibility for existing components
         crowd: {
