@@ -53,9 +53,9 @@ export function ThemeProvider({ children }) {
       root.setAttribute('data-theme', theme);
       if (theme === THEMES.LIGHT) {
         root.classList.add('theme-light');
-        root.classList.remove('theme-dark', 'theme-high-contrast');
+        root.classList.remove('theme-dark', 'theme-high-contrast', 'dark');
       } else {
-        root.classList.add('theme-dark');
+        root.classList.add('theme-dark', 'dark');
         root.classList.remove('theme-light', 'theme-high-contrast');
       }
     }
