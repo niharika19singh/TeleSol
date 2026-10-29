@@ -863,6 +863,26 @@ class AuthService:
                 AuthService.register_user(**default_operator)
                 logger.info("[AUTH] Seeded default development operator account: operator@telesol.io")
 
+            # Also seed default development administrator for sandbox evaluation
+            default_admin_email = os.getenv("SENPAY_ADMIN_EMAIL", "admin@telesol.io").strip().lower()
+            default_admin_pass = os.getenv("SENPAY_ADMIN_PASSWORD", "SenPayAdmin2026!")
+            cursor.execute("SELECT id FROM users WHERE email = ? OR username = 'admin'", (default_admin_email,))
+            if not cursor.fetchone():
+                now_iso = datetime.now(timezone.utc).isoformat()
+                pwd_hash, salt = hash_password(default_admin_pass)
+                user_id = f"usr_admin_{secrets.token_hex(4)}"
+                cursor.execute(
+                    """
+                    INSERT INTO users (
+                        id, username, email, password_hash, salt, full_name,
+                        role, is_active, email_verified, workspace_id, created_at, updated_at
+                    ) VALUES (?, 'admin', ?, ?, ?, 'SENPAY Platform Administrator', ?, 1, 1, 'ws_telesol_default', ?, ?)
+                    """,
+                    (user_id, default_admin_email, pwd_hash, salt, ROLE_PLATFORM_ADMIN, now_iso, now_iso)
+                )
+                conn.commit()
+                logger.info("[AUTH] Seeded default development admin account: %s", default_admin_email)
+
 
 # FastAPI Dependency for protecting authenticated endpoints
 async def get_current_user(authorization: Optional[str] = Header(None)) -> Dict[str, Any]:

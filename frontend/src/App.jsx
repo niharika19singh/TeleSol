@@ -54,14 +54,22 @@ import { controlSentinel, triggerTinyFishInvestigation } from './data/api';
 function AppContent() {
   const { user, isAuthenticated, isLoading } = useAuth();
 
+  const normalizeAuthRoute = (val) => {
+    if (!val) return val;
+    const clean = val.toLowerCase().replace(/^[/#]+/, '').trim();
+    if (clean === 'sign-in' || clean === 'signin') return 'login';
+    if (clean === 'register' || clean === 'sign-up') return 'signup';
+    return clean;
+  };
+
   const getInitialPage = () => {
     if (typeof window !== 'undefined') {
-      const hash = window.location.hash.replace('#', '').trim();
+      const hash = normalizeAuthRoute(window.location.hash);
       if (hash) return hash;
       const params = new URLSearchParams(window.location.search);
-      const pageParam = params.get('page');
+      const pageParam = normalizeAuthRoute(params.get('page'));
       if (pageParam) return pageParam;
-      const path = window.location.pathname.replace(/^\//, '').trim();
+      const path = normalizeAuthRoute(window.location.pathname);
       if (path && path !== 'index.html') return path;
     }
     return 'command_center';
@@ -70,16 +78,17 @@ function AppContent() {
   const [currentPage, setCurrentPageRaw] = useState(getInitialPage);
 
   const setCurrentPage = (page) => {
-    setCurrentPageRaw(page);
-    if (typeof window !== 'undefined' && window.location.hash !== `#${page}`) {
-      window.location.hash = `#${page}`;
+    const normalized = normalizeAuthRoute(page);
+    setCurrentPageRaw(normalized);
+    if (typeof window !== 'undefined' && window.location.hash !== `#${normalized}`) {
+      window.location.hash = `#${normalized}`;
     }
   };
 
   // Sync with browser back/forward and hash changes
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '').trim();
+      const hash = normalizeAuthRoute(window.location.hash);
       if (hash) setCurrentPageRaw(hash);
     };
     window.addEventListener('hashchange', handleHashChange);
@@ -187,7 +196,7 @@ function AppContent() {
   }
 
   // ── Render Public Authentication & Recovery Screens Standalone ──
-  if (currentPage === 'signup') {
+  if (currentPage === 'signup' || currentPage === 'register') {
     if (isAuthenticated) {
       setCurrentPage('command_center');
       return null;

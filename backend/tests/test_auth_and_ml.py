@@ -78,6 +78,20 @@ class TestAuthAndMLPipeline(unittest.TestCase):
         })
         self.assertEqual(bad_res.status_code, 401)
 
+    def test_03b_auth_login_seeded_admin(self):
+        """Verify POST /api/auth/login with pre-seeded platform admin credentials."""
+        res = self.client.post("/api/auth/login", json={
+            "username_or_email": "admin@telesol.io",
+            "password": "SenPayAdmin2026!"
+        })
+        self.assertEqual(res.status_code, 200)
+        data = res.json()
+        token = data.get("token") or data.get("access_token")
+        self.assertIsNotNone(token)
+        self.assertEqual(data["token_type"].lower(), "bearer")
+        self.assertEqual(data["user"]["email"], "admin@telesol.io")
+        self.assertEqual(data["user"]["role"], "PLATFORM_ADMIN")
+
     def test_04_auth_register_and_protected_route(self):
         """Verify POST /api/auth/register and GET /api/auth/me authentication guard."""
         unique_id = "test_user_7788"

@@ -2,10 +2,22 @@
 // Connects to backend, falls back to mock data when offline
 
 // Base API URL: configured via VITE_API_BASE_URL for production (e.g. Render), falls back to localhost:8000
-const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
-const defaultBase = isLocal ? 'http://localhost:8000' : 'https://telesol-sentinel-api.onrender.com';
-const rawApiBase = import.meta.env.VITE_API_BASE_URL || defaultBase;
-export const API_BASE = rawApiBase.replace(/\/+$/, '');
+function resolveApiBase() {
+  const isLocal = typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1');
+  const defaultBase = isLocal ? 'http://localhost:8000' : 'https://telesol-sentinel-api.onrender.com';
+  let candidate = (import.meta.env.VITE_API_BASE_URL || '').trim();
+
+  // Guard against accidental environment cross-project contamination
+  if (candidate.toLowerCase().includes('wadih') || candidate.toLowerCase().includes('counsellor')) {
+    console.warn('[SECURITY] Contaminated API base detected in environment. Falling back to SENPAY production backend.');
+    candidate = defaultBase;
+  }
+
+  const base = (candidate || defaultBase).replace(/\/+$/, '');
+  return base;
+}
+
+export const API_BASE = resolveApiBase();
 
 // Dynamic WebSocket URL with wss:// support in production
 function computeWsUrl() {
@@ -219,23 +231,37 @@ export function getGPSLocation() {
   });
 }
 
+function formatApiErrorMessage(res, data, endpoint) {
+  if (data) {
+    if (typeof data.detail === 'string') return data.detail;
+    if (Array.isArray(data.detail)) return data.detail.map(d => d.msg || JSON.stringify(d)).join(', ');
+    if (data.detail && typeof data.detail === 'object') return JSON.stringify(data.detail);
+    if (data.message && typeof data.message === 'string') return data.message;
+    if (data.error && typeof data.error.message === 'string') return data.error.message;
+  }
+  if (res.status === 404) return `Endpoint ${endpoint} not found on backend (HTTP 404). Please verify backend deployment.`;
+  if (res.status === 401) return 'Invalid username/email or password.';
+  if (res.status === 403) return 'Access forbidden. You do not have permission for this action.';
+  if (res.status === 429) return 'Too many attempts. Account or IP temporarily rate-limited. Please retry shortly.';
+  return `Server error (${res.status})`;
+}
+
 /**
  * Generic POST request to backend API
  */
 async function apiPost(endpoint, body = {}, token = null) {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   try {
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}${endpoint}`, {
+    const res = await fetch(`${API_BASE}${cleanEndpoint}`, {
       method: 'POST',
       headers,
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = typeof data.detail === 'string'
-        ? data.detail
-        : (Array.isArray(data.detail) ? data.detail.map(d => d.msg || JSON.stringify(d)).join(', ') : (data.detail ? JSON.stringify(data.detail) : `HTTP ${res.status}`));
+      const msg = formatApiErrorMessage(res, data, cleanEndpoint);
       const err = new Error(msg);
       err.status = res.status;
       err.data = data;
@@ -243,21 +269,20 @@ async function apiPost(endpoint, body = {}, token = null) {
     }
     return data;
   } catch (err) {
-    console.warn(`[API POST] ${endpoint} failed:`, err.message);
+    console.warn(`[API POST] ${cleanEndpoint} failed:`, err.message);
     throw err;
   }
 }
 
 async function apiGetAuth(endpoint, token = null) {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   try {
     const headers = {};
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}${endpoint}`, { headers });
+    const res = await fetch(`${API_BASE}${cleanEndpoint}`, { headers });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = typeof data.detail === 'string'
-        ? data.detail
-        : (Array.isArray(data.detail) ? data.detail.map(d => d.msg || JSON.stringify(d)).join(', ') : (data.detail ? JSON.stringify(data.detail) : `HTTP ${res.status}`));
+      const msg = formatApiErrorMessage(res, data, cleanEndpoint);
       const err = new Error(msg);
       err.status = res.status;
       err.data = data;
@@ -265,25 +290,24 @@ async function apiGetAuth(endpoint, token = null) {
     }
     return data;
   } catch (err) {
-    console.warn(`[API GET] ${endpoint} failed:`, err.message);
+    console.warn(`[API GET] ${cleanEndpoint} failed:`, err.message);
     throw err;
   }
 }
 
 async function apiPatch(endpoint, body = {}, token = null) {
+  const cleanEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
   try {
     const headers = { 'Content-Type': 'application/json' };
     if (token) headers['Authorization'] = `Bearer ${token}`;
-    const res = await fetch(`${API_BASE}${endpoint}`, {
+    const res = await fetch(`${API_BASE}${cleanEndpoint}`, {
       method: 'PATCH',
       headers,
       body: JSON.stringify(body),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const msg = typeof data.detail === 'string'
-        ? data.detail
-        : (Array.isArray(data.detail) ? data.detail.map(d => d.msg || JSON.stringify(d)).join(', ') : (data.detail ? JSON.stringify(data.detail) : `HTTP ${res.status}`));
+      const msg = formatApiErrorMessage(res, data, cleanEndpoint);
       const err = new Error(msg);
       err.status = res.status;
       err.data = data;
@@ -291,7 +315,7 @@ async function apiPatch(endpoint, body = {}, token = null) {
     }
     return data;
   } catch (err) {
-    console.warn(`[API PATCH] ${endpoint} failed:`, err.message);
+    console.warn(`[API PATCH] ${cleanEndpoint} failed:`, err.message);
     throw err;
   }
 }
