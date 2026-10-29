@@ -26,6 +26,12 @@ export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState(() => {
     if (typeof window !== 'undefined') {
       try {
+        if (window.location.search.includes('theme=light')) {
+          return THEMES.LIGHT;
+        }
+        if (window.location.search.includes('theme=dark')) {
+          return THEMES.DARK;
+        }
         const saved = localStorage.getItem(THEME_STORAGE_KEY);
         if (saved === THEMES.LIGHT || saved === THEMES.DARK) {
           return saved;

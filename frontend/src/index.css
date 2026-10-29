@@ -12,24 +12,24 @@
 :root,
 [data-theme="dark"],
 .theme-dark {
-  --senpay-bg: #000000;
-  --senpay-sidebar: #0A0D10;
-  --senpay-card: #0A0D10;
-  --senpay-panel: #10161D;
-  --senpay-elevated: #151D26;
-  --senpay-border: #26323E;
-  --senpay-border-light: #344353;
+  --senpay-bg: #07090D;
+  --senpay-sidebar: #0B0F15;
+  --senpay-card: #0F141B;
+  --senpay-panel: #141B24;
+  --senpay-elevated: #1A232E;
+  --senpay-border: #232F3D;
+  --senpay-border-light: #324357;
   --senpay-text-primary: #F1F5F9;
-  --senpay-text-secondary: #A7B3C2;
-  --senpay-text-muted: #758396;
+  --senpay-text-secondary: #9EAFBF;
+  --senpay-text-muted: #6B7C8E;
   --senpay-cyan: #20C7D9;
   --senpay-accent: #20C7D9;
   --senpay-amber: #E8AD43;
   --senpay-red: #E45B64;
   --senpay-green: #39B980;
   --senpay-violet: #8B5CF6;
-  --senpay-card-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
-  --senpay-grid-stroke: #16222F;
+  --senpay-card-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  --senpay-grid-stroke: #18222D;
 }
 
 [data-theme="light"],
@@ -581,4 +581,105 @@ input[type="range"]::-moz-range-thumb {
 .theme-dark button:focus-visible {
   outline: 2px solid #20C7D9 !important;
   outline-offset: 2px !important;
+}
+
+/* ═════════════════════════════════════════════════════════════════
+   REFERENCE 1 & 2 DESIGN ENHANCEMENTS:
+   - Telecom Operational Flight-Strip Primitives (Ref 1)
+   - Enterprise Micro-Interactions & Staggered Transitions (Ref 2)
+   - Accessibility & Prefers-Reduced-Motion Engine
+   ═════════════════════════════════════════════════════════════════ */
+
+/* ── Reference 1: Operational Status Strip ── */
+.telecom-op-strip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--senpay-panel);
+  border: 1px solid var(--senpay-border);
+  border-left: 3px solid var(--senpay-cyan);
+  border-radius: 6px;
+  padding: 8px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.telecom-op-strip:hover {
+  background-color: var(--senpay-elevated);
+  border-color: var(--senpay-border-light);
+  transform: translateY(-1px);
+}
+
+.telecom-op-strip.critical {
+  border-left-color: var(--senpay-red);
+  background: linear-gradient(90deg, rgba(228, 91, 100, 0.08) 0%, transparent 60%), var(--senpay-panel);
+}
+
+.telecom-op-strip.warning {
+  border-left-color: var(--senpay-amber);
+  background: linear-gradient(90deg, rgba(232, 173, 67, 0.08) 0%, transparent 60%), var(--senpay-panel);
+}
+
+.telecom-op-strip.nominal {
+  border-left-color: var(--senpay-green);
+}
+
+/* ── Reference 2: Staggered Entrance Animations ── */
+.stagger-1 { animation-delay: 50ms; }
+.stagger-2 { animation-delay: 100ms; }
+.stagger-3 { animation-delay: 150ms; }
+.stagger-4 { animation-delay: 200ms; }
+.stagger-5 { animation-delay: 250ms; }
+.stagger-6 { animation-delay: 300ms; }
+
+/* ── Interactive Elevate & Subtle Glow ── */
+.hover-elevate {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.hover-elevate:hover {
+  transform: translateY(-2px);
+  border-color: var(--senpay-border-light);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* ── Restrained NOC Operational Pulse ── */
+@keyframes nocPulseSubtle {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.08);
+  }
+}
+
+.noc-pulse-subtle {
+  animation: nocPulseSubtle 2.2s ease-in-out infinite;
+}
+
+/* ── Smooth Progressive Disclosure Drawer ── */
+.drawer-backdrop {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: opacity 0.25s ease-out;
+}
+
+/* ── Prefers-Reduced-Motion Accessibility Guardrail ── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  .telecom-op-strip:hover,
+  .hover-elevate:hover {
+    transform: none !important;
+  }
 }

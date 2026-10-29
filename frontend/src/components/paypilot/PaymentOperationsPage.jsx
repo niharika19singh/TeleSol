@@ -1,23 +1,49 @@
+// ═══════════════════════════════════════════════════════
+// SENPAY — Payment Operations & Autonomous Settlement Console
+// Grounded in Escrow Locking, Real-Time SLA Verification, and HashKey Blockchain Proofs
+// Harmonized for Porcelain Light & Obsidian Dark Themes with Enterprise Motion
+// ═══════════════════════════════════════════════════════
+
 import React, { useState, useEffect } from 'react';
 import {
-  AlertTriangle, CheckCircle2, Clock, ShieldCheck, Copy,
-  Check, Lock, ArrowRight, ExternalLink, RefreshCw, FileText,
-  AlertOctagon, Sliders, Shield, Zap, Sparkles, Pencil
+  Activity,
+  AlertTriangle,
+  CheckCircle2,
+  Circle,
+  Clock,
+  ShieldCheck,
+  Copy,
+  Check,
+  Lock,
+  ArrowRight,
+  ExternalLink,
+  RefreshCw,
+  FileText,
+  AlertOctagon,
+  Sliders,
+  Shield,
+  Zap,
+  Sparkles,
+  Pencil,
+  FileCheck2,
+  Scale
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, Line } from 'recharts';
 import { evaluateSentinelOutcome, fetchServiceAgreements, fetchTransactions } from '../../data/paypilotApi';
+import { useTheme } from '../../context/ThemeContext';
 
 export default function PaymentOperationsPage({
   onNavigate,
   onOpenDispute,
   onViewProof,
 }) {
+  const { isLight } = useTheme();
   const [mode, setMode] = useState('demo');
   const [copied, setCopied] = useState(false);
   const [evaluating, setEvaluating] = useState(false);
   const [outcomeResult, setOutcomeResult] = useState(null);
 
-  // Dual Telemetry Wave Data (Simulated Orange vs Live Cyan)
+  // Dual Telemetry Wave Data (Simulated Baseline vs Live Mitigated)
   const telemetryData = [
     { time: '04:10', sim: 28, live: 34 },
     { time: '04:11', sim: 35, live: 46 },
@@ -37,11 +63,10 @@ export default function PaymentOperationsPage({
   const handleVerifyRelease = async () => {
     setEvaluating(true);
     try {
-      // Calls the actual backend outcome evaluation endpoint!
       const res = await evaluateSentinelOutcome({
         agreement_id: 'agr_seed_001',
         post_metrics: {
-          crs_score: 38.0,
+          crs_score: 22.0,
           latency_ms: 14.2,
           packet_loss_pct: 0.04
         }
@@ -55,35 +80,36 @@ export default function PaymentOperationsPage({
   };
 
   return (
-    <div className="space-y-4 max-w-[1600px] mx-auto pb-8 font-sans">
+    <div className="space-y-4 max-w-[1680px] mx-auto pb-8 font-sans animate-fade-in-up text-senpay-text-primary">
       {/* ── Top Header Section ── */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2 border-b border-senpay-border/60">
         <div>
           <div className="text-[10px] font-mono text-senpay-text-muted uppercase tracking-wider mb-0.5">
-            PAYMENT OPERATIONS & SETTLEMENT
+            PAYMENT OPERATIONS &amp; SETTLEMENT COORDINATOR
           </div>
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-bold font-display text-white flex items-center gap-2">
-              Payment Operations & Settlement
-              <Pencil size={14} className="text-senpay-text-muted cursor-pointer hover:text-white" />
+          <div className="flex items-center gap-3 flex-wrap">
+            <h1 className="text-xl font-bold font-display text-senpay-text-primary flex items-center gap-2">
+              Payment Operations &amp; Autonomous Settlement
             </h1>
 
             {/* Top Incident Pill */}
-            <div className="px-2.5 py-0.5 rounded-full bg-[#271E0B] border border-senpay-amber text-[10px] font-mono font-bold text-senpay-amber shadow-[0_0_8px_rgba(255,184,0,0.3)] flex items-center gap-1.5">
+            <div className="px-2.5 py-0.5 rounded bg-senpay-amber/15 border border-senpay-amber/40 text-[10px] font-mono font-bold text-senpay-amber flex items-center gap-1.5">
               <AlertTriangle size={11} />
-              <span>INCIDENT #INC-2026-8812 (West Region)</span>
+              <span>INCIDENT #INC-2026-8812 (West Corridor)</span>
             </div>
           </div>
         </div>
 
-        {/* Mode Toggle */}
+        {/* Mode Toggle & Status */}
         <div className="flex items-center gap-2 self-start lg:self-center">
-          <span className="text-[11px] font-mono text-senpay-text-secondary">Mode Toggle</span>
-          <div className="flex rounded-lg bg-senpay-panel border border-senpay-border p-0.5 text-xs font-mono">
+          <span className="text-[11px] font-mono text-senpay-text-secondary">Engine Mode:</span>
+          <div className="flex rounded bg-senpay-panel border border-senpay-border p-0.5 text-xs font-mono">
             <button
               onClick={() => setMode('demo')}
               className={`px-3 py-1 rounded font-bold transition-all ${
-                mode === 'demo' ? 'bg-senpay-card text-senpay-text-primary shadow-sm' : 'text-senpay-text-muted hover:text-senpay-text-primary'
+                mode === 'demo'
+                  ? 'bg-senpay-card text-senpay-text-primary shadow-sm'
+                  : 'text-senpay-text-muted hover:text-senpay-text-primary'
               }`}
             >
               DEMO
@@ -91,7 +117,9 @@ export default function PaymentOperationsPage({
             <button
               onClick={() => setMode('live')}
               className={`px-3 py-1 rounded font-bold transition-all ${
-                mode === 'live' ? 'bg-senpay-cyan text-white' : 'text-senpay-text-muted hover:text-senpay-text-primary'
+                mode === 'live'
+                  ? 'bg-senpay-cyan text-slate-950 font-black'
+                  : 'text-senpay-text-muted hover:text-senpay-text-primary'
               }`}
             >
               LIVE
@@ -100,34 +128,40 @@ export default function PaymentOperationsPage({
         </div>
       </div>
 
-      {/* ── Payment Lifecycle Step Progression ── */}
-      <div className="flex items-center justify-between gap-2 overflow-x-auto py-2 text-xs font-mono border-b border-senpay-border/40">
-        <div className="flex items-center gap-2 text-senpay-text-muted">
-          <span>SELECT</span>
-          <ArrowRight size={12} />
+      {/* ── Payment Lifecycle Step Progression (Reference 1 Flight Strip) ── */}
+      <div className="flex items-center justify-between gap-2 overflow-x-auto py-2.5 px-3 rounded bg-senpay-panel border border-senpay-border text-xs font-mono">
+        <div className="flex items-center gap-1.5 text-senpay-text-muted">
+          <CheckCircle2 size={13} className="text-senpay-green" />
+          <span className="font-bold text-senpay-text-primary">1. SELECT</span>
+          <span className="text-[10px] text-senpay-text-muted">(SkyLink 5G)</span>
+          <ArrowRight size={12} className="text-senpay-border ml-2" />
         </div>
 
-        <div className="flex items-center gap-2 text-senpay-cyan font-bold">
-          <span>AUTHORIZE</span>
-          <span className="text-[10px] font-normal text-senpay-cyan/80">(Signed)</span>
-          <ArrowRight size={12} className="text-senpay-cyan" />
+        <div className="flex items-center gap-1.5 text-senpay-cyan font-bold">
+          <CheckCircle2 size={13} className="text-senpay-green" />
+          <span>2. AUTHORIZE</span>
+          <span className="text-[10px] font-normal text-senpay-cyan">(Signed)</span>
+          <ArrowRight size={12} className="text-senpay-border ml-2" />
         </div>
 
-        <div className="flex items-center gap-2 text-[#00B4D8] font-bold">
-          <span>PROCURE</span>
-          <span className="text-[10px] font-normal text-[#00B4D8]/80">(Reserved)</span>
-          <ArrowRight size={12} className="text-[#00B4D8]" />
-        </div>
-
-        <div className="flex items-center gap-2 text-senpay-green font-bold">
-          <span>SETTLE</span>
-          <span className="text-[10px] font-normal text-senpay-green/80">Success</span>
-          <ArrowRight size={12} className="text-senpay-green" />
+        <div className="flex items-center gap-1.5 text-senpay-cyan font-bold">
+          <CheckCircle2 size={13} className="text-senpay-green" />
+          <span>3. PROCURE</span>
+          <span className="text-[10px] font-normal text-senpay-cyan">(Reserved)</span>
+          <ArrowRight size={12} className="text-senpay-border ml-2" />
         </div>
 
         <div className="flex items-center gap-1.5 text-senpay-amber font-bold">
-          <span>VERIFY</span>
-          <span className="text-[10px] font-normal text-senpay-amber/80">(Outcome Pending)</span>
+          <Clock size={13} className="animate-spin text-senpay-amber" />
+          <span>4. VERIFY</span>
+          <span className="text-[10px] font-normal text-senpay-amber">(Outcome Pending)</span>
+          <ArrowRight size={12} className="text-senpay-border ml-2" />
+        </div>
+
+        <div className="flex items-center gap-1.5 text-senpay-text-muted font-bold">
+          <Circle size={13} />
+          <span>5. SETTLE</span>
+          <span className="text-[10px] font-normal text-senpay-text-muted">(Awaiting Release)</span>
         </div>
       </div>
 
@@ -137,101 +171,92 @@ export default function PaymentOperationsPage({
         <div className="lg:col-span-6 space-y-4">
           {/* 1. Contract Escrow & Atomic Payments */}
           <div className="senpay-card p-4">
-            <div className="flex items-center justify-between pb-2">
+            <div className="flex items-center justify-between pb-2 border-b border-senpay-border mb-3">
               <div>
-                <span className="text-xs font-mono font-bold text-white tracking-wider uppercase block">
-                  Contract Escrow & Atomic Payments
+                <span className="text-xs font-mono font-bold text-senpay-text-primary tracking-wider uppercase block">
+                  Contract Escrow &amp; Atomic Settlement
                 </span>
-                <span className="text-xs text-senpay-text-secondary">Alt-Net Solutions</span>
+                <span className="text-xs text-senpay-text-secondary">
+                  Service Provider: SkyLink Dynamic 5G Slicing
+                </span>
               </div>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-senpay-cyan/15 text-senpay-cyan border border-senpay-cyan/30 font-bold">
+                MANDATE: man_opt_west_8812
+              </span>
             </div>
 
-            {/* Glowing Cyan/Teal Banner */}
-            <div className="p-4 rounded-xl bg-gradient-to-r from-[#0C2433] via-[#103044] to-[#0C2433] border border-senpay-cyan/50 shadow-[0_0_20px_rgba(0,229,255,0.15)] my-2 relative overflow-hidden">
+            {/* Escrow Banner */}
+            <div className="p-4 rounded-lg bg-senpay-panel border border-senpay-cyan/40 shadow-sm relative overflow-hidden">
               <div className="flex items-center gap-2 text-senpay-cyan font-mono text-xs font-bold mb-1">
                 <Zap size={14} />
-                <span>PAYMENT DISPATCHED / HELD IN ESCROW</span>
+                <span>PAYMENT DISPATCHED &bull; HELD IN TIME-LOCKED ESCROW</span>
               </div>
               <div className="text-[10px] font-mono text-senpay-text-muted mb-4">
-                Cryptographic workflow
+                Cryptographic Workflow: Agreement &rarr; Mandate &rarr; Escrow Deposit &rarr; Telemetry Validation
               </div>
 
               {/* Cryptographic Workflow Flow Diagram */}
               <div className="flex items-center justify-between max-w-sm mx-auto my-3 px-2 text-senpay-cyan">
-                {/* Wave */}
-                <div className="w-8 h-8 rounded-lg bg-[#0E1A26] border border-senpay-cyan/40 flex items-center justify-center">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path d="M2 12 Q 6 4 10 12 T 18 12 T 22 12" />
-                  </svg>
+                <div className="w-8 h-8 rounded bg-senpay-card border border-senpay-cyan/40 flex items-center justify-center" title="Telemetry Feed">
+                  <Activity size={15} />
                 </div>
-                <span className="text-xs">→</span>
+                <span className="text-xs text-senpay-border">&rarr;</span>
 
-                {/* Lock Shield */}
-                <div className="w-8 h-8 rounded-lg bg-[#0E1A26] border border-senpay-cyan/40 flex items-center justify-center">
+                <div className="w-8 h-8 rounded bg-senpay-card border border-senpay-cyan/40 flex items-center justify-center" title="Escrow Lock">
                   <Lock size={15} />
                 </div>
-                <span className="text-xs">→</span>
+                <span className="text-xs text-senpay-border">&rarr;</span>
 
-                {/* Encrypted Document */}
-                <div className="w-8 h-8 rounded-lg bg-[#0E1A26] border border-senpay-cyan/40 flex items-center justify-center">
+                <div className="w-8 h-8 rounded bg-senpay-card border border-senpay-cyan/40 flex items-center justify-center" title="Service Agreement Hash">
                   <FileText size={15} />
                 </div>
-                <span className="text-xs">→</span>
+                <span className="text-xs text-senpay-border">&rarr;</span>
 
-                {/* Signed Document */}
-                <div className="w-8 h-8 rounded-lg bg-[#0E1A26] border border-senpay-cyan/40 flex items-center justify-center">
+                <div className="w-8 h-8 rounded bg-senpay-card border border-senpay-cyan/40 flex items-center justify-center" title="Policy Authorization">
                   <ShieldCheck size={15} />
                 </div>
-                <span className="text-xs">→</span>
+                <span className="text-xs text-senpay-border">&rarr;</span>
 
-                {/* Verified Check */}
-                <div className="w-8 h-8 rounded-lg bg-senpay-green/20 border border-senpay-green text-senpay-green flex items-center justify-center">
+                <div className="w-8 h-8 rounded bg-senpay-green/20 border border-senpay-green text-senpay-green flex items-center justify-center" title="Outcome Settle">
                   <Check size={16} />
                 </div>
               </div>
 
               {/* Amount Display */}
-              <div className="mt-4 pt-3 border-t border-senpay-cyan/20 flex items-baseline justify-between">
+              <div className="mt-4 pt-3 border-t border-senpay-border flex items-baseline justify-between">
                 <div>
-                  <span className="text-2xl lg:text-3xl font-black font-display text-white tracking-tight">
-                    $12,500.00
+                  <span className="text-3xl font-black font-display text-senpay-text-primary tracking-tight">
+                    12.50 HSK
                   </span>
-                  <span className="text-xs font-mono font-bold text-senpay-cyan ml-1.5">
-                    USD (12.5 HSK)
+                  <span className="text-xs font-mono font-bold text-senpay-cyan ml-2">
+                    ($12,500 USD Eqv.)
                   </span>
                 </div>
                 <span className="text-[10px] font-mono text-senpay-text-muted">
-                  Cryptographic workflow
+                  Chain ID: 133 (HashKey Testnet)
                 </span>
               </div>
             </div>
           </div>
 
-          {/* 2. Blockchain Receipts & Escrow Parameters (2 sub-cards side by side) */}
+          {/* 2. Blockchain Receipts & Escrow Parameters */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Blockchain Receipts */}
             <div className="senpay-card p-3.5 flex flex-col justify-between">
               <div>
-                <span className="text-xs font-mono font-bold text-white tracking-wider uppercase block">
+                <span className="text-xs font-mono font-bold text-senpay-text-primary tracking-wider uppercase block">
                   Blockchain Receipts
                 </span>
                 <span className="text-[10px] font-mono text-senpay-text-muted block mb-2">
                   HSK Chain Testnet Integration
                 </span>
 
-                {/* Circuit lines */}
-                <div className="h-6 w-full border-b border-senpay-border/60 relative overflow-hidden mb-2">
-                  <svg className="w-full h-full opacity-60" viewBox="0 0 160 20">
-                    <path d="M 0,10 L 40,10 L 50,5 L 80,5 L 90,15 L 140,15 L 160,10" fill="none" stroke="#00E5FF" strokeWidth="1.2" />
-                  </svg>
-                </div>
-
-                <div className="space-y-1.5 text-xs font-mono">
+                <div className="space-y-2 text-xs font-mono pt-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-senpay-text-secondary">Block</span>
-                    <span className="text-white font-bold flex items-center gap-1">
+                    <span className="text-senpay-text-secondary">Block Height</span>
+                    <span className="text-senpay-text-primary font-bold flex items-center gap-1">
                       #8,812,402
-                      <Copy size={11} className="text-senpay-text-muted cursor-pointer hover:text-white" onClick={handleCopyHash} />
+                      <Copy size={11} className="text-senpay-text-muted cursor-pointer hover:text-senpay-cyan" onClick={handleCopyHash} />
                     </span>
                   </div>
 
@@ -243,20 +268,20 @@ export default function PaymentOperationsPage({
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <span className="text-senpay-text-secondary">Gas:</span>
+                    <span className="text-senpay-text-secondary">Gas Consumed:</span>
                     <span className="text-senpay-text-primary">110,321 gwei</span>
                   </div>
                 </div>
               </div>
 
               {/* Automated Safety Check */}
-              <div className="pt-3 border-t border-senpay-border/60">
+              <div className="pt-3 border-t border-senpay-border mt-3">
                 <span className="text-[10px] font-mono text-senpay-text-muted block mb-1">
-                  Automated Safety Check
+                  Automated Safety Checks
                 </span>
                 <div className="flex items-center gap-1.5 text-senpay-green text-xs font-mono font-bold">
                   <CheckCircle2 size={13} />
-                  <span>No Reentrancy Risk</span>
+                  <span>No Reentrancy Risk &bull; Bounds Verified</span>
                 </div>
               </div>
             </div>
@@ -264,42 +289,37 @@ export default function PaymentOperationsPage({
             {/* Escrow Parameters */}
             <div className="senpay-card p-3.5 flex flex-col justify-between">
               <div>
-                <span className="text-xs font-mono font-bold text-white tracking-wider uppercase block">
-                  Escrow parameters
+                <span className="text-xs font-mono font-bold text-senpay-text-primary tracking-wider uppercase block">
+                  Escrow Parameters
                 </span>
 
                 <div className="space-y-2 mt-2">
-                  {/* Deposit Date */}
                   <div className="flex items-center justify-between text-xs font-mono">
-                    <span className="text-senpay-text-secondary">Deposit Date</span>
+                    <span className="text-senpay-text-secondary">Deposit Time</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-white">Oct 27, 2026</span>
-                      <span className="w-4 h-4 rounded bg-[#271E0B] border border-senpay-amber text-[9px] flex items-center justify-center text-senpay-amber">
-                        🔒
-                      </span>
+                      <span className="text-senpay-text-primary">18:41 UTC</span>
                       <Check size={12} className="text-senpay-green" />
                     </div>
                   </div>
 
-                  {/* Release Condition */}
                   <div className="text-xs font-mono">
-                    <span className="text-senpay-text-secondary block">Release Condition</span>
-                    <div className="text-[11px] text-white font-medium mt-0.5 leading-snug">
-                      Latency &lt;12ms<br />
-                      Dropped &lt;0.1% for 1 hour
+                    <span className="text-senpay-text-secondary block">Release Condition (SLA)</span>
+                    <div className="text-[11px] text-senpay-text-primary font-medium mt-0.5 leading-snug">
+                      Downlink CRS &lt; 35.0<br />
+                      Packet drop &lt; 0.1% for 1 hour
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Progress & Release state */}
-              <div className="pt-3 border-t border-senpay-border/60">
+              <div className="pt-3 border-t border-senpay-border mt-3">
                 <span className="text-[10px] font-mono text-senpay-text-muted block mb-1">
-                  Progress &amp; Release state
+                  Release State
                 </span>
                 <div className="flex items-center gap-1.5 text-senpay-amber text-[11px] font-mono font-bold">
                   <Clock size={13} className="animate-spin text-senpay-amber" />
-                  <span>Awaiting Autonomous Verification telemetry...</span>
+                  <span>Awaiting Autonomous Telemetry Evaluation...</span>
                 </div>
               </div>
             </div>
@@ -312,20 +332,20 @@ export default function PaymentOperationsPage({
           <div className="senpay-card p-4">
             <div className="flex items-center justify-between pb-1">
               <div>
-                <span className="text-xs font-mono font-bold text-white tracking-wider uppercase block">
-                  Live Telemetry &amp; Dispute Verification
+                <span className="text-xs font-mono font-bold text-senpay-text-primary tracking-wider uppercase block">
+                  Live Telemetry &amp; Outcome Evaluation
                 </span>
                 <div className="flex items-center gap-2 text-[10px] font-mono mt-0.5">
                   <span className="text-senpay-text-muted">Multi-tier dynamic visualizer</span>
                   <span className="text-senpay-border">|</span>
-                  <span className="text-[#FF8C00] font-bold">= simulation</span>
-                  <span className="text-senpay-cyan font-bold">- live network telemetry</span>
+                  <span className="text-senpay-amber font-bold">= baseline CRS</span>
+                  <span className="text-senpay-cyan font-bold">- live mitigated telemetry</span>
                 </div>
               </div>
             </div>
 
-            <p className="text-[11px] text-senpay-text-secondary mt-1 mb-2">
-              Sentinel Live Validation — Inspect whether $12,500 payload matches SLA
+            <p className="text-[11px] text-senpay-text-secondary mt-1 mb-2 font-sans">
+              Sentinel Live Validation &mdash; Inspect post-mitigation telemetry against SLA criteria.
             </p>
 
             {/* Dual Wave Area Chart */}
@@ -334,26 +354,26 @@ export default function PaymentOperationsPage({
                 <AreaChart data={telemetryData}>
                   <defs>
                     <linearGradient id="liveCyan" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#00E5FF" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="#00E5FF" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor={isLight ? '#007F95' : '#20C7D9'} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={isLight ? '#007F95' : '#20C7D9'} stopOpacity={0.0} />
                     </linearGradient>
                     <linearGradient id="simOrange" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#FF8C00" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#FF8C00" stopOpacity={0.0} />
+                      <stop offset="5%" stopColor={isLight ? '#946200' : '#E8AD43'} stopOpacity={0.2} />
+                      <stop offset="95%" stopColor={isLight ? '#946200' : '#E8AD43'} stopOpacity={0.0} />
                     </linearGradient>
                   </defs>
                   <Area
                     type="monotone"
                     dataKey="live"
-                    stroke="#00E5FF"
-                    strokeWidth={2.4}
+                    stroke={isLight ? '#007F95' : '#20C7D9'}
+                    strokeWidth={2}
                     fill="url(#liveCyan)"
                   />
                   <Area
                     type="monotone"
                     dataKey="sim"
-                    stroke="#FF8C00"
-                    strokeWidth={1.8}
+                    stroke={isLight ? '#946200' : '#E8AD43'}
+                    strokeWidth={1.5}
                     strokeDasharray="3 3"
                     fill="url(#simOrange)"
                   />
@@ -362,12 +382,12 @@ export default function PaymentOperationsPage({
             </div>
 
             {/* Performance Verification Status Card */}
-            <div className="p-3 rounded-xl bg-[#201B11] border border-senpay-amber/50 shadow-[0_0_12px_rgba(255,184,0,0.15)] my-2">
+            <div className="p-3 rounded bg-senpay-panel border border-senpay-amber/40 my-2">
               <div className="text-[10px] font-mono text-senpay-text-muted mb-0.5">
-                Performance Verification Status Card
+                Outcome Evaluation Pipeline
               </div>
-              <div className="text-xs font-mono font-black text-senpay-amber tracking-wide uppercase flex items-center justify-between">
-                <span>TELEMETRY INGESTION: VERIFYING OUTCOME</span>
+              <div className="text-xs font-mono font-bold text-senpay-amber tracking-wide uppercase flex items-center justify-between">
+                <span>POST-INTERVENTION TELEMETRY: CRS 22.0 (SLA FULFILLED)</span>
                 {evaluating && <RefreshCw size={13} className="animate-spin text-senpay-amber" />}
               </div>
             </div>
@@ -375,33 +395,33 @@ export default function PaymentOperationsPage({
             {/* 3 Telemetry Metrics */}
             <div className="grid grid-cols-3 gap-2 mt-2">
               {/* Latency */}
-              <div className="p-2.5 rounded-lg bg-[#111A24] border border-senpay-border text-xs font-mono">
+              <div className="p-2.5 rounded bg-senpay-panel border border-senpay-border text-xs font-mono">
                 <div className="flex items-center justify-between text-senpay-text-secondary text-[10px]">
                   <span>Latency</span>
-                  <AlertTriangle size={11} className="text-senpay-amber" />
-                </div>
-                <div className="text-sm font-bold text-white mt-1">14.2ms</div>
-                <div className="text-[9px] text-senpay-amber">Warning Amber Target (&lt;12ms)</div>
-              </div>
-
-              {/* Jitter */}
-              <div className="p-2.5 rounded-lg bg-[#111A24] border border-senpay-border text-xs font-mono">
-                <div className="flex items-center justify-between text-senpay-text-secondary text-[10px]">
-                  <span>Jitter</span>
                   <Check size={11} className="text-senpay-green" />
                 </div>
-                <div className="text-sm font-bold text-senpay-green mt-1">1.2ms</div>
-                <div className="text-[9px] text-senpay-green">OK ~~~</div>
+                <div className="text-sm font-bold text-senpay-text-primary mt-1">14.2ms</div>
+                <div className="text-[9px] text-senpay-green">&lt; 35ms Target Met</div>
+              </div>
+
+              {/* CRS Score */}
+              <div className="p-2.5 rounded bg-senpay-panel border border-senpay-border text-xs font-mono">
+                <div className="flex items-center justify-between text-senpay-text-secondary text-[10px]">
+                  <span>CRS Score</span>
+                  <Check size={11} className="text-senpay-green" />
+                </div>
+                <div className="text-sm font-bold text-senpay-green mt-1">22.0 / 100</div>
+                <div className="text-[9px] text-senpay-green">&lt; 35.0 Target Met</div>
               </div>
 
               {/* Packet Loss */}
-              <div className="p-2.5 rounded-lg bg-[#111A24] border border-senpay-border text-xs font-mono">
+              <div className="p-2.5 rounded bg-senpay-panel border border-senpay-border text-xs font-mono">
                 <div className="flex items-center justify-between text-senpay-text-secondary text-[10px]">
                   <span>Packet Loss</span>
                   <Check size={11} className="text-senpay-green" />
                 </div>
                 <div className="text-sm font-bold text-senpay-green mt-1">0.04%</div>
-                <div className="text-[9px] text-senpay-green">&lt;0.1% OK -----</div>
+                <div className="text-[9px] text-senpay-green">&lt; 0.1% SLA Target</div>
               </div>
             </div>
           </div>
@@ -410,46 +430,48 @@ export default function PaymentOperationsPage({
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Audit & Trace Event Log */}
             <div className="senpay-card p-3.5">
-              <span className="text-xs font-mono font-bold text-white tracking-wider uppercase block pb-2 border-b border-senpay-border/60">
+              <span className="text-xs font-mono font-bold text-senpay-text-primary tracking-wider uppercase block pb-2 border-b border-senpay-border mb-2">
                 Audit &amp; Trace Event Log
               </span>
 
-              <div className="space-y-1.5 font-mono text-[11px] mt-2">
+              <div className="space-y-1.5 font-mono text-[11px]">
                 <div className="flex items-center gap-2">
-                  <span className="text-senpay-text-muted">04:12</span>
-                  <span className="text-senpay-green">escrow_fund_reserved_OK</span>
+                  <span className="text-senpay-text-muted">18:41</span>
+                  <span className="text-senpay-green font-semibold">escrow_fund_reserved_OK</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-senpay-text-muted">04:12</span>
-                  <span className="text-senpay-violet">hsk_tx_broadcast</span>
+                  <span className="text-senpay-text-muted">18:41</span>
+                  <span className="text-senpay-violet">hsk_mandate_signed</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-senpay-text-muted">04:13</span>
-                  <span className="text-senpay-cyan">telemetry_data_polling_active</span>
+                  <span className="text-senpay-text-muted">18:42</span>
+                  <span className="text-senpay-cyan">hsp_slice_allocated</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-senpay-text-muted">04:15</span>
-                  <span className="text-senpay-violet">hsk_tx_confirmed</span>
+                  <span className="text-senpay-text-muted">18:50</span>
+                  <span className="text-senpay-green">telemetry_crs_dropped_22</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-senpay-text-muted">04:15</span>
-                  <span className="text-senpay-amber">escrow_fund_comploned_OK</span>
+                  <span className="text-senpay-text-muted">18:55</span>
+                  <span className="text-senpay-amber font-semibold">outcome_ready_for_release</span>
                 </div>
               </div>
             </div>
 
             {/* Action Panel */}
             <div className="senpay-card p-3.5 flex flex-col justify-between">
-              <span className="text-xs font-mono font-bold text-white tracking-wider uppercase block pb-2 border-b border-senpay-border/60">
+              <span className="text-xs font-mono font-bold text-senpay-text-primary tracking-wider uppercase block pb-2 border-b border-senpay-border mb-2">
                 Action Panel
               </span>
 
-              <div className="space-y-2 my-2">
+              <div className="space-y-2 my-1">
                 {/* Vibrant Cyan Button: VERIFY & RELEASE ESCROW */}
                 <button
                   onClick={handleVerifyRelease}
                   disabled={evaluating}
-                  className="w-full py-2.5 px-3 rounded-xl bg-senpay-cyan hover:opacity-90 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.98]"
+                  className={`w-full py-2.5 px-3 rounded bg-senpay-cyan hover:opacity-90 ${
+                    isLight ? 'text-white' : 'text-black'
+                  } font-mono font-bold text-xs uppercase tracking-wider shadow-sm flex items-center justify-center gap-1.5 transition-all active:scale-[0.98] hover-elevate`}
                 >
                   {evaluating ? (
                     <>
@@ -457,14 +479,17 @@ export default function PaymentOperationsPage({
                       <span>EVALUATING SLA...</span>
                     </>
                   ) : (
-                    <span>VERIFY &amp; RELEASE ESCROW</span>
+                    <>
+                      <Zap size={13} />
+                      <span>VERIFY &amp; RELEASE ESCROW</span>
+                    </>
                   )}
                 </button>
 
                 {/* Secondary Button: Initiate Dispute Bundle */}
                 <button
                   onClick={() => onNavigate('disputes')}
-                  className="w-full py-2 px-3 rounded-lg bg-[#1B2733] hover:bg-[#233342] text-senpay-text-secondary hover:text-white border border-senpay-border text-xs font-mono font-medium transition-colors"
+                  className="w-full py-2 px-3 rounded bg-senpay-panel hover:bg-senpay-elevated text-senpay-text-secondary hover:text-senpay-text-primary border border-senpay-border text-xs font-mono font-medium transition-colors"
                 >
                   Initiate Dispute Bundle
                 </button>
@@ -472,7 +497,7 @@ export default function PaymentOperationsPage({
                 {/* Secondary Button: View Proof Bundle */}
                 <button
                   onClick={() => onNavigate('evidence')}
-                  className="w-full py-2 px-3 rounded-lg bg-[#1B2733] hover:bg-[#233342] text-senpay-text-secondary hover:text-white border border-senpay-border text-xs font-mono font-medium transition-colors"
+                  className="w-full py-2 px-3 rounded bg-senpay-panel hover:bg-senpay-elevated text-senpay-text-secondary hover:text-senpay-text-primary border border-senpay-border text-xs font-mono font-medium transition-colors"
                 >
                   View Proof Bundle
                 </button>
@@ -482,10 +507,31 @@ export default function PaymentOperationsPage({
         </div>
       </div>
 
-      {/* ── Footnote from Reference 2 ── */}
-      <div className="text-[10px] font-mono text-senpay-text-muted pt-2">
-        * Developer tracking for its layer-packed, highly functional, human, slightly hand-crafted tech vibe. No fake screen warp.
-      </div>
+      {/* Outcome Result Notification Drawer */}
+      {outcomeResult && (
+        <div className="senpay-card p-4 border-l-[3px] border-l-senpay-green animate-drawer-enter font-mono text-xs">
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-senpay-border">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 size={16} className="text-senpay-green" />
+              <span className="font-bold text-senpay-text-primary">
+                Outcome Evaluation: {outcomeResult.status || 'VERIFIED_SUCCESS'}
+              </span>
+            </div>
+            <button
+              onClick={() => setOutcomeResult(null)}
+              className="text-senpay-text-muted hover:text-senpay-text-primary"
+            >
+              Dismiss
+            </button>
+          </div>
+          <p className="text-senpay-text-secondary font-sans leading-relaxed">
+            {outcomeResult.message || 'Telemetry SLA criteria validated. Escrow payout of 12.50 HSK dispatched to SkyLink provider wallet.'}
+          </p>
+          <div className="mt-2 text-[10px] text-senpay-text-muted">
+            Settlement Hash: <code className="text-senpay-cyan">0x7a89b...41cd</code> &bull; Verified on HashKey Testnet 133
+          </div>
+        </div>
+      )}
     </div>
   );
 }

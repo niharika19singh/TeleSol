@@ -2,6 +2,7 @@
 // SENPAY — Active Network Operations Command Center (NOC)
 // Professional Telecom Network Operations & Autonomous Procurement Interface
 // Grounded in Network Topology, Financial Settlement, and Scientific Instrumentation
+// Inspired by Airport Interface Situational Awareness & Enterprise Motion Design
 // ═════════════════════════════════════════════════════════════════
 
 import React, { useState, useEffect } from 'react';
@@ -29,7 +30,10 @@ import {
   Server,
   FileCheck2,
   Lock,
-  ArrowUpRight
+  ArrowUpRight,
+  Wifi,
+  Sparkles,
+  Info
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -46,12 +50,12 @@ import { fetchModelInfo, fetchDatasetCatalog, runModelInference } from '../../da
 
 // ── Realistic CRS Sparkline Trend with Threshold Annotation ──
 const CRS_TREND_DATA = [
-  { time: '18:30', crs: 42, threshold: 65 },
-  { time: '18:35', crs: 48, threshold: 65 },
-  { time: '18:40', crs: 56, threshold: 65 },
-  { time: '18:45', crs: 64, threshold: 65 },
-  { time: '18:50', crs: 74, threshold: 65 },
-  { time: '18:55', crs: 78, threshold: 65 },
+  { time: '18:30', crs: 42, threshold: 65, mitigated: 42 },
+  { time: '18:35', crs: 48, threshold: 65, mitigated: 44 },
+  { time: '18:40', crs: 56, threshold: 65, mitigated: 45 },
+  { time: '18:45', crs: 64, threshold: 65, mitigated: 40 },
+  { time: '18:50', crs: 74, threshold: 65, mitigated: 28 },
+  { time: '18:55', crs: 78, threshold: 65, mitigated: 22 },
 ];
 
 // ── Real 8-Stage Operational Workflow Definition ──
@@ -62,7 +66,8 @@ const WORKFLOW_STAGES = [
     status: 'COMPLETED',
     timestamp: '18:41:10 UTC',
     summary: 'Virtual Sentinel probe detected CRS surge (78.0) exceeding 65.0 SLA threshold.',
-    actor: 'Sentinel Daemon (UCC 5G Feed)'
+    actor: 'Sentinel Daemon (UCC 5G Feed)',
+    hash: '0x8f2d...41a0'
   },
   {
     id: 'analyze',
@@ -70,7 +75,8 @@ const WORKFLOW_STAGES = [
     status: 'COMPLETED',
     timestamp: '18:41:15 UTC',
     summary: 'Packet loss (14.2%) and RTT latency (142ms) localized to Gate C VIP corridor.',
-    actor: 'ML Inference (RF-GB Model)'
+    actor: 'ML Inference (RF-GB Model)',
+    hash: '0x3c9e...77b1'
   },
   {
     id: 'simulate',
@@ -78,7 +84,8 @@ const WORKFLOW_STAGES = [
     status: 'COMPLETED',
     timestamp: '18:41:22 UTC',
     summary: 'Digital twin projected unmitigated CRS reaching 88.0 within 12 minutes.',
-    actor: 'Digital Twin Engine'
+    actor: 'Digital Twin Engine',
+    hash: '0x11a5...98c2'
   },
   {
     id: 'select',
@@ -86,7 +93,8 @@ const WORKFLOW_STAGES = [
     status: 'COMPLETED',
     timestamp: '18:41:28 UTC',
     summary: 'Optimizer ranked 4 candidates; SkyLink Dynamic 5G Slicing selected (-50.8 CRS).',
-    actor: 'Intervention Optimizer'
+    actor: 'Intervention Optimizer',
+    hash: '0xaa42...55f4'
   },
   {
     id: 'authorize',
@@ -94,7 +102,8 @@ const WORKFLOW_STAGES = [
     status: 'ACTIVE',
     timestamp: 'Pending Operator Signature',
     summary: 'Escrow mandate reserved (12.50 HSK). Awaiting authorized wallet execution.',
-    actor: 'Delegation del_sentinel_001'
+    actor: 'Delegation del_sentinel_001',
+    hash: '0x6e78...012d'
   },
   {
     id: 'procure',
@@ -102,7 +111,8 @@ const WORKFLOW_STAGES = [
     status: 'PENDING',
     timestamp: 'Queued',
     summary: 'HSP Gateway v2.3.0 will dispatch 5G dynamic slice provisioning on network 133.',
-    actor: 'HSP Payment Adapter'
+    actor: 'HSP Payment Adapter',
+    hash: 'Pending Execution'
   },
   {
     id: 'verify',
@@ -110,7 +120,8 @@ const WORKFLOW_STAGES = [
     status: 'PENDING',
     timestamp: 'Queued',
     summary: 'Post-mitigation telemetry will measure CRS < 35.0 to validate SLA fulfillment.',
-    actor: 'Counterfactual Evaluator'
+    actor: 'Counterfactual Evaluator',
+    hash: 'Pending Verification'
   },
   {
     id: 'settle',
@@ -118,7 +129,8 @@ const WORKFLOW_STAGES = [
     status: 'PENDING',
     timestamp: 'Queued',
     summary: 'Cryptographic settlement receipt issued upon verified outcome proof.',
-    actor: 'HashKey Testnet 133'
+    actor: 'HashKey Testnet 133',
+    hash: 'Pending Receipt'
   }
 ];
 
@@ -133,7 +145,7 @@ const PROVIDER_COMPARISON_DATA = [
     throughput: '+20 Gbps',
     cost: '12.50 HSK',
     decision: 'RECOMMENDED',
-    decisionBadge: 'bg-[#35C7D9]/15 text-[#35C7D9] border-[#35C7D9]/40',
+    decisionBadge: 'bg-senpay-cyan/15 text-senpay-cyan border-senpay-cyan/40',
     isRecommended: true
   },
   {
@@ -145,7 +157,7 @@ const PROVIDER_COMPARISON_DATA = [
     throughput: '+8 Gbps',
     cost: '18.00 HSK',
     decision: 'ELIGIBLE',
-    decisionBadge: 'bg-[#293746]/40 text-[#9AAABA] border-[#293746]',
+    decisionBadge: 'bg-senpay-panel text-senpay-text-secondary border-senpay-border',
     isRecommended: false
   },
   {
@@ -157,7 +169,7 @@ const PROVIDER_COMPARISON_DATA = [
     throughput: '+2 Gbps',
     cost: '8.00 HSK',
     decision: 'STANDBY',
-    decisionBadge: 'bg-[#293746]/40 text-[#718297] border-[#293746]',
+    decisionBadge: 'bg-senpay-panel text-senpay-text-muted border-senpay-border',
     isRecommended: false
   },
   {
@@ -169,7 +181,7 @@ const PROVIDER_COMPARISON_DATA = [
     throughput: 'N/A (Routing)',
     cost: '22.00 HSK',
     decision: 'STANDBY',
-    decisionBadge: 'bg-[#293746]/40 text-[#718297] border-[#293746]',
+    decisionBadge: 'bg-senpay-panel text-senpay-text-muted border-senpay-border',
     isRecommended: false
   }
 ];
@@ -182,6 +194,7 @@ export default function ActiveCommandCenter({
   const { theme, isLight } = useTheme();
   const [selectedTopologyNode, setSelectedTopologyNode] = useState('SEC-VIP-C1');
   const [selectedWorkflowStage, setSelectedWorkflowStage] = useState('authorize');
+  const [workflowDrawerOpen, setWorkflowDrawerOpen] = useState(true);
 
   // ML Intelligence & Provenance state
   const [mlModalOpen, setMlModalOpen] = useState(false);
@@ -249,93 +262,154 @@ export default function ActiveCommandCenter({
   const activeStageObj = WORKFLOW_STAGES.find((s) => s.id === selectedWorkflowStage) || WORKFLOW_STAGES[4];
 
   return (
-    <div className="space-y-4 max-w-[1600px] mx-auto pb-8 text-senpay-text-primary">
-      {/* ── 1. Concise Operational Incident Banner ── */}
-      <div className="rounded-lg bg-senpay-card border border-senpay-amber/50 p-3 flex items-center justify-between shadow-sm">
-        <div className="flex items-center gap-3">
-          <div className="w-6 h-6 rounded bg-senpay-amber/15 border border-senpay-amber/40 flex items-center justify-center text-senpay-amber flex-shrink-0">
-            <AlertTriangle size={15} />
+    <div className="space-y-4 max-w-[1680px] mx-auto pb-8 text-senpay-text-primary animate-fade-in-up">
+      {/* ── 1. Situational Awareness Top Operational Strip (Reference 1 Flight-Strip Structure) ── */}
+      <div className="telecom-op-strip critical flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-sm">
+        {/* Left: Incident Identity & Network Path */}
+        <div className="flex items-start md:items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded bg-senpay-red/15 border border-senpay-red/40 flex items-center justify-center text-senpay-red flex-shrink-0">
+            <AlertTriangle size={16} className="noc-pulse-subtle" />
           </div>
-          <div className="flex items-center gap-2 flex-wrap text-xs">
-            <span className="font-mono font-bold text-senpay-amber tracking-wider uppercase">
-              INCIDENT #INC-2026-8812
-            </span>
-            <span className="text-senpay-text-muted">&bull;</span>
-            <span className="font-semibold text-senpay-text-primary">
-              Gate C — VIP Corridor Congestion Spike
-            </span>
-            <span className="text-senpay-text-muted">&bull;</span>
-            <span className="text-[11px] font-mono px-2 py-0.5 rounded bg-senpay-rose/15 border border-senpay-rose/40 text-senpay-rose font-bold">
-              CRITICAL (CRS 78.0)
-            </span>
-            <span className="text-[11px] font-mono text-senpay-text-secondary hidden sm:inline">
-              Loss: 14.2% &bull; RTT: 142ms
-            </span>
+
+          <div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-mono font-black text-senpay-red tracking-wider uppercase text-xs">
+                INCIDENT #INC-2026-8812
+              </span>
+              <span className="text-senpay-border">&bull;</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-senpay-red/15 border border-senpay-red/40 text-senpay-red font-bold">
+                CRITICAL (CRS 78.0 / 100)
+              </span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-senpay-amber/15 border border-senpay-amber/40 text-senpay-amber font-bold">
+                P1 SLA RISK
+              </span>
+              <span className="text-[10px] font-mono text-senpay-text-muted">
+                Elapsed: 14m 22s
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 mt-1 text-xs text-senpay-text-secondary flex-wrap">
+              <span className="font-semibold text-senpay-text-primary">
+                Gate C — VIP Corridor Congestion Surge
+              </span>
+              <span className="text-senpay-border">&bull;</span>
+              <span className="font-mono text-[11px] text-senpay-text-muted">
+                Topology Path: <strong className="text-senpay-cyan font-normal">GW-CORE-01</strong> &rarr; <strong className="text-senpay-amber font-normal">BS-WEST-02</strong> &rarr; <strong className="text-senpay-red font-bold">SEC-VIP-C1</strong>
+              </span>
+              <span className="text-senpay-border">&bull;</span>
+              <span className="font-mono text-[11px] text-senpay-amber font-semibold">
+                Loss: 14.2% &bull; RTT: 142ms &bull; DL: 1.4 Gbps
+              </span>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        {/* Right: Operational Triggers */}
+        <div className="flex items-center gap-2 flex-shrink-0 self-end md:self-center">
           <button
             onClick={() => setMlModalOpen(true)}
-            className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded bg-senpay-panel hover:bg-senpay-elevated text-senpay-green border border-senpay-green/40 text-[11px] font-mono font-bold transition"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-senpay-panel hover:bg-senpay-elevated text-senpay-green border border-senpay-green/40 text-xs font-mono font-bold transition hover-elevate"
             title="Inspect trained ML model metrics and run live inference"
           >
-            <Cpu size={12} />
-            <span>ML Model: 98.7% Acc (UCC 5G)</span>
+            <Cpu size={13} />
+            <span className="hidden sm:inline">ML Provenance: 98.7% Acc</span>
+            <span className="sm:hidden">ML Model</span>
           </button>
+
           <button
-            onClick={() => onNavigate('incident_monitor')}
-            className="px-2.5 py-1 rounded bg-senpay-panel hover:bg-senpay-elevated text-senpay-amber border border-senpay-amber/30 text-xs font-mono font-bold transition"
+            onClick={handleAuthorizeFunds}
+            className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded bg-senpay-cyan hover:opacity-90 ${
+              isLight ? 'text-white' : 'text-black'
+            } text-xs font-mono font-bold tracking-wider uppercase transition shadow-sm hover-elevate`}
           >
-            Inspect Telemetry
+            <Zap size={13} />
+            <span>Authorize 12.50 HSK</span>
+            <ArrowRight size={13} />
           </button>
         </div>
       </div>
 
-      {/* ── 2. Primary Operations Row: Network Digital Twin (7 Cols) & Workflow/CRS (5 Cols) ── */}
+      {/* ── 2. Primary Operations Row: Network Digital Twin (7 Cols) & Workflow / Risk Radar (5 Cols) ── */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* ── Network Digital Twin (Left 7 Cols) ── */}
-        <div className="lg:col-span-7 senpay-card p-3.5 flex flex-col justify-between overflow-hidden relative min-h-[440px]">
-          {/* Header */}
-          <div className="flex items-center justify-between pb-2.5 border-b border-senpay-border">
+        <div className="lg:col-span-7 senpay-card p-3.5 flex flex-col justify-between overflow-hidden relative min-h-[460px]">
+          {/* Header with Sector Quick-Switch Tabs */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2.5 border-b border-senpay-border gap-2">
             <div className="flex items-center gap-2">
               <Activity size={14} className="text-senpay-cyan" />
               <span className="text-xs font-mono font-bold text-senpay-text-primary tracking-wider uppercase">
-                NETWORK DIGITAL TWIN &bull; TOPOLOGY
+                NETWORK DIGITAL TWIN &bull; TOPOLOGY &amp; SPATIAL RF
               </span>
             </div>
-            <div className="text-[11px] font-mono text-senpay-text-muted">
-              Transport Model: UCC 5G Commercial Trace
+
+            {/* Quick Sector Selector Tabs */}
+            <div className="flex items-center gap-1 overflow-x-auto text-[10px] font-mono">
+              {[
+                { id: 'SEC-VIP-C1', label: 'SEC-VIP-C1 (Critical)', color: 'text-senpay-red' },
+                { id: 'BS-WEST-02', label: 'BS-WEST-02', color: 'text-senpay-amber' },
+                { id: 'SLICE-SKYLINK-5G', label: 'SkyLink Slice', color: 'text-senpay-cyan' },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setSelectedTopologyNode(tab.id)}
+                  className={`px-2 py-0.5 rounded border transition ${
+                    selectedTopologyNode === tab.id
+                      ? 'bg-senpay-panel border-senpay-cyan text-senpay-text-primary font-bold'
+                      : 'border-transparent text-senpay-text-muted hover:text-senpay-text-primary'
+                  }`}
+                >
+                  <span className={tab.color}>{tab.label}</span>
+                </button>
+              ))}
             </div>
           </div>
 
           {/* Embedded Precise Schematic Canvas */}
-          <div className="flex-1 w-full my-2 min-h-[350px]">
+          <div className="flex-1 w-full my-2 min-h-[360px] relative">
             <NetworkTopologyCanvas
               selectedNodeId={selectedTopologyNode}
               onSelectNode={(nodeId) => setSelectedTopologyNode(nodeId)}
               showMitigation={true}
             />
+
+            {/* Counterfactual Projection Badge Overlaid */}
+            <div className="absolute top-3 left-3 px-2.5 py-1.5 rounded bg-senpay-card/90 backdrop-blur-md border border-senpay-border text-[10px] font-mono text-senpay-text-secondary z-10 pointer-events-none shadow-md">
+              <div className="flex items-center gap-1.5 font-bold text-senpay-text-primary">
+                <Sparkles size={11} className="text-senpay-cyan" />
+                <span>Counterfactual Impact Projection</span>
+              </div>
+              <div className="mt-0.5 text-[10.5px]">
+                Baseline: <span className="text-senpay-red font-bold">CRS 78.0</span> &rarr; With 5G Slice: <span className="text-senpay-green font-bold">CRS 22.0 (-71.8%)</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* ── Right Column: Operational Workflow & Congestion Risk Score (5 Cols) ── */}
+        {/* ── Right Column: Operational Workflow & Congestion Risk Radar (5 Cols) ── */}
         <div className="lg:col-span-5 flex flex-col gap-4">
-          {/* ── OPERATIONAL WORKFLOW (Renamed from Playful Timeline) ── */}
+          {/* ── OPERATIONAL WORKFLOW (Reference 2 Progressive Disclosure Drawer) ── */}
           <div className="senpay-card p-3.5">
             <div className="flex items-center justify-between pb-2 border-b border-senpay-border mb-3">
               <div className="flex items-center gap-2">
                 <Shield size={14} className="text-senpay-amber" />
                 <span className="text-xs font-mono font-bold text-senpay-text-primary tracking-wider uppercase">
-                  OPERATIONAL WORKFLOW
+                  OPERATIONAL WORKFLOW (8-STAGE)
                 </span>
               </div>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-senpay-amber/15 text-senpay-amber border border-senpay-amber/30 font-bold">
-                STAGE 5: AUTHORIZE
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-senpay-amber/15 text-senpay-amber border border-senpay-amber/30 font-bold">
+                  STAGE 5: AUTHORIZE
+                </span>
+                <button
+                  onClick={() => setWorkflowDrawerOpen(!workflowDrawerOpen)}
+                  className="text-senpay-text-muted hover:text-senpay-text-primary text-[10px] font-mono underline"
+                >
+                  {workflowDrawerOpen ? 'Collapse' : 'Expand'}
+                </button>
+              </div>
             </div>
 
-            {/* Structured Horizontal Step Sequence */}
+            {/* Horizontal Step Sequence */}
             <div className="relative pt-1 pb-2">
               {/* Connecting Background Line */}
               <div className="absolute top-4 left-3 right-3 h-0.5 bg-senpay-border" />
@@ -350,7 +424,10 @@ export default function ActiveCommandCenter({
                   return (
                     <button
                       key={s.id}
-                      onClick={() => setSelectedWorkflowStage(s.id)}
+                      onClick={() => {
+                        setSelectedWorkflowStage(s.id);
+                        setWorkflowDrawerOpen(true);
+                      }}
                       className="group flex flex-col items-center focus:outline-none"
                       title={`${s.label}: ${s.status}`}
                     >
@@ -359,9 +436,11 @@ export default function ActiveCommandCenter({
                           isCompleted
                             ? 'bg-senpay-panel border border-senpay-green text-senpay-green'
                             : isActive
-                            ? (isLight ? 'bg-senpay-amber text-white ring-4 ring-senpay-amber/20 font-black' : 'bg-senpay-amber text-black ring-4 ring-senpay-amber/20 font-black')
+                            ? isLight
+                              ? 'bg-senpay-amber text-white ring-4 ring-senpay-amber/20 font-black'
+                              : 'bg-senpay-amber text-black ring-4 ring-senpay-amber/20 font-black'
                             : 'bg-senpay-panel border border-senpay-border text-senpay-text-muted'
-                        } ${isSelected ? 'ring-2 ring-senpay-cyan' : ''}`}
+                        } ${isSelected ? 'ring-2 ring-senpay-cyan scale-110' : ''}`}
                       >
                         {isCompleted ? <Check size={11} strokeWidth={3} /> : idx + 1}
                       </div>
@@ -382,23 +461,33 @@ export default function ActiveCommandCenter({
               </div>
             </div>
 
-            {/* Interactive Selected Stage Technical Summary */}
-            {activeStageObj && (
-              <div className="mt-3 p-2.5 rounded bg-senpay-panel border border-senpay-border text-xs font-mono">
-                <div className="flex items-center justify-between pb-1 mb-1 border-b border-senpay-border/60">
-                  <span className="font-bold text-senpay-text-primary text-[11px]">
-                    STAGE: {activeStageObj.label} &bull; {activeStageObj.status}
-                  </span>
+            {/* Expandable Step Technical Summary Drawer (Reference 2) */}
+            {workflowDrawerOpen && activeStageObj && (
+              <div className="mt-3 p-3 rounded bg-senpay-panel border border-senpay-border text-xs font-mono animate-drawer-enter">
+                <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-senpay-border/60">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-senpay-text-primary text-[11px]">
+                      STAGE {WORKFLOW_STAGES.findIndex(s => s.id === activeStageObj.id) + 1}: {activeStageObj.label}
+                    </span>
+                    <span className={`text-[9px] px-1.5 py-0.2 rounded font-bold ${
+                      activeStageObj.status === 'COMPLETED' ? 'bg-senpay-green/15 text-senpay-green border border-senpay-green/30' :
+                      activeStageObj.status === 'ACTIVE' ? 'bg-senpay-amber/15 text-senpay-amber border border-senpay-amber/30' :
+                      'bg-senpay-card text-senpay-text-muted border border-senpay-border'
+                    }`}>
+                      {activeStageObj.status}
+                    </span>
+                  </div>
                   <span className="text-[10px] text-senpay-text-muted flex items-center gap-1">
                     <Clock size={10} />
                     <span>{activeStageObj.timestamp}</span>
                   </span>
                 </div>
-                <p className="text-[11px] text-senpay-text-secondary leading-relaxed">
+                <p className="text-[11px] text-senpay-text-secondary leading-relaxed font-sans">
                   {activeStageObj.summary}
                 </p>
-                <div className="pt-1 text-[10px] text-senpay-text-muted">
-                  Actor / Engine: <span className="text-senpay-cyan">{activeStageObj.actor}</span>
+                <div className="pt-2 mt-2 border-t border-senpay-border/40 flex justify-between items-center text-[10px] text-senpay-text-muted">
+                  <span>Actor: <strong className="text-senpay-cyan font-normal">{activeStageObj.actor}</strong></span>
+                  <span>Hash: <code className="text-senpay-text-primary">{activeStageObj.hash}</code></span>
                 </div>
               </div>
             )}
@@ -410,11 +499,11 @@ export default function ActiveCommandCenter({
               <div className="flex items-center gap-2">
                 <TrendingUp size={14} className="text-senpay-amber" />
                 <span className="text-xs font-mono font-bold text-senpay-text-primary tracking-wider uppercase">
-                  CONGESTION RISK SCORE (CRS)
+                  CONGESTION RISK SCORE (CRS) RADAR
                 </span>
               </div>
               <span className="text-[10px] font-mono text-senpay-text-muted">
-                Live &bull; Updated 12s ago
+                Live Stream &bull; Updated 8s ago
               </span>
             </div>
 
@@ -428,7 +517,7 @@ export default function ActiveCommandCenter({
                   <span className="text-sm font-mono text-senpay-text-muted">/ 100</span>
                 </div>
                 <div className="mt-1 flex items-center gap-1.5">
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-senpay-rose/15 border border-senpay-rose/40 text-senpay-rose">
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-senpay-red/15 border border-senpay-red/40 text-senpay-red">
                     CRITICAL
                   </span>
                   <span className="text-[10px] font-mono text-senpay-amber font-semibold">
@@ -464,10 +553,11 @@ export default function ActiveCommandCenter({
                       content={({ active, payload }) => {
                         if (active && payload && payload.length) {
                           return (
-                            <div className="bg-senpay-card border border-senpay-border p-1.5 rounded text-[10px] font-mono text-senpay-text-primary shadow-lg">
+                            <div className="bg-senpay-card border border-senpay-border p-2 rounded text-[10px] font-mono text-senpay-text-primary shadow-xl">
                               <div>Time: {payload[0].payload.time}</div>
                               <div className="text-senpay-amber font-bold">CRS: {payload[0].value}</div>
-                              <div className="text-senpay-rose">SLA Target: &lt; 35.0</div>
+                              <div className="text-senpay-green">Mitigated Projected: {payload[0].payload.mitigated}</div>
+                              <div className="text-senpay-red">Critical Threshold: 65.0</div>
                             </div>
                           );
                         }
@@ -504,16 +594,16 @@ export default function ActiveCommandCenter({
         </div>
       </div>
 
-      {/* ── 3. Bottom Operations Grid: Incident Summary (4 Cols), Providers (5 Cols), Budget (3 Cols) ── */}
+      {/* ── 3. Bottom Operations Grid: Incident Specifications (4 Cols), Providers (5 Cols), Budget (3 Cols) ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-4">
-        {/* ── 1. Active Incident Summary (Col 1-4) ── */}
+        {/* ── 1. Active Incident Specifications (Col 1-4) ── */}
         <div className="lg:col-span-4 senpay-card p-3.5 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between pb-2 border-b border-senpay-border mb-3">
               <span className="text-xs font-mono font-bold text-senpay-text-primary tracking-wider uppercase">
                 ACTIVE INCIDENT SPECIFICATIONS
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-senpay-rose/15 text-senpay-rose border border-senpay-rose/30 font-bold">
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-senpay-red/15 text-senpay-red border border-senpay-red/30 font-bold">
                 INC-2026-8812
               </span>
             </div>
@@ -522,7 +612,7 @@ export default function ActiveCommandCenter({
             <div className="space-y-2 text-xs font-mono">
               <div className="flex justify-between py-1 border-b border-senpay-border/40">
                 <span className="text-senpay-text-muted">Severity Level:</span>
-                <span className="text-senpay-rose font-bold">CRITICAL (P1 SLA Risk)</span>
+                <span className="text-senpay-red font-bold">CRITICAL (P1 SLA Risk)</span>
               </div>
               <div className="flex justify-between py-1 border-b border-senpay-border/40">
                 <span className="text-senpay-text-muted">Current Status:</span>
@@ -542,7 +632,7 @@ export default function ActiveCommandCenter({
               </div>
               <div className="flex justify-between py-1 border-b border-senpay-border/40">
                 <span className="text-senpay-text-muted">Active Telemetry:</span>
-                <span className="text-senpay-amber">Loss: 14.2% &bull; RTT: 142ms</span>
+                <span className="text-senpay-amber font-semibold">Loss: 14.2% &bull; RTT: 142ms</span>
               </div>
               <div className="flex justify-between py-1">
                 <span className="text-senpay-text-muted">Recommended Action:</span>
@@ -555,7 +645,9 @@ export default function ActiveCommandCenter({
           <div className="pt-3 border-t border-senpay-border flex gap-2">
             <button
               onClick={handleAuthorizeFunds}
-              className={`flex-1 py-2 px-3 rounded bg-senpay-cyan hover:opacity-90 ${isLight ? 'text-white' : 'text-black'} font-mono font-bold text-xs tracking-wider uppercase transition text-center shadow-sm`}
+              className={`flex-1 py-2 px-3 rounded bg-senpay-cyan hover:opacity-90 ${
+                isLight ? 'text-white' : 'text-black'
+              } font-mono font-bold text-xs tracking-wider uppercase transition text-center shadow-sm hover-elevate`}
             >
               Authorize 12.50 HSK
             </button>
@@ -616,11 +708,7 @@ export default function ActiveCommandCenter({
                         {prov.cost}
                       </td>
                       <td className="py-2.5 text-right pr-1.5">
-                        <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${
-                          prov.isRecommended
-                            ? 'bg-senpay-cyan/15 text-senpay-cyan border-senpay-cyan/40'
-                            : 'bg-senpay-panel text-senpay-text-muted border-senpay-border'
-                        }`}>
+                        <span className={`px-2 py-0.5 rounded text-[9px] font-mono font-bold border ${prov.decisionBadge}`}>
                           {prov.decision}
                         </span>
                       </td>
@@ -700,7 +788,9 @@ export default function ActiveCommandCenter({
           <div className="pt-3 border-t border-senpay-border">
             <button
               onClick={handleAuthorizeFunds}
-              className={`w-full py-2 px-3 rounded bg-senpay-cyan hover:opacity-90 ${isLight ? 'text-white' : 'text-black'} font-mono font-bold text-xs tracking-wider uppercase transition flex items-center justify-center gap-1.5 shadow-sm`}
+              className={`w-full py-2 px-3 rounded bg-senpay-cyan hover:opacity-90 ${
+                isLight ? 'text-white' : 'text-black'
+              } font-mono font-bold text-xs tracking-wider uppercase transition flex items-center justify-center gap-1.5 shadow-sm hover-elevate`}
             >
               <span>Review Authorization</span>
               <ArrowRight size={13} />
@@ -711,8 +801,8 @@ export default function ActiveCommandCenter({
 
       {/* ── ML Intelligence & Dataset Provenance Modal (Preserved & Styled) ── */}
       {mlModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
-          <div className="relative w-full max-w-4xl bg-senpay-card border border-senpay-border rounded-lg shadow-2xl overflow-hidden my-8 text-senpay-text-primary">
+        <div className="fixed inset-0 z-50 flex items-center justify-center drawer-backdrop p-4 overflow-y-auto">
+          <div className="relative w-full max-w-4xl bg-senpay-card border border-senpay-border rounded-lg shadow-2xl overflow-hidden my-8 text-senpay-text-primary animate-drawer-enter">
             {/* Header */}
             <div className="flex items-center justify-between p-4 border-b border-senpay-border bg-senpay-panel">
               <div className="flex items-center gap-3">
@@ -774,7 +864,7 @@ export default function ActiveCommandCenter({
                       <Database className="w-3.5 h-3.5 text-senpay-cyan" />
                       Public Dataset Provenance
                     </h4>
-                    <p className="text-xs text-senpay-text-secondary leading-relaxed">
+                    <p className="text-xs text-senpay-text-secondary leading-relaxed font-sans">
                       Trained on client-side cellular KPIs collected from a major commercial 5G production network via G-NetTrack Pro.
                     </p>
                     <div className="space-y-1 text-xs pt-1 text-senpay-text-primary">
@@ -889,7 +979,7 @@ export default function ActiveCommandCenter({
                     <button
                       type="submit"
                       disabled={predLoading}
-                      className="w-full py-1.5 bg-senpay-green hover:opacity-90 text-white font-bold text-xs rounded transition flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-sm"
+                      className="w-full py-1.5 bg-senpay-green hover:opacity-90 text-white font-bold text-xs rounded transition flex items-center justify-center gap-1.5 disabled:opacity-50 shadow-sm hover-elevate"
                     >
                       {predLoading ? (
                         <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -904,11 +994,11 @@ export default function ActiveCommandCenter({
 
                   {/* Prediction Output */}
                   {predResult && (
-                    <div className="p-2.5 bg-senpay-elevated rounded border border-senpay-border space-y-1.5 text-xs">
+                    <div className="p-2.5 bg-senpay-elevated rounded border border-senpay-border space-y-1.5 text-xs animate-drawer-enter">
                       <div className="flex items-center justify-between">
                         <span className="text-senpay-text-muted">Predicted CRS:</span>
                         <span className={`text-sm font-bold ${
-                          predResult.predicted_crs >= 75 ? 'text-senpay-rose' :
+                          predResult.predicted_crs >= 75 ? 'text-senpay-red' :
                           predResult.predicted_crs >= 50 ? 'text-senpay-amber' : 'text-senpay-green'
                         }`}>
                           {predResult.predicted_crs} / 100
