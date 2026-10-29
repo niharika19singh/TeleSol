@@ -70,7 +70,7 @@ export default function SenPayLogo({ size = 'default', showSubtitle = false, cla
 
       {/* ── Wordmark ── */}
       <div className="flex flex-col">
-        <div className="flex items-center tracking-wider font-display font-black text-white leading-none">
+        <div className="flex items-center tracking-wider font-display font-black text-senpay-text-primary leading-none">
           <span className={isLarge ? 'text-2xl' : isSmall ? 'text-base' : 'text-xl'}>
             SEN
           </span>

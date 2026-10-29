@@ -49,6 +49,7 @@ export default function SenPayTopBar({
         <div className="flex items-center">
           <button
             onClick={onToggleMode}
+            data-testid="topbar-demo-badge"
             className="px-2.5 py-0.5 rounded-full bg-senpay-amber text-slate-950 text-[11px] font-black tracking-wide font-mono uppercase shadow-sm hover:brightness-110 transition-all flex items-center gap-1.5"
             title={DEMO_SESSION_MESSAGE}
           >
@@ -214,6 +215,7 @@ export default function SenPayTopBar({
         ) : (
           <button
             onClick={handleGoHome}
+            data-testid="topbar-exit-demo-btn"
             className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-senpay-panel hover:bg-senpay-elevated border border-senpay-border text-senpay-text-primary text-xs font-mono font-bold transition"
             title="Exit interactive demo and return to public landing page"
           >

@@ -320,6 +320,7 @@ export default function ActiveCommandCenter({
 
           <button
             onClick={handleAuthorizeFunds}
+            data-testid="cmd-authorize-btn"
             className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded bg-senpay-cyan hover:opacity-90 ${
               isLight ? 'text-white' : 'text-black'
             } text-xs font-mono font-bold tracking-wider uppercase transition shadow-sm hover-elevate`}
