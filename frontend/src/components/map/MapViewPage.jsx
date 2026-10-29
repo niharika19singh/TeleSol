@@ -207,11 +207,11 @@ export default function MapViewPage({ zones = [], isLive = false }) {
     const lastVal = values[values.length - 1];
 
     return (
-      <div className="bg-[#0A0F16] p-2.5 rounded-lg border border-senpay-border/50">
+      <div className="bg-senpay-panel p-2.5 rounded-lg border border-senpay-border/60">
         <div className="flex justify-between items-center mb-1 text-[11px] font-mono">
-          <span className="text-slate-400">{label}</span>
-          <span className="font-bold text-white">
-            {lastVal.toFixed(1)} <span className="text-slate-400 text-[10px]">{unit}</span>
+          <span className="text-senpay-text-muted">{label}</span>
+          <span className="font-bold text-senpay-text-primary">
+            {lastVal.toFixed(1)} <span className="text-senpay-text-muted text-[10px]">{unit}</span>
           </span>
         </div>
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-9 overflow-visible">
@@ -234,10 +234,10 @@ export default function MapViewPage({ zones = [], isLive = false }) {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 pb-2.5 border-b border-senpay-border/60">
         <div>
           <div className="flex items-center gap-2 mb-1 flex-wrap">
-            <h2 className="text-base font-bold text-white tracking-wide uppercase font-mono">
+            <h2 className="text-base font-bold text-senpay-text-primary tracking-wide uppercase font-mono">
               Network Digital Twin
             </h2>
-            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#101822] border border-senpay-border text-[11px] font-mono">
+            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-senpay-panel border border-senpay-border text-[11px] font-mono">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span className="text-emerald-400 font-bold">
                 {selectedSource === 'ucc_5g'
@@ -248,7 +248,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
               </span>
             </div>
             {openCellIdStatus && (
-              <span className="text-[10px] font-mono text-slate-400 border border-slate-800 px-2 py-0.5 rounded bg-slate-900/60">
+              <span className="text-[10px] font-mono text-senpay-text-muted border border-senpay-border px-2 py-0.5 rounded bg-senpay-panel">
                 OpenCelliD: {openCellIdStatus.configured ? 'Active' : 'Unconfigured'}
               </span>
             )}
@@ -274,7 +274,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
           </div>
           <div className="px-3 py-1 rounded-lg bg-senpay-card border border-senpay-border text-center">
             <div className="text-[9px] text-senpay-text-muted uppercase">Critical Alerts</div>
-            <div className="text-sm font-bold text-rose-500">{stats.criticalCount}</div>
+            <div className="text-sm font-bold text-senpay-rose">{stats.criticalCount}</div>
           </div>
         </div>
       </div>
@@ -283,7 +283,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
       <div className="flex flex-wrap items-center justify-between gap-2 p-2 rounded-xl bg-senpay-card border border-senpay-border text-xs font-mono">
         {/* Left: Dataset / Region Selector */}
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-slate-400 font-bold uppercase text-[10px] mr-1">Region:</span>
+          <span className="text-senpay-text-muted font-bold uppercase text-[10px] mr-1">Region:</span>
           <button
             onClick={() => {
               setSelectedSource('ucc_5g');
@@ -292,7 +292,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
             className={`px-2.5 py-1 rounded text-xs transition ${
               selectedSource === 'ucc_5g'
                 ? 'bg-senpay-cyan/20 text-senpay-cyan border border-senpay-cyan/50 font-bold'
-                : 'text-slate-400 hover:text-white bg-[#0A0F16] border border-slate-800'
+                : 'text-senpay-text-muted hover:text-senpay-text-primary bg-senpay-panel border border-senpay-border'
             }`}
           >
             🇮🇪 Cork 5G Grid (UCC Public)
@@ -305,7 +305,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
             className={`px-2.5 py-1 rounded text-xs transition ${
               selectedSource === 'campus_sim'
                 ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 font-bold'
-                : 'text-slate-400 hover:text-white bg-[#0A0F16] border border-slate-800'
+                : 'text-senpay-text-muted hover:text-senpay-text-primary bg-senpay-panel border border-senpay-border'
             }`}
           >
             🇮🇳 Delhi Campus (Simulation)
@@ -318,7 +318,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
             className={`px-2.5 py-1 rounded text-xs transition ${
               selectedSource === 'all'
                 ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50 font-bold'
-                : 'text-slate-400 hover:text-white bg-[#0A0F16] border border-slate-800'
+                : 'text-senpay-text-muted hover:text-senpay-text-primary bg-senpay-panel border border-senpay-border'
             }`}
           >
             All Sites
@@ -329,13 +329,13 @@ export default function MapViewPage({ zones = [], isLive = false }) {
         <div className="flex items-center gap-2 flex-wrap">
           {/* Search Box */}
           <div className="relative">
-            <Search size={12} className="absolute left-2.5 top-2 text-slate-400" />
+            <Search size={12} className="absolute left-2.5 top-2 text-senpay-text-muted" />
             <input
               type="text"
               placeholder="Filter site ID or cell..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-7 pr-2.5 py-1 rounded bg-[#0A0F16] border border-slate-800 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-senpay-cyan w-36 sm:w-44"
+              className="pl-7 pr-2.5 py-1 rounded bg-senpay-panel border border-senpay-border text-xs text-senpay-text-primary placeholder-senpay-text-muted focus:outline-none focus:border-senpay-cyan w-36 sm:w-44"
             />
           </div>
 
@@ -343,7 +343,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
           <select
             value={techFilter}
             onChange={(e) => setTechFilter(e.target.value)}
-            className="px-2 py-1 rounded bg-[#0A0F16] border border-slate-800 text-xs text-white focus:outline-none"
+            className="px-2 py-1 rounded bg-senpay-panel border border-senpay-border text-xs text-senpay-text-primary focus:outline-none"
           >
             <option value="all">All Tech</option>
             <option value="5G">5G NR</option>
@@ -354,7 +354,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
           <select
             value={riskFilter}
             onChange={(e) => setRiskFilter(e.target.value)}
-            className="px-2 py-1 rounded bg-[#0A0F16] border border-slate-800 text-xs text-white focus:outline-none"
+            className="px-2 py-1 rounded bg-senpay-panel border border-senpay-border text-xs text-senpay-text-primary focus:outline-none"
           >
             <option value="all">All Risk</option>
             <option value="safe">Safe (0-40)</option>
@@ -369,7 +369,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
               className={`flex items-center gap-1.5 px-2.5 py-1 rounded border transition ${
                 layersOpen
                   ? 'bg-senpay-cyan text-slate-950 border-senpay-cyan font-bold'
-                  : 'bg-[#0A0F16] border-slate-800 text-slate-300 hover:text-white'
+                  : 'bg-senpay-panel border-senpay-border text-senpay-text-secondary hover:text-senpay-text-primary'
               }`}
             >
               <Layers size={12} />
@@ -378,8 +378,8 @@ export default function MapViewPage({ zones = [], isLive = false }) {
             </button>
 
             {layersOpen && (
-              <div className="absolute right-0 mt-2 w-56 rounded-xl bg-[#0D1520] border border-senpay-border shadow-2xl p-2.5 z-50 text-xs font-mono space-y-1.5">
-                <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-1">
+              <div className="absolute right-0 mt-2 w-56 rounded-xl bg-senpay-card border border-senpay-border shadow-2xl p-2.5 z-50 text-xs font-mono space-y-1.5">
+                <div className="text-[10px] text-senpay-text-muted font-bold uppercase tracking-wider mb-1">
                   Toggle Map Layers
                 </div>
                 {[
@@ -396,16 +396,16 @@ export default function MapViewPage({ zones = [], isLive = false }) {
                   <button
                     key={item.id}
                     onClick={() => toggleLayer(item.id)}
-                    className="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-slate-800/60 text-left transition"
+                    className="w-full flex items-center justify-between px-2 py-1 rounded hover:bg-senpay-panel text-left transition"
                   >
                     <div>
-                      <span className="text-white block">{item.label}</span>
-                      <span className="text-[9px] text-slate-500">{item.desc}</span>
+                      <span className="text-senpay-text-primary block">{item.label}</span>
+                      <span className="text-[9px] text-senpay-text-muted">{item.desc}</span>
                     </div>
                     {layers[item.id] ? (
                       <span className="text-senpay-cyan font-bold">ON</span>
                     ) : (
-                      <span className="text-slate-500">OFF</span>
+                      <span className="text-senpay-text-muted">OFF</span>
                     )}
                   </button>
                 ))}
@@ -433,7 +433,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
         {/* Right Sidebar: Deep Site Inspection or Active Sites List */}
         <div className="space-y-3 overflow-y-auto pr-1">
           <div className="flex items-center justify-between">
-            <h3 className="text-xs font-bold text-white uppercase tracking-wider font-mono flex items-center gap-1.5">
+            <h3 className="text-xs font-bold text-senpay-text-primary uppercase tracking-wider font-mono flex items-center gap-1.5">
               <MapPin size={13} className="text-senpay-cyan" />
               <span>{selectedZone ? 'Site Telemetry & ML' : 'Monitored Sites'}</span>
             </h3>
@@ -473,8 +473,8 @@ export default function MapViewPage({ zones = [], isLive = false }) {
                 </div>
 
                 {/* Provenance Pill */}
-                <div className="px-2.5 py-1.5 rounded-lg bg-[#0C131C] border border-slate-800 text-[10px] flex items-center justify-between">
-                  <span className="text-slate-400">Data Provenance:</span>
+                <div className="px-2.5 py-1.5 rounded-lg bg-senpay-panel border border-senpay-border text-[10px] flex items-center justify-between">
+                  <span className="text-senpay-text-muted">Data Provenance:</span>
                   <span className="font-bold text-senpay-cyan">
                     {selectedZone.data_provenance
                       ? selectedZone.data_provenance.replace('_', ' ')
@@ -489,15 +489,15 @@ export default function MapViewPage({ zones = [], isLive = false }) {
                     : (selectedZone.metrics?.crs ?? 0);
                   const risk = getRiskLevel(crs);
                   return (
-                    <div className="text-center py-2 bg-[#0C131C] rounded-xl border border-senpay-border/40">
+                    <div className="text-center py-2 bg-senpay-panel rounded-xl border border-senpay-border/40">
                       <div className="text-3xl font-black tracking-tight" style={{ color: risk.color }}>
                         {crs}
-                        <span className="text-xs text-slate-500 font-normal ml-1">/ 100</span>
+                        <span className="text-xs text-senpay-text-muted font-normal ml-1">/ 100</span>
                       </div>
-                      <div className="text-[10px] text-slate-400 mt-0.5">
+                      <div className="text-[10px] text-senpay-text-muted mt-0.5">
                         Congestion Risk Score (CRS)
                       </div>
-                      <div className="mx-4 mt-2 h-1.5 rounded-full bg-slate-800 overflow-hidden">
+                      <div className="mx-4 mt-2 h-1.5 rounded-full bg-senpay-border overflow-hidden">
                         <div
                           className="h-full rounded-full transition-all duration-500"
                           style={{
@@ -512,30 +512,30 @@ export default function MapViewPage({ zones = [], isLive = false }) {
 
                 {/* Real Radio Telemetry Metrics */}
                 <div className="space-y-1.5">
-                  <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                  <div className="text-[10px] text-senpay-text-muted font-bold uppercase tracking-wider">
                     Radio Link Quality
                   </div>
                   <div className="grid grid-cols-2 gap-2">
-                    <div className="bg-[#0C131C] rounded-lg p-2 border border-slate-800/80">
-                      <p className="text-[10px] text-slate-400">RSRP (Signal)</p>
-                      <p className="text-xs font-bold text-white">
+                    <div className="bg-senpay-panel rounded-lg p-2 border border-senpay-border/80">
+                      <p className="text-[10px] text-senpay-text-muted">RSRP (Signal)</p>
+                      <p className="text-xs font-bold text-senpay-text-primary">
                         {selectedZone.metrics?.rsrp !== undefined ? `${selectedZone.metrics.rsrp} dBm` : '—'}
                       </p>
                     </div>
-                    <div className="bg-[#0C131C] rounded-lg p-2 border border-slate-800/80">
-                      <p className="text-[10px] text-slate-400">RSRQ (Quality)</p>
-                      <p className="text-xs font-bold text-white">
+                    <div className="bg-senpay-panel rounded-lg p-2 border border-senpay-border/80">
+                      <p className="text-[10px] text-senpay-text-muted">RSRQ (Quality)</p>
+                      <p className="text-xs font-bold text-senpay-text-primary">
                         {selectedZone.metrics?.rsrq !== undefined ? `${selectedZone.metrics.rsrq} dB` : '—'}
                       </p>
                     </div>
-                    <div className="bg-[#0C131C] rounded-lg p-2 border border-slate-800/80">
-                      <p className="text-[10px] text-slate-400">SNR (Noise)</p>
-                      <p className="text-xs font-bold text-white">
+                    <div className="bg-senpay-panel rounded-lg p-2 border border-senpay-border/80">
+                      <p className="text-[10px] text-senpay-text-muted">SNR (Noise)</p>
+                      <p className="text-xs font-bold text-senpay-text-primary">
                         {selectedZone.metrics?.snr !== undefined ? `${selectedZone.metrics.snr} dB` : '—'}
                       </p>
                     </div>
-                    <div className="bg-[#0C131C] rounded-lg p-2 border border-slate-800/80">
-                      <p className="text-[10px] text-slate-400">Downlink Throughput</p>
+                    <div className="bg-senpay-panel rounded-lg p-2 border border-senpay-border/80">
+                      <p className="text-[10px] text-senpay-text-muted">Downlink Throughput</p>
                       <p className="text-xs font-bold text-emerald-400">
                         {selectedZone.metrics?.downlink_bitrate_mbps !== undefined
                           ? `${selectedZone.metrics.downlink_bitrate_mbps} Mbps`
@@ -553,26 +553,26 @@ export default function MapViewPage({ zones = [], isLive = false }) {
                         <Cpu size={11} />
                         <span>ML Model Inference</span>
                       </span>
-                      <span className="text-slate-400">
+                      <span className="text-senpay-text-muted">
                         {(activeSiteDetail.ml_prediction.confidence * 100).toFixed(0)}% Conf
                       </span>
                     </div>
-                    <div className="bg-[#0C131C] p-2 rounded-lg border border-senpay-cyan/30 text-[11px] space-y-1">
+                    <div className="bg-senpay-panel p-2 rounded-lg border border-senpay-cyan/30 text-[11px] space-y-1">
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Predicted CRS:</span>
-                        <span className="font-bold text-white">
+                        <span className="text-senpay-text-muted">Predicted CRS:</span>
+                        <span className="font-bold text-senpay-text-primary">
                           {activeSiteDetail.ml_prediction.predicted_crs}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Classification:</span>
+                        <span className="text-senpay-text-muted">Classification:</span>
                         <span className="font-bold text-amber-400 uppercase">
                           {activeSiteDetail.ml_prediction.severity}
                         </span>
                       </div>
                       <div className="flex justify-between">
-                        <span className="text-slate-400">Inference Latency:</span>
-                        <span className="text-slate-300">
+                        <span className="text-senpay-text-muted">Inference Latency:</span>
+                        <span className="text-senpay-text-secondary">
                           {activeSiteDetail.ml_prediction.latency_ms} ms
                         </span>
                       </div>
@@ -649,7 +649,7 @@ export default function MapViewPage({ zones = [], isLive = false }) {
                       />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between">
-                          <p className="text-xs font-bold text-white group-hover:text-senpay-cyan transition truncate">
+                          <p className="text-xs font-bold text-senpay-text-primary group-hover:text-senpay-cyan transition truncate">
                             {siteName}
                           </p>
                           <span className="text-xs font-bold" style={{ color: risk.color }}>
