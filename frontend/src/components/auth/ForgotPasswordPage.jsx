@@ -156,20 +156,22 @@ export default function ForgotPasswordPage({ onNavigateLogin, onNavigateLanding 
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-mono font-medium mb-1.5">ACCOUNT EMAIL</label>
+                  <label htmlFor="forgot-email" className="block text-xs font-mono font-medium mb-1.5 cursor-pointer">ACCOUNT EMAIL</label>
                   <div className="relative">
                     <Mail
-                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${
+                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
                         isLight ? 'text-zinc-400' : 'text-zinc-500'
                       }`}
                     />
                     <input
+                      id="forgot-email"
                       type="email"
                       required
+                      autoComplete="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="operator@telesol.io"
-                      className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors ${
+                      className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors select-text ${
                         isLight ? 'bg-white border-zinc-300' : 'bg-zinc-900 border-zinc-800'
                       }`}
                     />

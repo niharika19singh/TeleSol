@@ -168,25 +168,29 @@ export default function ResetPasswordPage({ onNavigateLogin, onNavigateLanding }
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-medium mb-1.5">NEW PASSWORD</label>
+                  <label htmlFor="reset-new-password" className="block text-xs font-mono font-medium mb-1.5 cursor-pointer">NEW PASSWORD</label>
                   <div className="relative">
                     <Lock
-                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${
+                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
                         isLight ? 'text-zinc-400' : 'text-zinc-500'
                       }`}
                     />
                     <input
+                      id="reset-new-password"
                       type={showPassword ? 'text' : 'password'}
                       required
+                      autoComplete="new-password"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className={`w-full pl-9 pr-10 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors ${
+                      className={`w-full pl-9 pr-10 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors select-text ${
                         isLight ? 'bg-white border-zinc-300' : 'bg-zinc-900 border-zinc-800'
                       }`}
                     />
                     <button
                       type="button"
+                      tabIndex={-1}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100"
                     >
@@ -196,20 +200,22 @@ export default function ResetPasswordPage({ onNavigateLogin, onNavigateLanding }
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-medium mb-1.5">CONFIRM NEW PASSWORD</label>
+                  <label htmlFor="reset-confirm-password" className="block text-xs font-mono font-medium mb-1.5 cursor-pointer">CONFIRM NEW PASSWORD</label>
                   <div className="relative">
                     <Lock
-                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${
+                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
                         isLight ? 'text-zinc-400' : 'text-zinc-500'
                       }`}
                     />
                     <input
+                      id="reset-confirm-password"
                       type={showPassword ? 'text' : 'password'}
                       required
+                      autoComplete="new-password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors ${
+                      className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors select-text ${
                         isLight ? 'bg-white border-zinc-300' : 'bg-zinc-900 border-zinc-800'
                       }`}
                     />

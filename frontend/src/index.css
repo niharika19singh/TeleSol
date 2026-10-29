@@ -67,6 +67,19 @@ body {
   transition: background-color 0.15s ease, color 0.15s ease;
 }
 
+/* ── Form Controls Text Selection & Accessibility Safeguards ── */
+input,
+textarea,
+select {
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+button {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
 /* ── Custom Scrollbar ── */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
 ::-webkit-scrollbar-track { background: var(--senpay-panel); }

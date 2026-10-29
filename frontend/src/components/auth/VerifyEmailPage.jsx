@@ -186,14 +186,16 @@ export default function VerifyEmailPage({ onNavigateLogin, onNavigateLanding }) 
                 className="space-y-4"
               >
                 <div>
-                  <label className="block text-xs font-mono font-medium mb-1.5">VERIFICATION TOKEN</label>
+                  <label htmlFor="verify-token" className="block text-xs font-mono font-medium mb-1.5 cursor-pointer">VERIFICATION TOKEN</label>
                   <input
+                    id="verify-token"
                     type="text"
                     required
+                    autoComplete="one-time-code"
                     value={tokenInput}
                     onChange={(e) => setTokenInput(e.target.value)}
                     placeholder="Paste single-use token code"
-                    className={`w-full px-3 py-2 text-sm font-mono rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors ${
+                    className={`w-full px-3 py-2 text-sm font-mono rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors select-text ${
                       isLight ? 'bg-white border-zinc-300' : 'bg-zinc-900 border-zinc-800'
                     }`}
                   />

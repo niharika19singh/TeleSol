@@ -198,20 +198,22 @@ export default function SignupPage({ onNavigateLogin, onNavigateLanding }) {
 
               <form onSubmit={handleSubmit} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-mono font-medium mb-1.5">FULL NAME</label>
+                  <label htmlFor="signup-fullname" className="block text-xs font-mono font-medium mb-1.5 cursor-pointer">FULL NAME</label>
                   <div className="relative">
                     <User
-                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${
+                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
                         isLight ? 'text-zinc-400' : 'text-zinc-500'
                       }`}
                     />
                     <input
+                      id="signup-fullname"
                       type="text"
                       required
+                      autoComplete="name"
                       value={fullName}
                       onChange={(e) => setFullName(e.target.value)}
                       placeholder="e.g. Rachel Chen"
-                      className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors ${
+                      className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors select-text ${
                         isLight ? 'bg-white border-zinc-300' : 'bg-zinc-900 border-zinc-800'
                       }`}
                     />
@@ -219,20 +221,22 @@ export default function SignupPage({ onNavigateLogin, onNavigateLanding }) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-medium mb-1.5">EMAIL ADDRESS</label>
+                  <label htmlFor="signup-email" className="block text-xs font-mono font-medium mb-1.5 cursor-pointer">EMAIL ADDRESS</label>
                   <div className="relative">
                     <Mail
-                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${
+                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
                         isLight ? 'text-zinc-400' : 'text-zinc-500'
                       }`}
                     />
                     <input
+                      id="signup-email"
                       type="email"
                       required
+                      autoComplete="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="name@telecom-org.com"
-                      className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors ${
+                      className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors select-text ${
                         isLight ? 'bg-white border-zinc-300' : 'bg-zinc-900 border-zinc-800'
                       }`}
                     />
@@ -240,21 +244,23 @@ export default function SignupPage({ onNavigateLogin, onNavigateLanding }) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-medium mb-1.5">
+                  <label htmlFor="signup-org" className="block text-xs font-mono font-medium mb-1.5 cursor-pointer">
                     ORGANIZATION / WORKSPACE <span className="opacity-50">(OPTIONAL)</span>
                   </label>
                   <div className="relative">
                     <Building
-                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${
+                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
                         isLight ? 'text-zinc-400' : 'text-zinc-500'
                       }`}
                     />
                     <input
+                      id="signup-org"
                       type="text"
+                      autoComplete="organization"
                       value={orgName}
                       onChange={(e) => setOrgName(e.target.value)}
                       placeholder="e.g. TeleSol Cork Operations"
-                      className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors ${
+                      className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors select-text ${
                         isLight ? 'bg-white border-zinc-300' : 'bg-zinc-900 border-zinc-800'
                       }`}
                     />
@@ -262,25 +268,29 @@ export default function SignupPage({ onNavigateLogin, onNavigateLanding }) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-medium mb-1.5">PASSWORD</label>
+                  <label htmlFor="signup-password" className="block text-xs font-mono font-medium mb-1.5 cursor-pointer">PASSWORD</label>
                   <div className="relative">
                     <Lock
-                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${
+                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
                         isLight ? 'text-zinc-400' : 'text-zinc-500'
                       }`}
                     />
                     <input
+                      id="signup-password"
                       type={showPassword ? 'text' : 'password'}
                       required
+                      autoComplete="new-password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className={`w-full pl-9 pr-10 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors ${
+                      className={`w-full pl-9 pr-10 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors select-text ${
                         isLight ? 'bg-white border-zinc-300' : 'bg-zinc-900 border-zinc-800'
                       }`}
                     />
                     <button
                       type="button"
+                      tabIndex={-1}
+                      aria-label={showPassword ? 'Hide password' : 'Show password'}
                       onClick={() => setShowPassword(!showPassword)}
                       className="absolute right-3 top-1/2 -translate-y-1/2 opacity-50 hover:opacity-100"
                     >
@@ -290,20 +300,22 @@ export default function SignupPage({ onNavigateLogin, onNavigateLanding }) {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-mono font-medium mb-1.5">CONFIRM PASSWORD</label>
+                  <label htmlFor="signup-confirm-password" className="block text-xs font-mono font-medium mb-1.5 cursor-pointer">CONFIRM PASSWORD</label>
                   <div className="relative">
                     <Lock
-                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 ${
+                      className={`w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none ${
                         isLight ? 'text-zinc-400' : 'text-zinc-500'
                       }`}
                     />
                     <input
+                      id="signup-confirm-password"
                       type={showPassword ? 'text' : 'password'}
                       required
+                      autoComplete="new-password"
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       placeholder="••••••••••••"
-                      className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors ${
+                      className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors select-text ${
                         isLight ? 'bg-white border-zinc-300' : 'bg-zinc-900 border-zinc-800'
                       }`}
                     />

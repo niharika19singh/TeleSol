@@ -86,9 +86,9 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
   };
 
   return (
-    <div className="min-h-screen bg-senpay-bg text-senpay-text-primary flex flex-col justify-between font-sans relative overflow-hidden select-none transition-colors duration-150">
+    <div className="min-h-screen bg-senpay-bg text-senpay-text-primary flex flex-col justify-between font-sans relative overflow-hidden transition-colors duration-150">
       {/* Background ambient mesh */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.12),rgba(255,255,255,0))]" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(16,185,129,0.12),rgba(255,255,255,0))] pointer-events-none" />
       <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-1/4 left-1/4 w-96 h-96 bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
 
@@ -129,7 +129,7 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
 
       {/* Main Card */}
       <main className="relative z-10 flex-1 flex items-center justify-center px-4 py-8">
-        <div className="w-full max-w-md bg-senpay-card border border-senpay-border rounded-2xl shadow-2xl backdrop-blur-xl p-8">
+        <div className="w-full max-w-md bg-senpay-card border border-senpay-border rounded-2xl shadow-2xl backdrop-blur-xl p-8 select-text">
           {/* Logo & Headline */}
           <div className="text-center mb-8">
             <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-senpay-green/10 border border-senpay-green/20 text-senpay-green mb-3">
@@ -233,7 +233,7 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
           {mode === 'login' ? (
             <form onSubmit={handleLoginSubmit} className="space-y-4">
               <div>
-                <label className="block text-xs font-medium text-senpay-text-secondary mb-1.5">
+                <label htmlFor="login-identifier" className="block text-xs font-medium text-senpay-text-secondary mb-1.5 cursor-pointer">
                   Email or Username
                 </label>
                 <div className="relative">
@@ -241,19 +241,21 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
                     <Mail className="w-4 h-4" />
                   </div>
                   <input
+                    id="login-identifier"
                     type="text"
                     required
+                    autoComplete="username"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
                     placeholder="operator@telesol.io"
-                    className="w-full pl-9 pr-3 py-2 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary placeholder:text-senpay-text-muted focus:outline-none focus:border-senpay-cyan focus:ring-1 focus:ring-senpay-cyan transition"
+                    className="w-full pl-9 pr-3 py-2 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary placeholder:text-senpay-text-muted focus:outline-none focus:border-senpay-cyan focus:ring-1 focus:ring-senpay-cyan transition select-text"
                   />
                 </div>
               </div>
 
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium text-senpay-text-secondary">
+                  <label htmlFor="login-password" className="text-xs font-medium text-senpay-text-secondary cursor-pointer">
                     Password
                   </label>
                   <a
@@ -273,15 +275,19 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
                     <Lock className="w-4 h-4" />
                   </div>
                   <input
+                    id="login-password"
                     type={showPassword ? 'text' : 'password'}
                     required
+                    autoComplete="current-password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full pl-9 pr-10 py-2 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary placeholder:text-senpay-text-muted focus:outline-none focus:border-senpay-cyan focus:ring-1 focus:ring-senpay-cyan transition font-mono"
+                    className="w-full pl-9 pr-10 py-2 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary placeholder:text-senpay-text-muted focus:outline-none focus:border-senpay-cyan focus:ring-1 focus:ring-senpay-cyan transition font-mono select-text"
                   />
                   <button
                     type="button"
+                    tabIndex={-1}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-senpay-text-muted hover:text-senpay-text-primary"
                   >
@@ -325,7 +331,7 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
             /* Register Form */
             <form onSubmit={handleRegisterSubmit} className="space-y-3.5">
               <div>
-                <label className="block text-xs font-medium text-senpay-text-secondary mb-1">
+                <label htmlFor="reg-fullname" className="block text-xs font-medium text-senpay-text-secondary mb-1 cursor-pointer">
                   Full Name
                 </label>
                 <div className="relative">
@@ -333,35 +339,40 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
                     <User className="w-4 h-4" />
                   </div>
                   <input
+                    id="reg-fullname"
                     type="text"
                     required
+                    autoComplete="name"
                     value={regFullName}
                     onChange={(e) => setRegFullName(e.target.value)}
                     placeholder="Devin Vance"
-                    className="w-full pl-9 pr-3 py-1.5 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary placeholder:text-senpay-text-muted focus:outline-none focus:border-senpay-cyan"
+                    className="w-full pl-9 pr-3 py-1.5 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary placeholder:text-senpay-text-muted focus:outline-none focus:border-senpay-cyan select-text"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-2">
                 <div>
-                  <label className="block text-xs font-medium text-senpay-text-secondary mb-1">
+                  <label htmlFor="reg-username" className="block text-xs font-medium text-senpay-text-secondary mb-1 cursor-pointer">
                     Username
                   </label>
                   <input
+                    id="reg-username"
                     type="text"
                     required
+                    autoComplete="username"
                     value={regUsername}
                     onChange={(e) => setRegUsername(e.target.value)}
                     placeholder="dvance"
-                    className="w-full px-3 py-1.5 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary placeholder:text-senpay-text-muted focus:outline-none focus:border-senpay-cyan"
+                    className="w-full px-3 py-1.5 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary placeholder:text-senpay-text-muted focus:outline-none focus:border-senpay-cyan select-text"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-senpay-text-secondary mb-1">
+                  <label htmlFor="reg-role" className="block text-xs font-medium text-senpay-text-secondary mb-1 cursor-pointer">
                     Role
                   </label>
                   <select
+                    id="reg-role"
                     value={regRole}
                     onChange={(e) => setRegRole(e.target.value)}
                     className="w-full px-3 py-1.5 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary focus:outline-none focus:border-senpay-cyan"
@@ -374,7 +385,7 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-senpay-text-secondary mb-1">
+                <label htmlFor="reg-email" className="block text-xs font-medium text-senpay-text-secondary mb-1 cursor-pointer">
                   Corporate Email
                 </label>
                 <div className="relative">
@@ -382,18 +393,20 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
                     <Mail className="w-4 h-4" />
                   </div>
                   <input
+                    id="reg-email"
                     type="email"
                     required
+                    autoComplete="email"
                     value={regEmail}
                     onChange={(e) => setRegEmail(e.target.value)}
                     placeholder="dvance@carrier.com"
-                    className="w-full pl-9 pr-3 py-1.5 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary placeholder:text-senpay-text-muted focus:outline-none focus:border-senpay-cyan"
+                    className="w-full pl-9 pr-3 py-1.5 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary placeholder:text-senpay-text-muted focus:outline-none focus:border-senpay-cyan select-text"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-xs font-medium text-senpay-text-secondary mb-1">
+                <label htmlFor="reg-password" className="block text-xs font-medium text-senpay-text-secondary mb-1 cursor-pointer">
                   Password (min 8 chars)
                 </label>
                 <div className="relative">
@@ -401,16 +414,20 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
                     <Lock className="w-4 h-4" />
                   </div>
                   <input
+                    id="reg-password"
                     type={showPassword ? 'text' : 'password'}
                     required
                     minLength={8}
+                    autoComplete="new-password"
                     value={regPassword}
                     onChange={(e) => setRegPassword(e.target.value)}
                     placeholder="••••••••••••"
-                    className="w-full pl-9 pr-10 py-1.5 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary placeholder:text-senpay-text-muted focus:outline-none focus:border-senpay-cyan font-mono"
+                    className="w-full pl-9 pr-10 py-1.5 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary placeholder:text-senpay-text-muted focus:outline-none focus:border-senpay-cyan font-mono select-text"
                   />
                   <button
                     type="button"
+                    tabIndex={-1}
+                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 pr-3 flex items-center text-senpay-text-muted hover:text-senpay-text-primary"
                   >
