@@ -109,73 +109,108 @@ Added regression test `test_03b_auth_login_seeded_admin` validating:
 
 ## 4. Verification Evidence
 
-### 4.1 Backend Test Suite (127 Tests)
-```
-$ pytest backend/tests/ -v
-...
-backend/tests/test_auth_and_ml.py::test_01_auth_register_success PASSED
-backend/tests/test_auth_and_ml.py::test_02_auth_register_duplicate PASSED
-backend/tests/test_auth_and_ml.py::test_03_auth_login_success PASSED
-backend/tests/test_auth_and_ml.py::test_03b_auth_login_seeded_admin PASSED
-...
-============================= 127 passed in 1.86s =============================
-```
+### 4.1 Fresh Production Verification (Automated Headless Chrome CDP)
 
-### 4.2 Frontend Production Build
-```
-$ npm run build
-vite v5.4.14 building for production...
-transforming...
-✓ 183 modules transformed.
-rendering chunks...
-computing chunk sizes...
-dist/index.html                   1.48 kB │ gzip:  0.72 kB
-dist/assets/index-BIv2WtZR.css   62.14 kB │ gzip: 11.23 kB
-dist/assets/index-BIv2WtZR.js   384.21 kB │ gzip: 98.45 kB
-✓ built in 2.78s
-```
+A fresh browser automation run was conducted on `https://frontend-five-psi-43.vercel.app` using an isolated Chrome instance (`--headless=new` with empty temporary profiles) to inspect network panel activity in real time.
 
-### 4.3 Production Deployment
-- **Deployment URL:** `https://frontend-jny3qz419-niharika-singhs-projects-b3043020.vercel.app`
-- **Canonical Alias:** `https://frontend-five-psi-43.vercel.app`
-- **HTTP Status:** `HTTP/2 200`
-- **API Target Confirmed in Live Bundle:** `https://telesol-sentinel-api.onrender.com`
+#### 4.1.1 Login Screen Inspection & Submission
+- **Target URL:** `https://frontend-five-psi-43.vercel.app/#login`
+- **Pre-filled Credentials:** `operator@telesol.io` / `senpay-telecom-2026`
+- **Submission Action:** Form submitted via `Enter Autonomous Console` button and `Sign In →` helper.
+- **Request URL:** `https://telesol-sentinel-api.onrender.com/api/auth/login`
+- **Method:** `POST`
+- **Request Headers:**
+  - `Content-Type`: `application/json`
+  - `Origin`: `https://frontend-five-psi-43.vercel.app`
+- **Request Payload:**
+  ```json
+  {
+    "username_or_email": "operator@telesol.io",
+    "password": "senpay-telecom-2026"
+  }
+  ```
+- **HTTP Status:** `200 OK` (Preceded by `OPTIONS 200 OK`)
+- **Sanitized Response Body:**
+  ```json
+  {
+    "status": "success",
+    "message": "Authentication successful",
+    "token": "eyJ1aWQiOiJ1c3JfMTc5MzI5NzY5OV80NDg3YzkyNSIsInVzciI6Im9wZXJhdG9yIiwiZW1sIjoib3BlcmF0b3JAdGVsZXNvbC5pbyIsInJvbCI6Ik5PQ19PUEVSQVRPUiIsIndzX2lkIjoid3NfdGVsZXNvbF9kZWZhdWx0Iiwib3JnIjoiVGVsZVNvbCBHbG9iYWwiLCJpYXQiOjE3OTMyOTg1NDksImV4cCI6MTc5MzM4NDk0OX0.[SIGNATURE]",
+    "token_type": "Bearer",
+    "expires_in": 86400,
+    "user": {
+      "id": "usr_1793297699_4487c925",
+      "username": "operator",
+      "email": "operator@telesol.io",
+      "full_name": "SENPAY Lead NOC Engineer",
+      "role": "NOC_OPERATOR",
+      "workspace_id": "ws_telesol_default",
+      "org_name": "TeleSol Global",
+      "email_verified": true,
+      "last_login_at": "2026-10-29T18:29:09.638690+00:00"
+    }
+  }
+  ```
+- **Post-Login State:** Browser URL automatically transitioned to `https://frontend-five-psi-43.vercel.app/#command_center`, local storage stored `senpay_auth_token` and `senpay_auth_user`, and authenticated dashboards loaded with zero errors.
 
-### 4.4 Live Headless Chrome End-to-End Test
-A live browser automation script executed against `https://frontend-five-psi-43.vercel.app`:
+![Fresh Login Submission Success](/Users/user/.gemini/antigravity/brain/0e2f0d3e-6e2c-4850-bfad-9935511b02a6/fresh_auth_form_submit_success.png)
 
-1. **Sign-In Flow:**
-   - Navigated to `https://frontend-five-psi-43.vercel.app/#login`
-   - Verified pre-filled NOC Operator credentials: `operator@telesol.io` / `senpay-telecom-2026`
-   - Clicked "Sign In"
-   - Observed network traffic:
-     ```
-     [NET REQ] POST https://telesol-sentinel-api.onrender.com/api/auth/login
-     [NET RES] 200 OK
-     [NET REQ] GET  https://telesol-sentinel-api.onrender.com/api/dashboard/all
-     [NET RES] 200 OK
-     [NET REQ] GET  https://telesol-sentinel-api.onrender.com/api/ml/model-info
-     [NET RES] 200 OK
-     ```
-   - Confirmed post-login state:
-     - `hasToken: true` (291 chars JWT)
-     - `role: "NOC_OPERATOR"`
-     - `hash: "#command_center"`
-     - `error: null`
-   - Captured screenshot: `live_auth_01_signin_success.png`
+#### 4.1.2 Registration Screen Inspection & Submission
+- **Target URL:** `https://frontend-five-psi-43.vercel.app/#signup`
+- **Input Fields Populated:**
+  - Full Name: `Rachel Chen`
+  - Email: `noc_lead_1793298778@telesol.io`
+  - Organization: `TeleSol Global Network`
+  - Password: `senpay-telecom-2026`
+  - Confirm Password: `senpay-telecom-2026`
+- **Submission Action:** Clicked "Create Account"
+- **Request URL:** `https://telesol-sentinel-api.onrender.com/api/auth/register`
+- **Method:** `POST`
+- **Request Payload:**
+  ```json
+  {
+    "full_name": "Rachel Chen",
+    "email": "noc_lead_1793298778@telesol.io",
+    "organization_name": "TeleSol Global Network",
+    "password": "senpay-telecom-2026"
+  }
+  ```
+- **HTTP Status:** `201 Created`
+- **Response Body:**
+  ```json
+  {
+    "status": "success",
+    "message": "Account successfully registered. Please verify your email.",
+    "token": null,
+    "user": {
+      "id": "usr_1793298779_00ec4dd7",
+      "username": "noc_lead_1793298778_661b",
+      "email": "noc_lead_1793298778@telesol.io",
+      "full_name": "Rachel Chen",
+      "role": "WORKSPACE_OWNER",
+      "workspace_id": "ws_7835eb465beb",
+      "organization_name": "TeleSol Global Network",
+      "email_verified": false,
+      "_dev_verification_token": "LRj-xXC1xBT6kHOxJyx1wLvf1SgWbpROCzNxgeWtkW0"
+    }
+  }
+  ```
+- **Post-Registration State:** UI successfully transitioned to "Check Your Email" verification confirmation screen with the development fast-track token.
 
-2. **Registration Flow:**
-   - Navigated to `https://frontend-five-psi-43.vercel.app/#signup`
-   - Submitted new operator details:
-     - Name: `NOC Operations Lead`
-     - Email: `noc_engineer_1793297955@telesol.io`
-     - Organization: `TeleSol Global Network Operations`
-     - Password: `senpay-telecom-2026`
-   - Verified successful transition to verification pending screen without errors.
-   - Captured screenshot: `live_auth_02_register_success.png`
+![Fresh Registration Screen Success](/Users/user/.gemini/antigravity/brain/0e2f0d3e-6e2c-4850-bfad-9935511b02a6/fresh_auth_signup_page_success.png)
 
-3. **Network Audit Log:**
-   - Recorded 14 network events in `live_auth_network_log.json`, confirming 100% of requests routed to `https://telesol-sentinel-api.onrender.com` with zero HTTP 404 errors.
+### 4.2 Deployed Frontend Bundle Inspection
+Inspecting `https://frontend-five-psi-43.vercel.app/assets/index-BIv2WtZR.js` directly:
+- **Compiled API Target:** `https://telesol-sentinel-api.onrender.com`
+- **Foreign Domains (`wadih`):** 0 matches found.
+- **WebSocket Gateway:** `wss://telesol-sentinel-api.onrender.com/ws`
+
+### 4.3 Vercel Deployment Linkage
+- **Active Deployment:** `https://frontend-8btwvk4ua-niharika-singhs-projects-b3043020.vercel.app`
+- **Aliases:** `https://frontend-five-psi-43.vercel.app`
+- **Deployment ID:** `dpl_ELctiSEpjBe83CNAXxDY1XiBQcrR`
+- **Commit Associated:** `b47b54c` (`main` branch)
+- **Applied Environment Variable:** `VITE_API_BASE_URL="https://telesol-sentinel-api.onrender.com"`
 
 ---
 
