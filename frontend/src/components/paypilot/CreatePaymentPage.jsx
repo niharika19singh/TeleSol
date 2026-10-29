@@ -4,9 +4,10 @@ import {
   CheckCircle2, Clock, Layers, Lock, Cpu
 } from 'lucide-react';
 import { createPaymentRequest, fetchAgents, fetchProviders, fetchPolicy } from '../../data/paypilotApi';
+import { DEMO_SIMULATED_ACTION_MESSAGE } from '../../data/demoFixtures';
 import GlassCard from '../shared/GlassCard';
 
-export default function CreatePaymentPage({ prefilledProvider, onMandateCreated, onNavigate }) {
+export default function CreatePaymentPage({ prefilledProvider, onMandateCreated, onNavigate, isDemoMode = false }) {
   const [agents, setAgents] = useState([]);
   const [providers, setProviders] = useState([]);
   const [policy, setPolicy] = useState(null);
@@ -115,6 +116,24 @@ export default function CreatePaymentPage({ prefilledProvider, onMandateCreated,
     setErrorMsg(null);
 
     try {
+      if (isDemoMode) {
+        const simRes = {
+          request_id: `req_sim_${Date.now().toString().slice(-4)}`,
+          mandate_id: `man_sim_${Date.now().toString().slice(-4)}`,
+          is_demo_simulation: true,
+          demo_notice: DEMO_SIMULATED_ACTION_MESSAGE,
+          policy_decision: {
+            decision: 'POLICY_APPROVED (SIMULATED)',
+            reason: DEMO_SIMULATED_ACTION_MESSAGE,
+          },
+        };
+        setCreatedResult(simRes);
+        if (onMandateCreated) {
+          onMandateCreated(simRes);
+        }
+        return;
+      }
+
       const res = await createPaymentRequest({
         title: formData.title.trim(),
         buyer_agent_id: formData.buyer_agent_id,

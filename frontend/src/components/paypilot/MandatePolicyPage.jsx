@@ -4,9 +4,10 @@ import {
   Lock, Settings, RefreshCw, ArrowRight, ExternalLink, Sliders
 } from 'lucide-react';
 import { fetchMandates, fetchPolicy, updatePolicy } from '../../data/paypilotApi';
+import { DEMO_SIMULATED_ACTION_MESSAGE } from '../../data/demoFixtures';
 import GlassCard from '../shared/GlassCard';
 
-export default function MandatePolicyPage({ onSelectMandateToExecute, onNavigate }) {
+export default function MandatePolicyPage({ onSelectMandateToExecute, onNavigate, isDemoMode = false }) {
   const [mandates, setMandates] = useState([]);
   const [policy, setPolicy] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +49,17 @@ export default function MandatePolicyPage({ onSelectMandateToExecute, onNavigate
     if (!policy) return;
     setPolicySaving(true);
     try {
+      if (isDemoMode) {
+        setPolicy((prev) => ({
+          ...prev,
+          max_amount_per_tx: parseFloat(policyForm.max_amount_per_tx),
+          max_daily_budget: parseFloat(policyForm.max_daily_budget),
+          require_manual_approval: parseInt(policyForm.require_manual_approval, 10),
+        }));
+        setShowPolicyEditor(false);
+        setToastMsg({ type: 'success', text: DEMO_SIMULATED_ACTION_MESSAGE });
+        return;
+      }
       await updatePolicy(policy.id, {
         max_amount_per_tx: parseFloat(policyForm.max_amount_per_tx),
         max_daily_budget: parseFloat(policyForm.max_daily_budget),

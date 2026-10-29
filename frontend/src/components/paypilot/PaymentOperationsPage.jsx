@@ -30,12 +30,14 @@ import {
 } from 'lucide-react';
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, Line } from 'recharts';
 import { evaluateSentinelOutcome, fetchServiceAgreements, fetchTransactions } from '../../data/paypilotApi';
+import { DEMO_SIMULATED_ACTION_MESSAGE } from '../../data/demoFixtures';
 import { useTheme } from '../../context/ThemeContext';
 
 export default function PaymentOperationsPage({
   onNavigate,
   onOpenDispute,
   onViewProof,
+  isDemoMode = false,
 }) {
   const { isLight } = useTheme();
   const [mode, setMode] = useState('demo');
@@ -63,6 +65,16 @@ export default function PaymentOperationsPage({
   const handleVerifyRelease = async () => {
     setEvaluating(true);
     try {
+      if (isDemoMode || mode === 'demo') {
+        await new Promise((r) => setTimeout(r, 350));
+        setOutcomeResult({
+          status: 'SIMULATED_SLA_VERIFIED',
+          is_demo_simulation: true,
+          demo_notice: DEMO_SIMULATED_ACTION_MESSAGE,
+          message: 'Simulated post-intervention telemetry (CRS 22.0, RTT 14.2ms, Loss 0.04%) satisfies SLA threshold (< 35.0 CRS).',
+        });
+        return;
+      }
       const res = await evaluateSentinelOutcome({
         agreement_id: 'agr_seed_001',
         post_metrics: {
@@ -509,13 +521,21 @@ export default function PaymentOperationsPage({
 
       {/* Outcome Result Notification Drawer */}
       {outcomeResult && (
-        <div className="senpay-card p-4 border-l-[3px] border-l-senpay-green animate-drawer-enter font-mono text-xs">
+        <div
+          data-testid="payment-ops-outcome-result"
+          className="senpay-card p-4 border-l-[3px] border-l-senpay-green animate-drawer-enter font-mono text-xs"
+        >
           <div className="flex items-center justify-between pb-2 mb-2 border-b border-senpay-border">
             <div className="flex items-center gap-2">
               <CheckCircle2 size={16} className="text-senpay-green" />
               <span className="font-bold text-senpay-text-primary">
                 Outcome Evaluation: {outcomeResult.status || 'VERIFIED_SUCCESS'}
               </span>
+              {(isDemoMode || outcomeResult.is_demo_simulation) && (
+                <span className="px-2 py-0.5 rounded bg-senpay-amber/15 border border-senpay-amber/40 text-senpay-amber text-[10px] font-bold">
+                  Simulated operation results
+                </span>
+              )}
             </div>
             <button
               onClick={() => setOutcomeResult(null)}
@@ -524,11 +544,16 @@ export default function PaymentOperationsPage({
               Dismiss
             </button>
           </div>
+          {outcomeResult.demo_notice && (
+            <div className="mb-2 p-2.5 rounded bg-senpay-amber/15 border border-senpay-amber/40 text-senpay-amber font-semibold text-xs">
+              {outcomeResult.demo_notice}
+            </div>
+          )}
           <p className="text-senpay-text-secondary font-sans leading-relaxed">
             {outcomeResult.message || 'Telemetry SLA criteria validated. Escrow payout of 12.50 HSK dispatched to SkyLink provider wallet.'}
           </p>
           <div className="mt-2 text-[10px] text-senpay-text-muted">
-            Settlement Hash: <code className="text-senpay-cyan">0x7a89b...41cd</code> &bull; Verified on HashKey Testnet 133
+            Settlement Hash: <code className="text-senpay-cyan">0x7a89b...41cd</code> &bull; Testnet results (HashKey Testnet 133 Fixture)
           </div>
         </div>
       )}

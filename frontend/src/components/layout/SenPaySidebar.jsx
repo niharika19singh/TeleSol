@@ -58,11 +58,11 @@ export default function SenPaySidebar({
   collapsed,
   onToggleCollapse,
 }) {
-  const { user, isAdmin } = useAuth();
+  const { user, isAuthenticated, isAdmin, sessionMode } = useAuth();
   const [governanceOpen, setGovernanceOpen] = useState(true);
 
   const displayedGroups = [...NAVIGATION_GROUPS];
-  if (isAdmin) {
+  if (isAuthenticated && isAdmin) {
     displayedGroups.push({
       title: 'ADMINISTRATION',
       items: [
@@ -130,7 +130,6 @@ export default function SenPaySidebar({
                           ${collapsed ? 'justify-center px-0' : ''}
                         `}
                       >
-                        {/* Active dot or Icon */}
                         {isActive ? (
                           <span className="w-1.5 h-1.5 rounded-full bg-senpay-cyan flex-shrink-0" />
                         ) : null}
@@ -155,14 +154,26 @@ export default function SenPaySidebar({
         })}
       </nav>
 
-      {/* ── Active Identity Badge ── */}
-      {!collapsed && user && (
+      {/* ── Session Mode Badge (Explicit Separation of Demo vs Authenticated) ── */}
+      {!collapsed && (
         <div className="px-3 py-2 mx-2 mb-2 rounded bg-senpay-panel/40 border border-senpay-border/60 text-[10px] font-mono">
-          <div className="text-senpay-text-muted truncate">{user.org_name || user.workspace_id || 'TeleSol Global'}</div>
-          <div className="text-senpay-cyan font-bold truncate flex items-center gap-1">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            <span>{user.role || 'NOC_OPERATOR'}</span>
-          </div>
+          {isAuthenticated && user ? (
+            <>
+              <div className="text-senpay-text-muted truncate">{user.org_name || user.workspace_id || 'TeleSol Workspace'}</div>
+              <div className="text-senpay-cyan font-bold truncate flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>{user.role}</span>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="text-senpay-text-muted truncate">Interactive Sandbox</div>
+              <div className="text-senpay-amber font-bold truncate flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full bg-senpay-amber" />
+                <span>DEMO MODE ({sessionMode})</span>
+              </div>
+            </>
+          )}
         </div>
       )}
 

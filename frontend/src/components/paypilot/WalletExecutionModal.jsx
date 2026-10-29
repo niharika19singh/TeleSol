@@ -4,19 +4,55 @@ import {
   ExternalLink, RefreshCw, Cpu, Layers, Key
 } from 'lucide-react';
 import { executePayment } from '../../data/paypilotApi';
+import { DEMO_SIMULATED_ACTION_MESSAGE } from '../../data/demoFixtures';
 
-export default function WalletExecutionModal({ mandate, wallet, onClose, onSettled }) {
+export default function WalletExecutionModal({ mandate, wallet, onClose, onSettled, isDemoMode = false }) {
   const [stage, setStage] = useState('IDLE'); // 'IDLE' | 'SIGNING' | 'GATEWAY' | 'VERIFYING' | 'COMPLETED' | 'ERROR'
   const [errorMessage, setErrorMessage] = useState(null);
   const [executionResult, setExecutionResult] = useState(null);
 
   if (!mandate) return null;
 
+  const isSimulatedDemo = Boolean(isDemoMode || mandate.is_demo || wallet?.isDemoWallet);
+
   const handleSignAndExecute = async () => {
     setStage('SIGNING');
     setErrorMessage(null);
 
     try {
+      if (isDemoMode) {
+        // Safe demo mode preview: never execute a real financial transaction or mutate production state
+        await new Promise((r) => setTimeout(r, 350));
+        setStage('GATEWAY');
+        await new Promise((r) => setTimeout(r, 350));
+        const simulatedRes = {
+          success: true,
+          is_demo: true,
+          simulated_preview: true,
+          demo_message: DEMO_SIMULATED_ACTION_MESSAGE,
+          mandate_id: mandate.mandate_id,
+          gateway_order_id: 'ord_demo_sim_8812',
+          tx_hash: '0x573b9e4210a8b417c89f0019283746554433221100aabbccddeeff001122e79f',
+          receipt: {
+            receipt_id: 'rcpt_demo_sim_8812',
+            amount: mandate.amount,
+            asset: mandate.asset || 'HSK',
+            status: 'SIMULATED_PREVIEW',
+          },
+          chain_verification: {
+            verified: true,
+            network_id: mandate.network_id || 133,
+            explorer_url: 'https://hashkeychain-testnet-explorer.alt.technology',
+          },
+        };
+        setExecutionResult(simulatedRes);
+        setStage('COMPLETED');
+        if (onSettled) {
+          onSettled(simulatedRes);
+        }
+        return;
+      }
+
       // Step 1: Explicit Wallet Authorization Signature
       const signRes = await wallet.signMandate(mandate);
 
@@ -141,6 +177,20 @@ export default function WalletExecutionModal({ mandate, wallet, onClose, onSettl
               </div>
             </div>
 
+            {isSimulatedDemo && (
+              <div
+                data-testid="demo-simulated-action-notice"
+                className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/40 text-[11px] text-amber-300 font-mono space-y-1"
+              >
+                <div className="font-bold flex items-center gap-1.5">
+                  <span>DEMO MODE • SIMULATED OPERATION RESULTS</span>
+                </div>
+                <p className="text-[11px] text-amber-100 leading-relaxed">
+                  {DEMO_SIMULATED_ACTION_MESSAGE}
+                </p>
+              </div>
+            )}
+
             {/* Actions */}
             <div className="flex items-center justify-end gap-3 pt-3 border-t border-crowd-border">
               <button
@@ -156,7 +206,7 @@ export default function WalletExecutionModal({ mandate, wallet, onClose, onSettl
                 className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-crowd-cyan text-crowd-bg font-bold text-xs hover:bg-crowd-cyan/90 transition-all shadow-[0_0_15px_rgba(0,212,255,0.3)]"
               >
                 <Key size={14} />
-                <span>Sign & Execute via HSP Gateway</span>
+                <span>{isDemoMode ? 'Simulate Authorization Preview (Demo Mode)' : 'Sign & Execute via HSP Gateway'}</span>
               </button>
             </div>
           </div>
@@ -262,12 +312,15 @@ export default function WalletExecutionModal({ mandate, wallet, onClose, onSettl
             </div>
 
             {executionResult.is_demo && (
-              <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[11px] text-amber-300 font-mono space-y-0.5">
+              <div
+                data-testid="demo-simulated-receipt-notice"
+                className="p-3 rounded-xl bg-amber-500/15 border border-amber-500/40 text-[11px] text-amber-300 font-mono space-y-1"
+              >
                 <div className="font-bold flex items-center gap-1">
-                  <span>ℹ️ Simulated Settlement Active</span>
+                  <span>ℹ️ Simulated Operation Results (Testnet 133 Adapter)</span>
                 </div>
-                <p className="text-[10px] text-amber-200/80">
-                  Transaction verified via deterministic HSK testnet simulation adapter. No mainnet capital committed.
+                <p className="text-[11px] text-amber-100 leading-relaxed">
+                  {DEMO_SIMULATED_ACTION_MESSAGE}
                 </p>
               </div>
             )}

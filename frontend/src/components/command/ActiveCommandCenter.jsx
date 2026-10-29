@@ -190,6 +190,7 @@ export default function ActiveCommandCenter({
   onNavigate,
   onSelectMandateForSigning,
   wallet,
+  isDemoMode = false,
 }) {
   const { theme, isLight } = useTheme();
   const [selectedTopologyNode, setSelectedTopologyNode] = useState('SEC-VIP-C1');
@@ -253,6 +254,7 @@ export default function ActiveCommandCenter({
         network_id: 133,
         recipient_address: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
         purpose: 'Gate C VIP Corridor Congestion Mitigation (SkyLink 5G Slice)',
+        is_demo: Boolean(isDemoMode),
       });
     } else {
       onNavigate('operations');
@@ -503,7 +505,7 @@ export default function ActiveCommandCenter({
                 </span>
               </div>
               <span className="text-[10px] font-mono text-senpay-text-muted">
-                Live Stream &bull; Updated 8s ago
+                {isDemoMode ? 'Synthetic demo data • Deterministic Telecom Fixture' : 'Live Stream • Updated 8s ago'}
               </span>
             </div>
 

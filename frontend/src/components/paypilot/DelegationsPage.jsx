@@ -9,9 +9,10 @@ import {
   createDelegation,
   updateDelegationStatus
 } from '../../data/paypilotApi';
+import { DEMO_SIMULATED_ACTION_MESSAGE } from '../../data/demoFixtures';
 import GlassCard from '../shared/GlassCard';
 
-export default function DelegationsPage() {
+export default function DelegationsPage({ isDemoMode = false }) {
   const [delegations, setDelegations] = useState([]);
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -52,6 +53,16 @@ export default function DelegationsPage() {
   const handleToggleStatus = async (delegationId, currentStatus) => {
     const nextStatus = (currentStatus === 'ENABLED' || currentStatus === 'ACTIVE') ? 'SUSPENDED' : 'ENABLED';
     try {
+      if (isDemoMode) {
+        setDelegations((prev) =>
+          prev.map((d) => (d.id === delegationId ? { ...d, status: nextStatus } : d))
+        );
+        setNotification({
+          type: 'success',
+          text: DEMO_SIMULATED_ACTION_MESSAGE
+        });
+        return;
+      }
       await updateDelegationStatus(delegationId, nextStatus, 'admin_operator');
       setNotification({
         type: 'success',
@@ -71,6 +82,31 @@ export default function DelegationsPage() {
     try {
       const categories = formData.allowed_categories.split(',').map(c => c.trim()).filter(Boolean);
       const validUntilDate = new Date(Date.now() + (parseInt(formData.valid_until_hours, 10) * 3600 * 1000)).toISOString();
+      if (isDemoMode) {
+        setDelegations((prev) => [
+          {
+            id: `del_sim_${Date.now().toString().slice(-4)}`,
+            agent_id: formData.agent_id,
+            delegator_address: formData.delegator_address,
+            service_categories: categories,
+            max_amount_per_tx: parseFloat(formData.max_amount_per_tx),
+            max_cumulative_spend: parseFloat(formData.max_total_budget),
+            daily_budget_limit: parseFloat(formData.daily_budget_limit),
+            cumulative_spend: 0.0,
+            reserved_amount: 0.0,
+            remaining_cumulative_budget: parseFloat(formData.max_total_budget),
+            status: 'ENABLED',
+            valid_until: validUntilDate,
+          },
+          ...prev,
+        ]);
+        setShowModal(false);
+        setNotification({
+          type: 'success',
+          text: DEMO_SIMULATED_ACTION_MESSAGE,
+        });
+        return;
+      }
       await createDelegation({
         agent_id: formData.agent_id,
         delegator_address: formData.delegator_address,

@@ -3,8 +3,8 @@ import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { Shield, Lock, Mail, User, Eye, EyeOff, Radio, CheckCircle, ArrowRight, ArrowLeft, AlertCircle, Sun, Moon } from 'lucide-react';
 
-export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigateSignup, onNavigateForgotPassword }) {
-  const { login, register, demoSignIn, demoAdminSignIn } = useAuth();
+export default function LoginPage({ onLoginSuccess, onLaunchDemo, onNavigateLanding, onNavigateSignup, onNavigateForgotPassword }) {
+  const { login, register, enterDemoMode } = useAuth();
   const { theme, toggleTheme, isLight } = useTheme();
   const [mode, setMode] = useState('login'); // 'login' | 'register'
   const [showPassword, setShowPassword] = useState(false);
@@ -12,9 +12,9 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
   const [error, setError] = useState('');
   const [successMsg, setSuccessMsg] = useState('');
 
-  // Form states
-  const [identifier, setIdentifier] = useState('operator@telesol.io');
-  const [password, setPassword] = useState('senpay-telecom-2026');
+  // Form states (no hardcoded sandbox credentials)
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   
   // Register fields
   const [regUsername, setRegUsername] = useState('');
@@ -68,20 +68,12 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
     }
   };
 
-  const handleDemoFill = async () => {
-    setError('');
-    setLoading(true);
-    try {
-      await demoSignIn();
-      if (onLoginSuccess) {
-        onLoginSuccess();
-      } else {
-        window.location.hash = '#command_center';
-      }
-    } catch (err) {
-      setError(err.message || 'Demo sign-in failed. Please check backend connection.');
-    } finally {
-      setLoading(false);
+  const handleEnterDemo = () => {
+    enterDemoMode();
+    if (onLaunchDemo) {
+      onLaunchDemo();
+    } else {
+      window.location.hash = '#demo';
     }
   };
 
@@ -143,47 +135,19 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
             </p>
           </div>
 
-          {/* Quick Demo Sign-In Banners */}
-          <div className="mb-6 space-y-2">
-            <div className="p-3 bg-senpay-green/10 border border-senpay-green/30 rounded-xl flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 text-senpay-green font-medium">
-                <Shield className="w-4 h-4 text-senpay-green flex-shrink-0" />
-                <span>NOC Operator Account</span>
+          {/* Instant Demo Launch Option (No Credentials Required) */}
+          <div className="mb-6">
+            <div className="p-3 bg-senpay-cyan/10 border border-senpay-cyan/30 rounded-xl flex items-center justify-between text-xs gap-2">
+              <div className="flex items-center gap-2 text-senpay-cyan font-medium">
+                <Shield className="w-4 h-4 text-senpay-cyan flex-shrink-0" />
+                <span>Explore Public Interactive Demo (No Sign-In Required)</span>
               </div>
               <button
                 type="button"
-                onClick={handleDemoFill}
-                disabled={loading}
-                className="bg-senpay-green hover:opacity-90 text-white font-semibold px-2.5 py-1 rounded shadow text-xs transition flex items-center gap-1 disabled:opacity-50"
+                onClick={handleEnterDemo}
+                className={`bg-senpay-cyan hover:opacity-90 ${isLight ? 'text-white' : 'text-black'} font-bold px-3 py-1.5 rounded shadow text-xs transition flex items-center gap-1 flex-shrink-0`}
               >
-                Sign In &rarr;
-              </button>
-            </div>
-
-            <div className="p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2 text-emerald-500 font-medium">
-                <Lock className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                <span>Platform Admin Account</span>
-              </div>
-              <button
-                type="button"
-                onClick={async () => {
-                  setError('');
-                  setLoading(true);
-                  try {
-                    await demoAdminSignIn();
-                    if (onLoginSuccess) onLoginSuccess();
-                    else window.location.hash = '#command_center';
-                  } catch (err) {
-                    setError(err.message || 'Admin login failed');
-                  } finally {
-                    setLoading(false);
-                  }
-                }}
-                disabled={loading}
-                className="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold px-2.5 py-1 rounded shadow text-xs transition flex items-center gap-1 disabled:opacity-50"
-              >
-                Admin In &rarr;
+                Launch Demo &rarr;
               </button>
             </div>
           </div>
@@ -247,7 +211,7 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
                     autoComplete="username"
                     value={identifier}
                     onChange={(e) => setIdentifier(e.target.value)}
-                    placeholder="operator@telesol.io"
+                    placeholder="name@carrier-ops.com"
                     className="w-full pl-9 pr-3 py-2 bg-senpay-panel border border-senpay-border rounded-lg text-sm text-senpay-text-primary placeholder:text-senpay-text-muted focus:outline-none focus:border-senpay-cyan focus:ring-1 focus:ring-senpay-cyan transition select-text"
                   />
                 </div>
@@ -469,10 +433,9 @@ export default function LoginPage({ onLoginSuccess, onNavigateLanding, onNavigat
             </form>
           )}
 
-          {/* Footer credentials hint */}
-          <div className="mt-6 pt-4 border-t border-senpay-border text-center text-[11px] text-senpay-text-muted">
-            <span className="font-mono text-senpay-text-secondary">Default Sandbox Credentials:</span><br />
-            <span className="text-senpay-text-primary font-mono">operator@telesol.io</span> / <span className="text-senpay-text-primary font-mono">senpay-telecom-2026</span>
+          {/* Footer notice */}
+          <div className="mt-6 pt-4 border-t border-senpay-border text-center text-[11px] text-senpay-text-muted font-mono">
+            Internal Operator Authentication &bull; Public visitors can explore the interactive demo without signing in.
           </div>
         </div>
       </main>

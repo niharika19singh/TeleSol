@@ -4,9 +4,10 @@ import {
   XCircle, AlertTriangle, Lock, RefreshCw, Key
 } from 'lucide-react';
 import { fetchAgents, createAgent, updateAgentStatus } from '../../data/paypilotApi';
+import { DEMO_SIMULATED_ACTION_MESSAGE } from '../../data/demoFixtures';
 import GlassCard from '../shared/GlassCard';
 
-export default function AgentsPage() {
+export default function AgentsPage({ isDemoMode = false }) {
   const [agents, setAgents] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -41,6 +42,14 @@ export default function AgentsPage() {
   const handleToggleStatus = async (agent) => {
     const nextStatus = agent.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
     try {
+      if (isDemoMode) {
+        setAgents((prev) =>
+          prev.map((a) => (a.id === agent.id ? { ...a, status: nextStatus } : a))
+        );
+        setStatusMsg({ type: 'success', text: DEMO_SIMULATED_ACTION_MESSAGE });
+        setTimeout(() => setStatusMsg(null), 4000);
+        return;
+      }
       await updateAgentStatus(agent.id, nextStatus);
       await loadAgents();
       setStatusMsg({ type: 'success', text: `Agent '${agent.name}' marked ${nextStatus}.` });
@@ -55,6 +64,25 @@ export default function AgentsPage() {
     setSubmitting(true);
     try {
       const caps = formData.capabilities.split(',').map((c) => c.trim()).filter(Boolean);
+      if (isDemoMode) {
+        setAgents((prev) => [
+          ...prev,
+          {
+            id: formData.id.trim() || `agent_sim_${Date.now().toString().slice(-4)}`,
+            name: formData.name.trim(),
+            role: formData.role,
+            description: formData.description.trim(),
+            capabilities: caps,
+            wallet_address: formData.wallet_address.trim() || undefined,
+            spending_limit: parseFloat(formData.spending_limit) || 0,
+            daily_limit: parseFloat(formData.daily_limit) || 0,
+            status: 'ACTIVE',
+          },
+        ]);
+        setShowModal(false);
+        setStatusMsg({ type: 'success', text: DEMO_SIMULATED_ACTION_MESSAGE });
+        return;
+      }
       await createAgent({
         id: formData.id.trim(),
         name: formData.name.trim(),

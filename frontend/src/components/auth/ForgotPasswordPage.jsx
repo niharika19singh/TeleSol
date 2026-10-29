@@ -170,7 +170,7 @@ export default function ForgotPasswordPage({ onNavigateLogin, onNavigateLanding 
                       autoComplete="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      placeholder="operator@telesol.io"
+                      placeholder="name@carrier-ops.com"
                       className={`w-full pl-9 pr-3 py-2 text-sm rounded-lg border focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-colors select-text ${
                         isLight ? 'bg-white border-zinc-300' : 'bg-zinc-900 border-zinc-800'
                       }`}

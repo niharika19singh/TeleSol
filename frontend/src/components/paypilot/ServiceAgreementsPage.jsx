@@ -31,9 +31,10 @@ import {
   verifyAgreementTamper
 } from '../../data/paypilotApi';
 import OutcomeEvaluationModal from './OutcomeEvaluationModal';
+import { DEMO_SIMULATED_ACTION_MESSAGE } from '../../data/demoFixtures';
 import { useTheme } from '../../context/ThemeContext';
 
-export default function ServiceAgreementsPage({ onNavigate, onSelectAgreementForMandate }) {
+export default function ServiceAgreementsPage({ onNavigate, onSelectAgreementForMandate, isDemoMode = false }) {
   const { isLight } = useTheme();
   const [agreements, setAgreements] = useState([]);
   const [providers, setProviders] = useState([]);
@@ -57,6 +58,7 @@ export default function ServiceAgreementsPage({ onNavigate, onSelectAgreementFor
     required_evidence: 'TELECOM_QOS_TELEMETRY_LOG'
   });
   const [submitting, setSubmitting] = useState(false);
+  const [demoNotice, setDemoNotice] = useState(null);
 
   const fallbackDemoAgreement = {
     id: 'agr_seed_001',
@@ -133,6 +135,31 @@ export default function ServiceAgreementsPage({ onNavigate, onSelectAgreementFor
       const price = parseFloat(formData.price_amount) || 12.5;
       const maxAuth = parseFloat(formData.max_authorized_amount) || price;
 
+      if (isDemoMode) {
+        const simAgreement = {
+          id: `agr_sim_${Date.now().toString().slice(-4)}`,
+          task_id: `task_sim_${Date.now().toString().slice(-4)}`,
+          provider_id: formData.provider_id || 'prov_skylink_5g',
+          requesting_agent_id: formData.requesting_agent_id || 'agent_buyer_sentinel',
+          service_category: category,
+          service_description: formData.service_description,
+          agreed_price: price,
+          asset: formData.currency || 'HSK',
+          max_authorized_amount: maxAuth,
+          status: 'AGREED (SIMULATED)',
+          evaluation_status: 'SIMULATED_PREVIEW',
+          agreement_hash: '0x99887766554433221100ffeeddccbbaa99887766554433221100ffeeddccbbaa',
+          expected_deliverables: formData.deliverables,
+          evidence_required: formData.required_evidence,
+          expected_completion_time: new Date(Date.now() + 3600000).toISOString(),
+        };
+        setAgreements((prev) => [simAgreement, ...prev]);
+        setSelectedAgreement(simAgreement);
+        setShowCreateModal(false);
+        setDemoNotice(DEMO_SIMULATED_ACTION_MESSAGE);
+        return;
+      }
+
       await createServiceAgreement({
         task_id: `task_${Date.now()}`,
         requesting_agent_id: formData.requesting_agent_id || 'agent_buyer_sentinel',
@@ -163,6 +190,15 @@ export default function ServiceAgreementsPage({ onNavigate, onSelectAgreementFor
   return (
     <div className="space-y-4 max-w-[1680px] mx-auto pb-8 font-sans animate-fade-in-up text-senpay-text-primary">
       {/* ── Top Header Section ── */}
+      {demoNotice && (
+        <div
+          data-testid="demo-action-toast"
+          className="p-3 rounded bg-senpay-amber/15 border border-senpay-amber/40 text-senpay-amber text-xs font-mono flex items-center justify-between"
+        >
+          <span>{demoNotice}</span>
+          <button onClick={() => setDemoNotice(null)} className="text-[11px] underline">Dismiss</button>
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-senpay-border/60">
         <div>
           <div className="text-[10px] font-mono text-senpay-text-muted uppercase tracking-wider mb-0.5">

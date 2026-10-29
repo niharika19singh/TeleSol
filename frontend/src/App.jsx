@@ -3,9 +3,9 @@
 // Unified Autonomous Telecom Procurement & Payment Console
 // ═══════════════════════════════════════════════════════
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-// ── Authentication System ──
+// ── Authentication & Session System ──
 import { AuthProvider, useAuth } from './context/AuthContext';
 import LoginPage from './components/auth/LoginPage';
 import SignupPage from './components/auth/SignupPage';
@@ -45,55 +45,97 @@ import DelegationsPage from './components/paypilot/DelegationsPage';
 import EvidenceBundlesPage from './components/paypilot/EvidenceBundlesPage';
 import DisputesPage from './components/paypilot/DisputesPage';
 
-// Hooks
+// Hooks & Data
 import { useSimulation } from './hooks/useSimulation';
 import { useRealTimeData } from './hooks/useRealTimeData';
 import { useWeb3Wallet } from './hooks/useWeb3Wallet';
 import { controlSentinel, triggerTinyFishInvestigation } from './data/api';
+import { DEMO_SESSION_MESSAGE, DATA_SOURCE_LABELS } from './data/demoFixtures';
 
 function AppContent() {
-  const { user, isAuthenticated, isLoading } = useAuth();
+  const {
+    user,
+    isAuthenticated,
+    isDemoMode,
+    sessionMode,
+    enterDemoMode,
+    exitDemoMode,
+    isLoading,
+  } = useAuth();
 
-  const normalizeAuthRoute = (val) => {
-    if (!val) return val;
+  const normalizeRoute = useCallback((val) => {
+    if (!val) return '';
     const clean = val.toLowerCase().replace(/^[/#]+/, '').trim();
     if (clean === 'sign-in' || clean === 'signin') return 'login';
     if (clean === 'register' || clean === 'sign-up') return 'signup';
+    if (clean === 'home') return 'landing';
     return clean;
-  };
+  }, []);
 
   const getInitialPage = () => {
     if (typeof window !== 'undefined') {
-      const hash = normalizeAuthRoute(window.location.hash);
-      if (hash) return hash;
+      const hash = normalizeRoute(window.location.hash);
+      if (hash) {
+        if (hash === 'demo') return 'demo';
+        return hash;
+      }
       const params = new URLSearchParams(window.location.search);
-      const pageParam = normalizeAuthRoute(params.get('page'));
+      if (params.get('demo') === 'true') return 'demo';
+      const pageParam = normalizeRoute(params.get('page'));
       if (pageParam) return pageParam;
-      const path = normalizeAuthRoute(window.location.pathname);
+      const path = normalizeRoute(window.location.pathname);
       if (path && path !== 'index.html') return path;
     }
-    return 'command_center';
+    // Default homepage is the public SENPAY landing page
+    return 'landing';
   };
 
   const [currentPage, setCurrentPageRaw] = useState(getInitialPage);
 
-  const setCurrentPage = (page) => {
-    const normalized = normalizeAuthRoute(page);
+  const setCurrentPage = useCallback((page) => {
+    const rawTarget = (page || 'landing').toLowerCase().replace(/^[/#]+/, '').trim();
+    const normalized = normalizeRoute(rawTarget) || 'landing';
     setCurrentPageRaw(normalized);
-    if (typeof window !== 'undefined' && window.location.hash !== `#${normalized}`) {
-      window.location.hash = `#${normalized}`;
+
+    if (typeof window !== 'undefined') {
+      const desiredHash = rawTarget === 'home' ? '#home' : `#${rawTarget || 'home'}`;
+      if (window.location.hash !== desiredHash) {
+        window.location.hash = desiredHash;
+      }
     }
-  };
+  }, [normalizeRoute]);
 
   // Sync with browser back/forward and hash changes
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = normalizeAuthRoute(window.location.hash);
-      if (hash) setCurrentPageRaw(hash);
+      const rawHash = window.location.hash;
+      const normalized = normalizeRoute(rawHash);
+      if (!normalized) {
+        setCurrentPageRaw('landing');
+      } else {
+        setCurrentPageRaw(normalized);
+      }
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+  }, [normalizeRoute]);
+
+  // Automatically activate explicit demo session when visiting #demo, #command_center, or any operational subroute unauthenticated
+  useEffect(() => {
+    const isAuthPage =
+      currentPage === 'landing' ||
+      currentPage === 'login' ||
+      currentPage === 'signup' ||
+      currentPage === 'forgot-password' ||
+      currentPage.startsWith('verify-email') ||
+      currentPage.startsWith('reset-password') ||
+      currentPage === 'unauthorized';
+
+    if (!isAuthPage && !isAuthenticated) {
+      enterDemoMode();
+    }
+  }, [currentPage, isAuthenticated, enterDemoMode]);
+
   const [collapsed, setCollapsed] = useState(false);
   const [prefilledProvider, setPrefilledProvider] = useState(null);
   const [activeMandateForSigning, setActiveMandateForSigning] = useState(null);
@@ -118,36 +160,14 @@ function AppContent() {
     peakDensity: Math.max(...activeZones.map((z) => z.density || 0), 0),
   };
 
-  const handleControlSentinel = async (params) => {
-    if (realtime.isConnected) {
-      await controlSentinel(params);
-    }
-    if (params.scenario) {
-      if (params.scenario === 'normal') {
-        sim.updateParam('crowdDensity', 2.2);
-        sim.updateParam('entryRate', 80);
-        sim.updateParam('exitBlockage', 0);
-      } else if (params.scenario === 'congestion') {
-        sim.updateParam('crowdDensity', 5.5);
-        sim.updateParam('entryRate', 240);
-        sim.updateParam('exitBlockage', 20);
-      } else if (params.scenario === 'sudden_surge') {
-        sim.updateParam('crowdDensity', 7.8);
-        sim.updateParam('entryRate', 420);
-        sim.updateParam('exitBlockage', 35);
-      } else if (params.scenario === 'blocked_exit') {
-        sim.updateParam('crowdDensity', 8.6);
-        sim.updateParam('entryRate', 300);
-        sim.updateParam('exitBlockage', 85);
-      }
-    }
-    if (params.action === 'start') sim.setIsRunning(true);
-    if (params.action === 'pause') sim.setIsRunning(false);
-    if (params.action === 'reset') sim.resetSimulation();
+  const handleLaunchDemo = (targetPage = 'demo') => {
+    enterDemoMode();
+    setCurrentPage(targetPage);
   };
 
-  const handleTriggerTinyFish = async (zoneId, reason) => {
-    return await triggerTinyFishInvestigation(zoneId, reason);
+  const handleReturnToLanding = () => {
+    exitDemoMode();
+    setCurrentPage('home');
   };
 
   const handleSelectProviderForPayment = (provider) => {
@@ -164,38 +184,35 @@ function AppContent() {
         network_id: 133,
         recipient_address: '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC',
         purpose: 'Autonomous Telecom Slice Payment',
+        is_demo: !isAuthenticated,
       });
     }
   };
 
-  // ── Render Landing Page Standalone ──
-  if (currentPage === 'landing') {
+  // ── 1. Render Public SENPAY Landing Page (Default Homepage: `/`, `/#home`, `/#landing`) ──
+  if (currentPage === 'landing' || currentPage === 'home' || !currentPage) {
     return (
       <SenPayLandingPage
         onLaunchConsole={(page) => {
-          if (!isAuthenticated) {
-            setCurrentPage('login');
-          } else {
-            setCurrentPage(page || 'command_center');
-          }
+          handleLaunchDemo(page || 'demo');
         }}
       />
     );
   }
 
-  // ── Loading Session Screen ──
+  // ── Loading Session Screen (only when verifying an existing real auth token) ──
   if (isLoading) {
     return (
       <div className="min-h-screen bg-[#0B1118] flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
-          <span className="font-mono text-xs text-slate-400">Verifying Operator Session...</span>
+          <span className="font-mono text-xs text-slate-400">Initializing SENPAY Workspace...</span>
         </div>
       </div>
     );
   }
 
-  // ── Render Public Authentication & Recovery Screens Standalone ──
+  // ── Render Optional Auth Screens Standalone (Never blocking public demo routes) ──
   if (currentPage === 'signup' || currentPage === 'register') {
     if (isAuthenticated) {
       setCurrentPage('command_center');
@@ -204,7 +221,7 @@ function AppContent() {
     return (
       <SignupPage
         onNavigateLogin={() => setCurrentPage('login')}
-        onNavigateLanding={() => setCurrentPage('landing')}
+        onNavigateLanding={handleReturnToLanding}
       />
     );
   }
@@ -213,7 +230,7 @@ function AppContent() {
     return (
       <VerifyEmailPage
         onNavigateLogin={() => setCurrentPage('login')}
-        onNavigateLanding={() => setCurrentPage('landing')}
+        onNavigateLanding={handleReturnToLanding}
       />
     );
   }
@@ -222,7 +239,7 @@ function AppContent() {
     return (
       <ForgotPasswordPage
         onNavigateLogin={() => setCurrentPage('login')}
-        onNavigateLanding={() => setCurrentPage('landing')}
+        onNavigateLanding={handleReturnToLanding}
       />
     );
   }
@@ -231,7 +248,7 @@ function AppContent() {
     return (
       <ResetPasswordPage
         onNavigateLogin={() => setCurrentPage('login')}
-        onNavigateLanding={() => setCurrentPage('landing')}
+        onNavigateLanding={handleReturnToLanding}
       />
     );
   }
@@ -239,13 +256,12 @@ function AppContent() {
   if (currentPage === 'unauthorized') {
     return (
       <UnauthorizedPage
-        onNavigateDashboard={() => setCurrentPage('command_center')}
+        onNavigateDashboard={() => handleLaunchDemo('command_center')}
         onNavigateLogin={() => setCurrentPage('login')}
       />
     );
   }
 
-  // ── Render Login Screen Standalone ──
   if (currentPage === 'login') {
     if (isAuthenticated) {
       setCurrentPage('command_center');
@@ -254,27 +270,16 @@ function AppContent() {
     return (
       <LoginPage
         onLoginSuccess={() => setCurrentPage('command_center')}
-        onNavigateLanding={() => setCurrentPage('landing')}
+        onLaunchDemo={() => handleLaunchDemo('demo')}
+        onNavigateLanding={handleReturnToLanding}
         onNavigateSignup={() => setCurrentPage('signup')}
         onNavigateForgotPassword={() => setCurrentPage('forgot-password')}
       />
     );
   }
 
-  // ── Protected Route Guard: If unauthenticated, redirect to Login ──
-  if (!isAuthenticated) {
-    return (
-      <LoginPage
-        onLoginSuccess={() => setCurrentPage(currentPage === 'login' ? 'command_center' : currentPage)}
-        onNavigateLanding={() => setCurrentPage('landing')}
-        onNavigateSignup={() => setCurrentPage('signup')}
-        onNavigateForgotPassword={() => setCurrentPage('forgot-password')}
-      />
-    );
-  }
-
-  // ── Dedicated Platform Administration Console ──
-  if (currentPage === 'admin' || currentPage === 'platform_admin') {
+  // ── Dedicated Platform Administration Console (Protected for real admins; demo visitors stay in Command Center) ──
+  if ((currentPage === 'admin' || currentPage === 'platform_admin') && isAuthenticated) {
     return (
       <PlatformAdminPage
         onNavigateConsole={() => setCurrentPage('command_center')}
@@ -282,9 +287,14 @@ function AppContent() {
     );
   }
 
-  // ── Render Application Console Routes ──
+  const effectiveNavPage = currentPage === 'demo' ? 'command_center' : currentPage;
+  const activeDataSourceLabel = realtime.isConnected
+    ? DATA_SOURCE_LABELS.LIVE_BACKEND
+    : DATA_SOURCE_LABELS.SYNTHETIC_DEMO;
+
+  // ── Render Application Console Routes (Accessible in Demo Mode and Authenticated Mode) ──
   const renderCurrentView = () => {
-    switch (currentPage) {
+    switch (effectiveNavPage) {
       // ── Reference Screen 1: Active Command Center ──
       case 'command_center':
       case 'paypilot_dashboard':
@@ -294,6 +304,8 @@ function AppContent() {
             onNavigate={setCurrentPage}
             onSelectMandateForSigning={setActiveMandateForSigning}
             wallet={wallet}
+            isDemoMode={!isAuthenticated}
+            dataSourceLabel={activeDataSourceLabel}
           />
         );
 
@@ -305,6 +317,7 @@ function AppContent() {
             onNavigate={setCurrentPage}
             onOpenDispute={() => setCurrentPage('disputes')}
             onViewProof={() => setCurrentPage('evidence')}
+            isDemoMode={!isAuthenticated}
           />
         );
 
@@ -348,6 +361,7 @@ function AppContent() {
         return (
           <ServiceAgreementsPage
             onNavigate={setCurrentPage}
+            isDemoMode={!isAuthenticated}
             onSelectAgreementForMandate={(agr) => {
               setPrefilledProvider({
                 id: agr.provider_id,
@@ -374,7 +388,7 @@ function AppContent() {
         );
 
       case 'delegations':
-        return <DelegationsPage />;
+        return <DelegationsPage isDemoMode={!isAuthenticated} />;
 
       // ── Group: PAYMENTS & TRUST ──
       case 'safety':
@@ -391,7 +405,7 @@ function AppContent() {
         return <EvidenceBundlesPage />;
 
       case 'disputes':
-        return <DisputesPage />;
+        return <DisputesPage isDemoMode={!isAuthenticated} />;
 
       case 'trust':
         return (
@@ -407,6 +421,7 @@ function AppContent() {
           <MandatePolicyPage
             onSelectMandateToExecute={setActiveMandateForSigning}
             onNavigate={setCurrentPage}
+            isDemoMode={!isAuthenticated}
           />
         );
 
@@ -415,7 +430,7 @@ function AppContent() {
 
       case 'wallet':
       case 'agents':
-        return <AgentsPage />;
+        return <AgentsPage isDemoMode={!isAuthenticated} />;
 
       case 'create_payment':
         return (
@@ -423,6 +438,7 @@ function AppContent() {
             prefilledProvider={prefilledProvider}
             onMandateCreated={handleMandateCreated}
             onNavigate={setCurrentPage}
+            isDemoMode={!isAuthenticated}
           />
         );
 
@@ -439,6 +455,8 @@ function AppContent() {
             onNavigate={setCurrentPage}
             onSelectMandateForSigning={setActiveMandateForSigning}
             wallet={wallet}
+            isDemoMode={!isAuthenticated}
+            dataSourceLabel={activeDataSourceLabel}
           />
         );
     }
@@ -448,8 +466,9 @@ function AppContent() {
     <div className="min-h-screen bg-senpay-bg text-senpay-text-primary font-sans antialiased transition-colors duration-150">
       {/* ── SENPAY TopBar ── */}
       <SenPayTopBar
-        currentPage={currentPage}
+        currentPage={effectiveNavPage}
         onNavigate={setCurrentPage}
+        onNavigateHome={handleReturnToLanding}
         mode={sim.mode}
         onToggleMode={sim.toggleMode}
         wallet={wallet}
@@ -458,7 +477,7 @@ function AppContent() {
 
       {/* ── SENPAY Grouped Sidebar ── */}
       <SenPaySidebar
-        currentPage={currentPage}
+        currentPage={effectiveNavPage}
         onNavigate={setCurrentPage}
         collapsed={collapsed}
         onToggleCollapse={() => setCollapsed(!collapsed)}
@@ -472,7 +491,41 @@ function AppContent() {
           ${collapsed ? 'ml-16' : 'ml-56 lg:ml-60'}
         `}
       >
-        <main className="relative z-10 max-w-[1680px] mx-auto">
+        <main className="relative z-10 max-w-[1680px] mx-auto space-y-3">
+          {/* ── Persistent Visible Demo Mode Banner ── */}
+          {!isAuthenticated && (
+            <div
+              role="status"
+              aria-label="Interactive Demo Mode Active"
+              data-testid="demo-mode-banner"
+              className="rounded-xl bg-senpay-panel border border-senpay-amber/40 px-4 py-2.5 flex flex-col lg:flex-row lg:items-center justify-between gap-2 text-xs shadow-sm"
+            >
+              <div className="flex items-start sm:items-center gap-2.5">
+                <span className="px-2.5 py-0.5 rounded-full bg-senpay-amber text-slate-950 text-[10px] font-black font-mono uppercase tracking-wider flex-shrink-0">
+                  DEMO MODE
+                </span>
+                <span className="text-senpay-text-primary font-medium leading-snug">
+                  {DEMO_SESSION_MESSAGE}
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2 flex-wrap flex-shrink-0 font-mono text-[10px]">
+                <span className="px-2 py-0.5 rounded bg-senpay-card border border-senpay-border text-senpay-cyan">
+                  Source: {activeDataSourceLabel}
+                </span>
+                <span className="px-2 py-0.5 rounded bg-senpay-card border border-senpay-border text-senpay-text-secondary">
+                  Session: {sessionMode} (No Auth Required)
+                </span>
+                <button
+                  onClick={handleReturnToLanding}
+                  className="px-2.5 py-0.5 rounded bg-senpay-card hover:bg-senpay-elevated border border-senpay-border text-senpay-text-primary font-bold transition"
+                >
+                  &larr; Landing Page
+                </button>
+              </div>
+            </div>
+          )}
+
           {renderCurrentView()}
         </main>
       </div>
@@ -483,11 +536,12 @@ function AppContent() {
         onOpenLogs={() => setCurrentPage('audit')}
       />
 
-      {/* ── Wallet Authorization Modal ── */}
+      {/* ── Wallet Authorization / Safe Demo Simulation Modal ── */}
       {activeMandateForSigning && (
         <WalletExecutionModal
           mandate={activeMandateForSigning}
           wallet={wallet}
+          isDemoMode={!isAuthenticated}
           onClose={() => setActiveMandateForSigning(null)}
           onSettled={() => {
             setCurrentPage('operations');

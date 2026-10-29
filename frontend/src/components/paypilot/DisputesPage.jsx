@@ -10,9 +10,10 @@ import {
   checkSafeRetry,
   fetchMandates
 } from '../../data/paypilotApi';
+import { DEMO_SIMULATED_ACTION_MESSAGE } from '../../data/demoFixtures';
 import GlassCard from '../shared/GlassCard';
 
-export default function DisputesPage() {
+export default function DisputesPage({ isDemoMode = false }) {
   const [incidents, setIncidents] = useState([]);
   const [mandates, setMandates] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -72,6 +73,19 @@ export default function DisputesPage() {
   const handleUpdateStatus = async (incidentId, newStatus) => {
     setUpdating(true);
     try {
+      if (isDemoMode) {
+        setIncidents((prev) =>
+          prev.map((inc) => (inc.id === incidentId ? { ...inc, status: newStatus } : inc))
+        );
+        if (selectedIncident?.id === incidentId) {
+          setSelectedIncident((prev) => ({ ...prev, status: newStatus }));
+        }
+        setNotification({
+          type: 'success',
+          text: DEMO_SIMULATED_ACTION_MESSAGE
+        });
+        return;
+      }
       await updateIncidentStatus(
         incidentId,
         newStatus,
@@ -94,6 +108,26 @@ export default function DisputesPage() {
   const handleCreate = async (e) => {
     e.preventDefault();
     try {
+      if (isDemoMode) {
+        const simInc = {
+          id: `inc_sim_${Date.now().toString().slice(-4)}`,
+          mandate_id: formData.mandate_id || 'man_opt_west_8812',
+          incident_type: formData.incident_type,
+          status: 'INVESTIGATING',
+          severity: 'MEDIUM',
+          detection_reason: formData.description,
+          evidence_notes: formData.evidence_notes,
+          created_at: new Date().toISOString(),
+        };
+        setIncidents((prev) => [simInc, ...prev]);
+        setSelectedIncident(simInc);
+        setShowCreateModal(false);
+        setNotification({
+          type: 'success',
+          text: DEMO_SIMULATED_ACTION_MESSAGE,
+        });
+        return;
+      }
       await createIncident({
         ...formData,
         detection_reason: formData.description || formData.detection_reason || 'Manual incident reported',
